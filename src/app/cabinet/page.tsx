@@ -290,21 +290,22 @@ export default function CabinetPage() {
 
               {!published ? (
                 <>
-                  {/* Team & project form */}
+                  {/* Passport / project form */}
                   <div className="bg-white rounded-[3rem] p-10 mb-10">
-                    <h3 className="text-[2rem] font-medium mb-8">Моя команда и проект</h3>
+                    <h3 className="text-[2rem] font-medium mb-1">Паспорт проекта</h3>
+                    <p className="text-kv-muted mb-8">Основной документ вашего коробочного образовательного комплекта</p>
                     <div className="grid grid-cols-2 gap-8 max-[700px]:grid-cols-1">
                       <div>
-                        <label className="block mb-2.5 font-medium text-[#3f4a6b]">Название проекта</label>
-                        <input className="input-kv" placeholder="Дидактическая игра" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+                        <label className="block mb-2.5 font-medium text-[#3f4a6b]">Название КОП</label>
+                        <input className="input-kv" placeholder="Геометрический конструктор" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block mb-2.5 font-medium text-[#3f4a6b]">Блок проекта</label>
-                        <input className="input-kv" placeholder="1-й семестр" value={projectBlock} onChange={(e) => setProjectBlock(e.target.value)} />
+                        <label className="block mb-2.5 font-medium text-[#3f4a6b]">Предметная область</label>
+                        <input className="input-kv" placeholder="Математика, 7–8 класс" value={projectBlock} onChange={(e) => setProjectBlock(e.target.value)} />
                       </div>
                       <div className="col-span-2 max-[700px]:col-span-1">
-                        <label className="block mb-2.5 font-medium text-[#3f4a6b]">Описание проекта</label>
-                        <textarea className="textarea-kv" placeholder="Краткое описание" value={projectDesc} onChange={(e) => setProjectDesc(e.target.value)} />
+                        <label className="block mb-2.5 font-medium text-[#3f4a6b]">Описание КОП</label>
+                        <textarea className="textarea-kv" placeholder="Цель, целевая аудитория, особенности продукта и методические задачи" value={projectDesc} onChange={(e) => setProjectDesc(e.target.value)} />
                       </div>
                     </div>
 
@@ -329,8 +330,8 @@ export default function CabinetPage() {
                     {/* Production file */}
                     <div className="bg-kv-light rounded-[2.5rem] p-8 mt-8 flex items-center justify-between flex-wrap gap-4">
                       <div>
-                        <h4 className="font-medium mb-1">Итоговый файл для производства</h4>
-                        <p className="text-kv-muted text-sm">DXF, SVG, STL или PDF</p>
+                        <h4 className="font-medium mb-1">Производственный файл</h4>
+                        <p className="text-kv-muted text-sm">DXF / SVG для лазера · STL для 3D-печати · PDF для методики</p>
                       </div>
                       <button
                         className="bg-white border border-kv-blue text-kv-blue px-7 py-3 rounded-full cursor-pointer flex items-center gap-2 hover:bg-kv-light transition-colors"
@@ -347,7 +348,7 @@ export default function CabinetPage() {
                   {/* Kanban */}
                   <div className="bg-white rounded-[3rem] p-10 mb-10">
                     <div className="flex justify-between items-center mb-10">
-                      <h3 className="text-[2rem] font-medium">Трекер проектов</h3>
+                      <h3 className="text-[2rem] font-medium">Трекер задач</h3>
                       <button className="btn-blue" onClick={() => openTask()}>
                         <Plus className="w-4 h-4" /> Добавить задачу
                       </button>
@@ -418,8 +419,8 @@ export default function CabinetPage() {
                   {/* Publish */}
                   <div className="bg-kv-light rounded-[3.75rem] px-10 py-[50px] mb-10 flex items-center justify-between flex-wrap gap-6">
                     <div>
-                      <h3 className="text-[1.8rem] font-medium mb-1">Опубликовать проект в каталог</h3>
-                      <p className="text-kv-muted">После отправки проект будет проверен куратором</p>
+                      <h3 className="text-[1.8rem] font-medium mb-1">Опубликовать КОП в каталог</h3>
+                      <p className="text-kv-muted">Проект отправится куратору на проверку — после одобрения появится в общем каталоге</p>
                     </div>
                     <button className="bg-kv-blue text-white border-none rounded-full px-10 py-4 text-lg cursor-pointer hover:bg-kv-dark transition-colors" onClick={handlePublish}>
                       Опубликовать
@@ -446,7 +447,7 @@ export default function CabinetPage() {
                     {productionFile && <p className="mt-3"><strong>Файл:</strong> {productionFile}</p>}
                   </div>
                   <div className="flex gap-4 flex-wrap">
-                    <button className="btn-blue bg-ai-primary! hover:bg-ai-dark!" style={{ background: '#7c3aed' }}
+                    <button className="btn-ai"
                       onClick={() => document.getElementById('approbation-section')?.scrollIntoView({ behavior: 'smooth' })}>
                       <Cpu className="w-4 h-4" /> Апробация
                     </button>
@@ -470,12 +471,8 @@ export default function CabinetPage() {
 
                   {/* AI questions */}
                   <div className="mb-6">
-                    <button
-                      className="btn-blue"
-                      style={{ background: '#7c3aed' }}
-                      onClick={generateAiQuestions}
-                    >
-                      <Cpu className="w-4 h-4" /> Сгенерировать вопросы
+                    <button className="btn-ai" onClick={generateAiQuestions}>
+                      <Cpu className="w-4 h-4" /> Сгенерировать вопросы для анкеты
                     </button>
                     {showAiQuestions && aiQuestions.length > 0 && (
                       <div className="mt-4 bg-[#f9fbfe] rounded-3xl p-4">
@@ -557,7 +554,7 @@ export default function CabinetPage() {
               <div className="bg-kv-light rounded-[3rem] p-10 mb-10 text-center">
                 <h3 className="text-[1.8rem] font-medium mb-4">Каталог коробочных образовательных комплектов</h3>
                 <p className="text-kv-muted mb-6">Посмотрите готовые работы других команд</p>
-                <Link href="/catalog" className="btn-primary" style={{ background: '#2b3b6b' }}>
+                <Link href="/catalog" className="btn-blue inline-flex">
                   Перейти в каталог
                 </Link>
               </div>

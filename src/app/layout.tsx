@@ -9,14 +9,14 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Педагогический технопарк | Проектная деятельность',
-  description: 'Кванториум им. К. Д. Ушинского — РГПУ им. А.И. Герцена. Проектная деятельность и практики на базе технопарка.',
+  title: 'Кванториум им. К. Д. Ушинского | Цифровая среда практики',
+  description: 'Цифровая образовательная среда педагогического технопарка РГПУ им. А.И. Герцена. Разработка и апробация коробочных образовательных комплектов (КОП).',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" className={inter.variable}>
-      <body className="font-[var(--font-inter),Inter,-apple-system,BlinkMacSystemFont,sans-serif]">
+      <body>
         {children}
       </body>
     </html>

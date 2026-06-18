@@ -48,6 +48,9 @@
   .btn-blue {
     @apply bg-kv-blue text-white border-none rounded-full px-8 py-3.5 font-medium cursor-pointer transition-colors hover:bg-kv-dark flex items-center gap-2.5;
   }
+  .btn-ai {
+    @apply bg-ai-primary text-white border-none rounded-full px-8 py-3.5 font-medium cursor-pointer transition-colors hover:bg-ai-dark flex items-center gap-2.5;
+  }
   .status-badge {
     @apply inline-flex items-center gap-2 px-5 py-2 rounded-full font-medium text-sm;
   }
