@@ -1,6 +1,3 @@
-// Abstracts data persistence: calls Yandex Cloud Function when
-// NEXT_PUBLIC_API_URL is set at build time, falls back to localStorage otherwise.
-
 export type SubmittedProject = {
   id: string
   projectName: string
@@ -12,8 +9,15 @@ export type SubmittedProject = {
   authors: string[]
   productionFile: string
   files: Array<{ name: string; icon: string; size?: string }>
-  status: 'review' | 'approved' | 'rejected'
+  status: 'feedback_requested' | 'review' | 'approved' | 'rejected'
   submittedAt: string
+  feedbackRequestedAt?: string
+  curatorLogin: string
+  curatorFeedback?: string
+  workspaceSnapshot?: {
+    tasks: Array<{ id: string; title: string; desc: string; status: string; priority: string; dueDate: string }>
+    notes: string
+  }
 }
 
 export type CatalogEntry = {
@@ -70,11 +74,12 @@ export async function getSubmittedProjects(): Promise<SubmittedProject[]> {
 
 export async function updateProjectStatus(
   id: string,
-  status: 'review' | 'approved' | 'rejected',
+  status: SubmittedProject['status'],
   catalogEntry?: CatalogEntry,
+  curatorFeedback?: string,
 ): Promise<void> {
   if (API_URL) {
-    await apiCall('updateStatus', 'POST', { id, status, catalogEntry })
+    await apiCall('updateStatus', 'POST', { id, status, catalogEntry, curatorFeedback })
     return
   }
   const subs: SubmittedProject[] = JSON.parse(
@@ -82,7 +87,13 @@ export async function updateProjectStatus(
   )
   localStorage.setItem(
     'submittedProjects',
-    JSON.stringify(subs.map((p) => (p.id === id ? { ...p, status } : p))),
+    JSON.stringify(
+      subs.map((p) =>
+        p.id === id
+          ? { ...p, status, ...(curatorFeedback !== undefined ? { curatorFeedback } : {}) }
+          : p,
+      ),
+    ),
   )
   const numId = parseInt(id.slice(-7)) + 10000
   const existing: CatalogEntry[] = JSON.parse(

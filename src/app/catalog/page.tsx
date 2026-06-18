@@ -233,8 +233,11 @@ export default function CatalogPage() {
               <X size={24} />
             </button>
             <h2 className="text-[2.4rem] font-medium mb-6 pr-10">{selected.title}</h2>
-            <div className="w-full h-[240px] bg-kv-light rounded-[2.25rem] mb-6 flex items-center justify-center text-[4rem]">
-              {selected.image}
+            <div className="w-full h-[240px] bg-kv-light rounded-[2.25rem] mb-6 flex items-center justify-center">
+              {(() => {
+                const ModalIcon = subjectIconMap[selected.image] ?? subjectIconMap[selected.subject] ?? Box
+                return <ModalIcon className="w-20 h-20 text-kv-blue stroke-[1.25]" />
+              })()}
             </div>
             <p className="text-lg leading-[1.7] my-6">{selected.fullDesc}</p>
 
