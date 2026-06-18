@@ -156,7 +156,7 @@ export default function CuratorPage() {
   if (!authorized) return null
 
   // ── derived stats ──────────────────────────────────────────────────────────
-  const myTeams   = [...new Set(projects.map((p) => p.teamName))]
+  const myTeams   = Array.from(new Set(projects.map((p) => p.teamName)))
   const counts = {
     total:     myTeams.length,
     feedback:  projects.filter((p) => p.status === 'feedback_requested').length,
