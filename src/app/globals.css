@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-kv-bg text-kv-dark font-sans;
+  }
+}
+
+@layer components {
+  .container-kv {
+    @apply max-w-[1280px] mx-auto px-8;
+  }
+  .section-kv {
+    @apply py-24 border-b border-black/[0.03];
+  }
+  .btn-primary {
+    @apply inline-block bg-kv-dark text-white px-10 py-3.5 rounded-full font-medium transition-colors duration-200 hover:bg-kv-blue no-underline;
+  }
+  .btn-outline {
+    @apply inline-block bg-transparent text-kv-dark px-10 py-3.5 rounded-full font-medium border border-[#cdd6e4] transition-colors duration-200 hover:bg-kv-light no-underline;
+  }
+  .card-kv {
+    @apply bg-white rounded-4xl p-10 shadow-card border border-kv-border;
+  }
+  .modal-overlay {
+    @apply fixed inset-0 bg-[rgba(15,18,28,0.7)] backdrop-blur-sm flex items-center justify-center z-[1000];
+  }
+  .modal-box {
+    @apply bg-white max-w-[600px] w-[90%] rounded-[3rem] p-[50px] relative shadow-modal;
+  }
+  .modal-close-btn {
+    @apply absolute top-6 right-7 bg-transparent border-none text-[#7c7f93] text-[2rem] leading-none cursor-pointer hover:text-kv-dark transition-colors;
+  }
+  .tag-kv {
+    @apply bg-kv-light text-kv-dark px-4 py-1.5 rounded-full text-sm font-medium inline-block;
+  }
+  .input-kv {
+    @apply w-full px-6 py-4 border border-[#e2e8f0] rounded-full font-sans text-base bg-[#f9fcff] outline-none transition-shadow focus:border-kv-blue focus:ring-2 focus:ring-kv-blue/20;
+  }
+  .textarea-kv {
+    @apply w-full px-5 py-3.5 border border-[#e2e8f0] rounded-[1.5rem] font-sans text-base bg-[#f9fcff] outline-none resize-y transition-shadow focus:border-kv-blue focus:ring-2 focus:ring-kv-blue/20 min-h-[100px];
+  }
+  .btn-blue {
+    @apply bg-kv-blue text-white border-none rounded-full px-8 py-3.5 font-medium cursor-pointer transition-colors hover:bg-kv-dark flex items-center gap-2.5;
+  }
+  .status-badge {
+    @apply inline-flex items-center gap-2 px-5 py-2 rounded-full font-medium text-sm;
+  }
+}
