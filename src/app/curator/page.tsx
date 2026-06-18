@@ -73,7 +73,7 @@ export default function CuratorPage() {
     router.push('/cabinet')
   }
 
-  const updateStatus = (id: string, status: 'approved' | 'rejected') => {
+  const updateStatus = (id: string, status: 'approved' | 'rejected' | 'review') => {
     try {
       const subs: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
       const updated = subs.map((p) => p.id === id ? { ...p, status } : p)
