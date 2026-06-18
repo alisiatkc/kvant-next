@@ -1,5 +1,6 @@
-export type StudentAccount = {
-  name: string
+export type TeamAccount = {
+  code: string
+  password: string
   teamName: string
   track: 'А1' | 'А2'
   curatorLogin: string
@@ -12,13 +13,10 @@ export type CuratorAccount = {
   id: string
 }
 
-export const STUDENT_ACCOUNTS: StudentAccount[] = [
-  { name: 'Ткаченко Алиса',    teamName: 'Команда «Конструктор»',   track: 'А1', curatorLogin: 'curator'  },
-  { name: 'Петрова Мария',     teamName: 'Команда «Конструктор»',   track: 'А1', curatorLogin: 'curator'  },
-  { name: 'Иванов Сергей',     teamName: 'Команда «Исследователи»', track: 'А2', curatorLogin: 'curator'  },
-  { name: 'Сидорова Анна',     teamName: 'Команда «Исследователи»', track: 'А2', curatorLogin: 'curator'  },
-  { name: 'Козлов Дмитрий',    teamName: 'Команда «Педагоги»',      track: 'А1', curatorLogin: 'curator2' },
-  { name: 'Новикова Елена',    teamName: 'Команда «Педагоги»',      track: 'А1', curatorLogin: 'curator2' },
+export const TEAM_ACCOUNTS: TeamAccount[] = [
+  { code: 'kvant-01', password: 'konstr24', teamName: 'Команда «Конструктор»',   track: 'А1', curatorLogin: 'curator'  },
+  { code: 'kvant-02', password: 'issled24', teamName: 'Команда «Исследователи»', track: 'А2', curatorLogin: 'curator'  },
+  { code: 'kvant-03', password: 'pedag24',  teamName: 'Команда «Педагоги»',      track: 'А1', curatorLogin: 'curator2' },
 ]
 
 export const CURATOR_ACCOUNTS: CuratorAccount[] = [

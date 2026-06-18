@@ -84,12 +84,12 @@ module.exports.handler = async function (event) {
       return respond(200, { projects })
     }
 
-    // ── POST ?action=updateStatus  (curator approves / rejects) ─────────────
+    // ── POST ?action=updateStatus  (curator approves / rejects / leaves feedback) ──
     if (action === 'updateStatus' && event.httpMethod === 'POST') {
-      const { id, status, catalogEntry } = body
+      const { id, status, catalogEntry, curatorFeedback } = body
       if (!id || !status) return respond(400, { error: 'id and status required' })
 
-      // Update status in submitted_projects
+      // Update status (and optional feedback) in submitted_projects
       const found = await ddb.send(new GetCommand({
         TableName: 'submitted_projects',
         Key: { id },
@@ -97,6 +97,9 @@ module.exports.handler = async function (event) {
       if (found.Item) {
         const project = JSON.parse(found.Item.data)
         project.status = status
+        if (curatorFeedback !== undefined && curatorFeedback !== null) {
+          project.curatorFeedback = curatorFeedback
+        }
         await ddb.send(new PutCommand({
           TableName: 'submitted_projects',
           Item: { id, data: JSON.stringify(project) },

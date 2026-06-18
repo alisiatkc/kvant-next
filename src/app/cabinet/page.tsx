@@ -7,12 +7,13 @@ import {
   Cpu, ArrowLeft, CheckCircle, XCircle, X, LogOut,
   LayoutDashboard, ClipboardList, FolderOpen, MessageSquare, BookOpen,
   Send, Calendar, Lightbulb, Hammer, School, BarChart3, Bell, AlertTriangle,
+  KeyRound, RefreshCw,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { type SubmittedProject, submitProject, getSubmittedProjects } from '@/lib/storage'
-import { STUDENT_ACCOUNTS, CURATOR_ACCOUNTS } from '@/data/accounts'
+import { TEAM_ACCOUNTS, CURATOR_ACCOUNTS } from '@/data/accounts'
 
 type Task = {
   id: string; title: string; desc: string
@@ -20,7 +21,7 @@ type Task = {
   priority: 'low' | 'medium' | 'high'
   dueDate: string
 }
-type FileItem = { name: string; icon: string; size?: string; addedAt?: string }
+type FileItem = { name: string; icon: string; size?: string }
 type ApprobationRecord = {
   id: number; school: string; date: string; engagement: string
   whatWorked: string; whatNeedsWork: string; recommendations: string
@@ -29,12 +30,12 @@ type ChatMessage = { id: string; author: string; text: string; time: string; isS
 type Tab = 'overview' | 'passport' | 'tasks' | 'files' | 'chat' | 'notes' | 'approbation'
 
 const AI_QUESTIONS: Record<string, string[]> = {
-  математика: ['Удалось ли организовать обсуждение решений?', 'Насколько задания связаны с реальной жизнью?', 'Какие трудности возникли у учеников?', 'Хотели бы вы использовать комплект снова?'],
-  биология:   ['Насколько школьники были увлечены наблюдением?', 'Удобно ли проводить эксперимент?', 'Что добавить для лучшего понимания?', 'Соответствует ли уровень программе?'],
-  физика:     ['Насколько наглядно представлены явления?', 'Были ли трудности при опыте?', 'Оцените безопасность использования.', 'Что изменить для улучшения?'],
-  информатика:['Понятны ли инструкции?', 'Какие алгоритмические задачи удалось решить?', 'Что можно упростить?', 'Подходит ли для самостоятельной работы?'],
-  экономика:  ['Насколько игра отражает реальные процессы?', 'Было ли интересно?', 'Какие дополнения предложили бы ученики?', 'Сколько времени заняло занятие?'],
-  педагогика: ['Насколько игровая форма помогла?', 'Удалось ли удержать внимание детей?', 'Что улучшить в методике?', 'Подходит ли для разных возрастных групп?'],
+  математика:  ['Удалось ли организовать обсуждение решений?', 'Насколько задания связаны с реальной жизнью?', 'Какие трудности возникли у учеников?', 'Хотели бы вы использовать комплект снова?'],
+  биология:    ['Насколько школьники были увлечены наблюдением?', 'Удобно ли проводить эксперимент?', 'Что добавить для лучшего понимания?', 'Соответствует ли уровень программе?'],
+  физика:      ['Насколько наглядно представлены явления?', 'Были ли трудности при опыте?', 'Оцените безопасность использования.', 'Что изменить для улучшения?'],
+  информатика: ['Понятны ли инструкции?', 'Какие алгоритмические задачи удалось решить?', 'Что можно упростить?', 'Подходит ли для самостоятельной работы?'],
+  экономика:   ['Насколько игра отражает реальные процессы?', 'Было ли интересно?', 'Какие дополнения предложили бы ученики?', 'Сколько времени заняло занятие?'],
+  педагогика:  ['Насколько игровая форма помогла?', 'Удалось ли удержать внимание детей?', 'Что улучшить в методике?', 'Подходит ли для разных возрастных групп?'],
 }
 
 const PRIORITY_CFG = {
@@ -45,29 +46,29 @@ const PRIORITY_CFG = {
 
 const STATUS_CFG = {
   feedback_requested: { label: 'Ожидает обратной связи', bg: 'bg-[#e3f2fd]', color: 'text-[#1565c0]', Icon: Bell },
-  review:    { label: 'На рассмотрении', bg: 'bg-[#fff3e0]', color: 'text-[#ef6c00]', Icon: Clock },
-  approved:  { label: 'Одобрено',         bg: 'bg-[#e8f5e9]', color: 'text-[#2e7d32]', Icon: CheckCircle },
-  rejected:  { label: 'Отклонено',        bg: 'bg-[#ffebee]', color: 'text-[#c62828]', Icon: XCircle },
+  review:             { label: 'На рассмотрении',         bg: 'bg-[#fff3e0]', color: 'text-[#ef6c00]', Icon: Clock },
+  approved:           { label: 'Одобрено',                 bg: 'bg-[#e8f5e9]', color: 'text-[#2e7d32]', Icon: CheckCircle },
+  rejected:           { label: 'Отклонено',                bg: 'bg-[#ffebee]', color: 'text-[#c62828]', Icon: XCircle },
 }
 
-const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }>; onlyPublished?: boolean }[] = [
+const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }>; onlyApproved?: boolean }[] = [
   { id: 'overview',    label: 'Обзор',           Icon: LayoutDashboard },
   { id: 'passport',    label: 'Паспорт проекта', Icon: ClipboardList },
   { id: 'tasks',       label: 'Трекер задач',    Icon: CheckCircle2 },
   { id: 'files',       label: 'Рабочие файлы',   Icon: FolderOpen },
   { id: 'chat',        label: 'Командный чат',   Icon: MessageSquare },
   { id: 'notes',       label: 'Заметки',         Icon: BookOpen },
-  { id: 'approbation', label: 'Апробация',       Icon: School, onlyPublished: true },
+  { id: 'approbation', label: 'Апробация',       Icon: School, onlyApproved: true },
 ]
 
-const columns: { status: Task['status']; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+const KANBAN_COLS: { status: Task['status']; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { status: 'planned',    label: 'Запланировано', Icon: Circle },
   { status: 'inprogress', label: 'В работе',      Icon: Clock },
   { status: 'done',       label: 'Готово',         Icon: CheckCircle2 },
 ]
 
 function teamKey(key: string, team: string) {
-  return `${key}_${team.replace(/\s/g, '_')}`
+  return `${key}_${team.replace(/\s+/g, '_')}`
 }
 
 export default function CabinetPage() {
@@ -76,12 +77,22 @@ export default function CabinetPage() {
   // ── auth ─────────────────────────────────────────────────────────────────
   const [loggedIn,        setLoggedIn]        = useState(false)
   const [userType,        setUserType]        = useState<'student' | 'curator'>('student')
-  const [captainName,     setCaptainName]     = useState('')
-  const [teamName,        setTeamName]        = useState('')
-  const [track,           setTrack]           = useState<'А1' | 'А2'>('А1')
-  const [curatorLogin,    setCuratorLogin]    = useState('')
+  const [teamCode,        setTeamCode]        = useState('')
+  const [teamPassword,    setTeamPassword]    = useState('')
+  const [curatorLogin,    setCuratorLogin]    = useState('')   // curator input OR team's curator ref
   const [curatorPassword, setCuratorPassword] = useState('')
   const [loginError,      setLoginError]      = useState('')
+
+  // ── team identity (set after login + setup) ───────────────────────────────
+  const [captainName, setCaptainName] = useState('')  // set during setup
+  const [teamName,    setTeamName]    = useState('')
+  const [track,       setTrack]       = useState<'А1' | 'А2'>('А1')
+  const [authors,     setAuthors]     = useState<string[]>([])
+
+  // ── team setup (shown after first login before workspace) ─────────────────
+  const [setupInput,     setSetupInput]     = useState('')
+  const [setupMembers,   setSetupMembers]   = useState<string[]>([])
+  const [setupMemberInput, setSetupMemberInput] = useState('')
 
   // ── navigation ────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -90,9 +101,6 @@ export default function CabinetPage() {
   const [projectName,    setProjectName]    = useState('')
   const [projectBlock,   setProjectBlock]   = useState('')
   const [projectDesc,    setProjectDesc]    = useState('')
-  const [authors,        setAuthors]        = useState<string[]>([])
-  const [newAuthorInput, setNewAuthorInput] = useState('')
-  const [showAuthorModal,setShowAuthorModal]= useState(false)
   const [productionFile, setProductionFile] = useState('')
   const [passportSaved,  setPassportSaved]  = useState(false)
 
@@ -103,7 +111,7 @@ export default function CabinetPage() {
   const [editingTask,   setEditingTask]   = useState<Task | null>(null)
   const [taskTitle,     setTaskTitle]     = useState('')
   const [taskDesc,      setTaskDesc]      = useState('')
-  const [taskPriority,  setTaskPriority]  = useState<'low' | 'medium' | 'high'>('medium')
+  const [taskPriority,  setTaskPriority]  = useState<Task['priority']>('medium')
   const [taskDueDate,   setTaskDueDate]   = useState('')
 
   // ── files ────────────────────────────────────────────────────────────────
@@ -122,12 +130,13 @@ export default function CabinetPage() {
   const [notesSaved, setNotesSaved] = useState(false)
 
   // ── publication ───────────────────────────────────────────────────────────
-  const [published,        setPublished]        = useState(false)
-  const [projectStatus,    setProjectStatus]    = useState<SubmittedProject['status']>('feedback_requested')
-  const [curatorFeedback,  setCuratorFeedback]  = useState('')
+  const [published,          setPublished]          = useState(false)
+  const [projectStatus,      setProjectStatus]      = useState<SubmittedProject['status']>('feedback_requested')
+  const [curatorFeedback,    setCuratorFeedback]    = useState('')
   const [showPublishConfirm, setShowPublishConfirm] = useState(false)
-  const [showNotification, setShowNotification] = useState(false)
-  const [showFeedbackSent, setShowFeedbackSent] = useState(false)
+  const [showNotification,   setShowNotification]   = useState(false)
+  const [showFeedbackSent,   setShowFeedbackSent]   = useState(false)
+  const [refreshing,         setRefreshing]         = useState(false)
 
   // ── approbation ───────────────────────────────────────────────────────────
   const [approbationHistory, setApprobationHistory] = useState<ApprobationRecord[]>([])
@@ -138,45 +147,68 @@ export default function CabinetPage() {
   const [showAiQuestions, setShowAiQuestions] = useState(false)
   const [approbationSaved,setApprobationSaved]= useState(false)
 
+  // ── author modal ──────────────────────────────────────────────────────────
+  const [showAuthorModal, setShowAuthorModal] = useState(false)
+  const [newAuthorInput,  setNewAuthorInput]  = useState('')
+
   const projectId = useRef<string>('')
 
-  // ── load ──────────────────────────────────────────────────────────────────
+  // ── helpers ───────────────────────────────────────────────────────────────
+  const loadTeamData = (tn: string) => {
+    const savedTasks = localStorage.getItem(teamKey('cabinet_tasks', tn))
+    setTasks(savedTasks ? JSON.parse(savedTasks) : [])
+    const savedFiles = localStorage.getItem(teamKey('cabinet_files', tn))
+    setFiles(savedFiles ? JSON.parse(savedFiles) : [])
+    const savedChat = localStorage.getItem(teamKey('cabinet_chat', tn))
+    if (savedChat) {
+      setChatMessages([
+        { id: 'sys0', author: 'Система', isSystem: true, time: '',
+          text: 'Добро пожаловать! Здесь вы можете общаться с участниками команды.' },
+        ...JSON.parse(savedChat),
+      ])
+    }
+    setNotes(         localStorage.getItem(teamKey('cabinet_notes',         tn)) || '')
+    setProjectName(   localStorage.getItem(teamKey('cabinet_projectName',   tn)) || '')
+    setProjectBlock(  localStorage.getItem(teamKey('cabinet_projectBlock',  tn)) || '')
+    setProjectDesc(   localStorage.getItem(teamKey('cabinet_projectDesc',   tn)) || '')
+    setProductionFile(localStorage.getItem(teamKey('cabinet_productionFile',tn)) || '')
+  }
+
+  const refreshStatus = async () => {
+    if (!projectId.current) return
+    setRefreshing(true)
+    try {
+      const subs = await getSubmittedProjects()
+      const mine = subs.find((s) => s.id === projectId.current)
+      if (mine) {
+        setProjectStatus(mine.status)
+        if (mine.curatorFeedback) setCuratorFeedback(mine.curatorFeedback)
+      }
+    } catch {}
+    setRefreshing(false)
+  }
+
+  // ── initial load ──────────────────────────────────────────────────────────
   useEffect(() => {
-    (async () => {
+    ;(async () => {
       try {
-        const savedCaptain = localStorage.getItem('cabinet_captainName')
-        const savedTeam    = localStorage.getItem('cabinet_teamName')
-        const savedTrack   = localStorage.getItem('cabinet_track') as 'А1' | 'А2' | null
-        const savedCurator = localStorage.getItem('cabinet_curatorLogin') || ''
-        if (savedCaptain && savedTeam) {
-          setCaptainName(savedCaptain)
+        const savedCode = localStorage.getItem('cabinet_teamCode')
+        const savedTeam = localStorage.getItem('cabinet_teamName')
+        const savedTrack = localStorage.getItem('cabinet_track') as 'А1' | 'А2' | null
+        if (savedCode && savedTeam) {
+          const account = TEAM_ACCOUNTS.find((a) => a.code === savedCode)
+          if (!account) return
           setTeamName(savedTeam)
           if (savedTrack) setTrack(savedTrack)
-          setCuratorLogin(savedCurator)
+          setCuratorLogin(account.curatorLogin)
+          const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', savedTeam)) || ''
+          setCaptainName(savedCaptain)
           const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', savedTeam))
-          setAuthors(savedAuthors ? JSON.parse(savedAuthors) : [savedCaptain])
+          setAuthors(savedAuthors ? JSON.parse(savedAuthors) : savedCaptain ? [savedCaptain] : [])
+          loadTeamData(savedTeam)
           setLoggedIn(true)
-
-          const savedTasks = localStorage.getItem(teamKey('cabinet_tasks', savedTeam))
-          if (savedTasks) setTasks(JSON.parse(savedTasks))
-          const savedFiles = localStorage.getItem(teamKey('cabinet_files', savedTeam))
-          if (savedFiles) setFiles(JSON.parse(savedFiles))
-          const savedChat = localStorage.getItem(teamKey('cabinet_chat', savedTeam))
-          if (savedChat) {
-            setChatMessages([
-              { id: 'sys0', author: 'Система', isSystem: true, time: '',
-                text: 'Добро пожаловать! Здесь вы можете общаться с участниками команды.' },
-              ...JSON.parse(savedChat),
-            ])
-          }
-          setNotes(localStorage.getItem(teamKey('cabinet_notes', savedTeam)) || '')
-          setProjectName(   localStorage.getItem(teamKey('cabinet_projectName',    savedTeam)) || '')
-          setProjectBlock(  localStorage.getItem(teamKey('cabinet_projectBlock',   savedTeam)) || '')
-          setProjectDesc(   localStorage.getItem(teamKey('cabinet_projectDesc',    savedTeam)) || '')
-          setProductionFile(localStorage.getItem(teamKey('cabinet_productionFile', savedTeam)) || '')
         }
       } catch {}
-
       try {
         const pid = localStorage.getItem('currentProjectId') || ''
         const pub = localStorage.getItem('projectPublished') === 'true'
@@ -192,64 +224,62 @@ export default function CabinetPage() {
         }
       } catch {}
     })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // auto-refresh on window focus when project is submitted
   useEffect(() => {
-    const t = localStorage.getItem('cabinet_teamName')
-    if (t) try { localStorage.setItem(teamKey('cabinet_tasks', t), JSON.stringify(tasks)) } catch {}
-  }, [tasks])
+    const onFocus = () => { if (published && projectId.current) refreshStatus() }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [published])
+
+  // persist tasks / files / authors
   useEffect(() => {
-    const t = localStorage.getItem('cabinet_teamName')
-    if (t) try { localStorage.setItem(teamKey('cabinet_files', t), JSON.stringify(files)) } catch {}
-  }, [files])
+    if (teamName) try { localStorage.setItem(teamKey('cabinet_tasks', teamName), JSON.stringify(tasks)) } catch {}
+  }, [tasks, teamName])
   useEffect(() => {
-    if (loggedIn) {
-      try { localStorage.setItem(teamKey('cabinet_authors', teamName), JSON.stringify(authors)) } catch {}
-    }
+    if (teamName) try { localStorage.setItem(teamKey('cabinet_files', teamName), JSON.stringify(files)) } catch {}
+  }, [files, teamName])
+  useEffect(() => {
+    if (loggedIn && teamName) try { localStorage.setItem(teamKey('cabinet_authors', teamName), JSON.stringify(authors)) } catch {}
   }, [authors, loggedIn, teamName])
+
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
 
   // ── handlers ──────────────────────────────────────────────────────────────
   const handleLogin = () => {
     setLoginError('')
     if (userType === 'student') {
-      if (!captainName.trim()) { setLoginError('Введите имя и фамилию'); return }
-      const account = STUDENT_ACCOUNTS.find(
-        (a) => a.name.toLowerCase() === captainName.trim().toLowerCase(),
+      if (!teamCode.trim() || !teamPassword.trim()) {
+        setLoginError('Введите код команды и пароль')
+        return
+      }
+      const account = TEAM_ACCOUNTS.find(
+        (a) => a.code.toLowerCase() === teamCode.trim().toLowerCase() && a.password === teamPassword.trim(),
       )
       if (!account) {
-        setLoginError('Вас нет в списке студентов. Уточните у куратора.')
+        setLoginError('Неверный код или пароль. Уточните у куратора.')
         return
       }
       const id = localStorage.getItem('currentProjectId') || Date.now().toString()
       projectId.current = id
       try {
-        localStorage.setItem('cabinet_captainName', account.name)
+        localStorage.setItem('cabinet_teamCode',    account.code)
         localStorage.setItem('cabinet_teamName',    account.teamName)
         localStorage.setItem('cabinet_track',       account.track)
         localStorage.setItem('cabinet_curatorLogin',account.curatorLogin)
         localStorage.setItem('currentProjectId',    id)
-        const existing = localStorage.getItem(teamKey('cabinet_authors', account.teamName))
-        if (!existing) {
-          localStorage.setItem(teamKey('cabinet_authors', account.teamName), JSON.stringify([account.name]))
-        }
       } catch {}
       setTeamName(account.teamName)
       setTrack(account.track)
       setCuratorLogin(account.curatorLogin)
+      const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', account.teamName)) || ''
+      setCaptainName(savedCaptain)
       const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', account.teamName))
-      setAuthors(savedAuthors ? JSON.parse(savedAuthors) : [account.name])
-
-      const savedTasks = localStorage.getItem(teamKey('cabinet_tasks', account.teamName))
-      setTasks(savedTasks ? JSON.parse(savedTasks) : [])
-      const savedFiles = localStorage.getItem(teamKey('cabinet_files', account.teamName))
-      setFiles(savedFiles ? JSON.parse(savedFiles) : [])
-      setProjectName(   localStorage.getItem(teamKey('cabinet_projectName',    account.teamName)) || '')
-      setProjectBlock(  localStorage.getItem(teamKey('cabinet_projectBlock',   account.teamName)) || '')
-      setProjectDesc(   localStorage.getItem(teamKey('cabinet_projectDesc',    account.teamName)) || '')
-      setProductionFile(localStorage.getItem(teamKey('cabinet_productionFile', account.teamName)) || '')
-      setNotes(         localStorage.getItem(teamKey('cabinet_notes',          account.teamName)) || '')
-
+      setAuthors(savedAuthors ? JSON.parse(savedAuthors) : savedCaptain ? [savedCaptain] : [])
+      loadTeamData(account.teamName)
       setLoggedIn(true)
     } else {
       const curator = CURATOR_ACCOUNTS.find(
@@ -257,17 +287,32 @@ export default function CabinetPage() {
       )
       if (!curator) { setLoginError('Неверный логин или пароль'); return }
       try {
-        localStorage.setItem('curatorLoggedIn', 'true')
-        localStorage.setItem('curatorId', curator.id)
+        localStorage.setItem('curatorLoggedIn',  'true')
+        localStorage.setItem('curatorId',        curator.id)
         localStorage.setItem('curatorLoginName', curator.login)
       } catch {}
       router.push('/curator')
     }
   }
 
+  const handleSetupComplete = () => {
+    if (!setupInput.trim()) { setLoginError('Введите ФИО капитана'); return }
+    const name = setupInput.trim()
+    const all = [name, ...setupMembers.filter((m) => m !== name)]
+    setCaptainName(name)
+    setAuthors(all)
+    try {
+      localStorage.setItem(teamKey('cabinet_captainName', teamName), name)
+      localStorage.setItem(teamKey('cabinet_authors',     teamName), JSON.stringify(all))
+    } catch {}
+    setSetupInput('')
+    setSetupMembers([])
+    setLoginError('')
+  }
+
   const handleLogout = () => {
     try {
-      localStorage.removeItem('cabinet_captainName')
+      localStorage.removeItem('cabinet_teamCode')
       localStorage.removeItem('cabinet_teamName')
       localStorage.removeItem('cabinet_track')
       localStorage.removeItem('cabinet_curatorLogin')
@@ -275,6 +320,8 @@ export default function CabinetPage() {
       localStorage.removeItem('projectPublished')
     } catch {}
     setLoggedIn(false)
+    setTeamCode('')
+    setTeamPassword('')
     setCaptainName('')
     setTeamName('')
     setTrack('А1')
@@ -308,15 +355,15 @@ export default function CabinetPage() {
     status,
     submittedAt:     new Date().toISOString(),
     curatorLogin,
+    curatorFeedback: curatorFeedback || undefined,
     workspaceSnapshot: { tasks, notes },
   })
 
   const handleFeedbackRequest = async () => {
     const id = projectId.current || Date.now().toString()
     projectId.current = id
-    const submission = buildSubmission(id, 'feedback_requested')
     try {
-      await submitProject(submission)
+      await submitProject(buildSubmission(id, 'feedback_requested'))
       localStorage.setItem('projectPublished', 'true')
       localStorage.setItem('currentProjectId', id)
     } catch {}
@@ -325,14 +372,11 @@ export default function CabinetPage() {
     setShowFeedbackSent(true)
   }
 
-  const handlePublish = () => setShowPublishConfirm(true)
-
   const confirmPublish = async () => {
     const id = projectId.current || Date.now().toString()
     projectId.current = id
-    const submission = buildSubmission(id, 'review')
     try {
-      await submitProject(submission)
+      await submitProject(buildSubmission(id, 'review'))
       localStorage.setItem('projectPublished', 'true')
       localStorage.setItem('currentProjectId', id)
     } catch {}
@@ -374,55 +418,43 @@ export default function CabinetPage() {
     setShowTaskModal(false)
   }
 
-  const onDrop = (status: Task['status']) => {
-    if (!draggedId) return
-    setTasks((p) => p.map((t) => t.id === draggedId ? { ...t, status } : t))
-    setDraggedId(null)
-  }
-
-  const addFile = () => {
-    const name = prompt('Название файла (например, product.dxf):')
-    if (!name?.trim()) return
-    setFiles((p) => [...p, { name: name.trim(), icon: name.endsWith('.pdf') ? 'FileText' : 'File', size: '—', addedAt: new Date().toISOString().slice(0, 10) }])
-  }
-
   const sendMessage = () => {
     if (!chatInput.trim()) return
-    const msg: ChatMessage = { id: Date.now().toString(), author: captainName, text: chatInput.trim(), time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }
+    const msg: ChatMessage = {
+      id: Date.now().toString(), author: captainName || teamName,
+      text: chatInput.trim(),
+      time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+    }
     const next = [...chatMessages, msg]
     setChatMessages(next)
     setChatInput('')
     try { localStorage.setItem(teamKey('cabinet_chat', teamName), JSON.stringify(next.filter((m) => !m.isSystem))) } catch {}
   }
 
-  const generateAiQuestions = () => {
-    const subject = prompt('Укажите предмет (математика, биология, физика, информатика, экономика, педагогика):', 'математика')?.toLowerCase() || 'математика'
-    setAiQuestions(AI_QUESTIONS[subject] ?? AI_QUESTIONS.математика)
-    setShowAiQuestions(true)
-  }
-
   // ── derived ───────────────────────────────────────────────────────────────
   const doneTasks      = tasks.filter((t) => t.status === 'done').length
   const passportFilled = !!(projectName.trim() && projectDesc.trim())
+  const canFeedback    = passportFilled && (!published || projectStatus === 'feedback_requested')
+  const canPublish     = passportFilled && projectStatus !== 'review' && projectStatus !== 'approved'
+  const sc = STATUS_CFG[projectStatus]
 
   let currentStage = 0
-  if (passportFilled) currentStage = 1
-  if (published)      currentStage = 2
-  if (approbationHistory.length > 0) currentStage = 3
+  if (passportFilled)                     currentStage = 1
+  if (published)                          currentStage = 2
+  if (approbationHistory.length > 0)      currentStage = 3
 
-  const stages = [
+  const STAGES = [
     { Icon: Lightbulb, label: 'Идея',      hint: 'Проект начат' },
     { Icon: Hammer,    label: 'Разработка', hint: 'Паспорт заполнен' },
-    { Icon: School,    label: 'Апробация',  hint: 'КОП направлен куратору' },
+    { Icon: School,    label: 'Апробация',  hint: 'КОП направлен' },
     { Icon: BarChart3, label: 'Рефлексия',  hint: 'Апробация пройдена' },
   ]
 
-  const visibleTabs = NAV.filter((t) => !t.onlyPublished || (published && projectStatus === 'approved'))
-  const sc = STATUS_CFG[projectStatus]
-  const canFeedback = passportFilled && (!published || projectStatus === 'feedback_requested')
-  const canPublish  = passportFilled && projectStatus !== 'review' && projectStatus !== 'approved'
+  const visibleTabs = NAV.filter((t) => !t.onlyApproved || (published && projectStatus === 'approved'))
 
-  // ── login screen ──────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  // LOGIN SCREEN
+  // ══════════════════════════════════════════════════════════════════════════
   if (!loggedIn) {
     return (
       <>
@@ -439,7 +471,7 @@ export default function CabinetPage() {
               {(['student', 'curator'] as const).map((t) => (
                 <button key={t}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer border-none transition-all ${userType === t ? 'bg-white text-kv-dark shadow-sm' : 'bg-transparent text-kv-muted hover:text-kv-dark'}`}
-                  onClick={() => setUserType(t)}
+                  onClick={() => { setUserType(t); setLoginError('') }}
                 >
                   {t === 'student' ? 'Студент' : 'Куратор'}
                 </button>
@@ -450,19 +482,28 @@ export default function CabinetPage() {
               <>
                 <div className="mb-3 bg-kv-light rounded-2xl px-5 py-3">
                   <p className="text-kv-muted text-xs leading-relaxed">
-                    Введите имя и фамилию точно так, как они указаны куратором. Примеры: <strong>Ткаченко Алиса</strong>, <strong>Петрова Мария</strong>
+                    Код и пароль выдаёт куратор перед началом практики
                   </p>
                 </div>
+                <div className="mb-4">
+                  <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Код команды</label>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-kv-muted pointer-events-none" />
+                    <input className="input-kv pl-10" placeholder="kvant-01" value={teamCode}
+                      onChange={(e) => setTeamCode(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleLogin()} />
+                  </div>
+                </div>
                 <div className="mb-6">
-                  <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Имя и фамилия</label>
-                  <input className="input-kv" placeholder="Иванова Мария" value={captainName}
-                    onChange={(e) => setCaptainName(e.target.value)}
+                  <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Пароль</label>
+                  <input className="input-kv" type="password" placeholder="••••••••" value={teamPassword}
+                    onChange={(e) => setTeamPassword(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleLogin()} />
                 </div>
               </>
             ) : (
               <>
-                <div className="mb-6">
+                <div className="mb-4">
                   <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Логин</label>
                   <input className="input-kv" placeholder="curator" value={curatorLogin}
                     onChange={(e) => setCuratorLogin(e.target.value)} />
@@ -491,7 +532,89 @@ export default function CabinetPage() {
     )
   }
 
-  // ── cabinet ───────────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  // TEAM SETUP SCREEN (first login — no captain set yet)
+  // ══════════════════════════════════════════════════════════════════════════
+  if (!captainName) {
+    return (
+      <>
+        <Header active="cabinet" />
+        <main>
+          <div className="bg-white rounded-[3rem] px-[50px] py-[60px] max-w-[560px] mx-auto my-16 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)]">
+            <div className="w-12 h-12 rounded-2xl bg-kv-light flex items-center justify-center mb-6">
+              <Users className="w-6 h-6 text-kv-blue" />
+            </div>
+            <h2 className="text-[2rem] font-semibold mb-1">Добро пожаловать!</h2>
+            <p className="text-kv-muted text-sm mb-2">{teamName} · Трек {track}</p>
+            <p className="text-kv-text text-sm mb-8">
+              Укажите состав команды. Эта информация отобразится в паспорте проекта.
+            </p>
+
+            <div className="mb-6">
+              <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">
+                ФИО капитана команды <span className="text-[#dc2626]">*</span>
+              </label>
+              <input className="input-kv" placeholder="Иванова Мария Ивановна" value={setupInput}
+                onChange={(e) => setSetupInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSetupComplete()} />
+              <p className="text-kv-muted text-xs mt-1.5">Вы вошли как представитель команды — капитан выступает от имени всех</p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Другие участники (необязательно)</label>
+              <div className="flex gap-2 flex-wrap mb-3">
+                {setupMembers.map((m, i) => (
+                  <span key={i} className="bg-kv-light px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm">
+                    {m}
+                    <button className="bg-transparent border-none cursor-pointer text-kv-muted hover:text-red-400 leading-none p-0.5"
+                      onClick={() => setSetupMembers((p) => p.filter((_, idx) => idx !== i))}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input className="input-kv flex-1" placeholder="Петров Иван Петрович" value={setupMemberInput}
+                  onChange={(e) => setSetupMemberInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && setupMemberInput.trim()) {
+                      setSetupMembers((p) => [...p, setupMemberInput.trim()])
+                      setSetupMemberInput('')
+                    }
+                  }} />
+                <button className="btn-blue px-4 flex-shrink-0"
+                  onClick={() => {
+                    if (setupMemberInput.trim()) {
+                      setSetupMembers((p) => [...p, setupMemberInput.trim()])
+                      setSetupMemberInput('')
+                    }
+                  }}>
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {loginError && (
+              <div className="flex items-center gap-2 text-[#c62828] text-sm mb-4 bg-[#ffebee] px-4 py-3 rounded-2xl">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {loginError}
+              </div>
+            )}
+            <button className="w-full py-4 bg-kv-blue text-white rounded-full text-base font-medium cursor-pointer hover:bg-kv-dark transition-colors border-none" onClick={handleSetupComplete}>
+              Начать работу
+            </button>
+            <button className="w-full py-3 mt-3 bg-transparent border-none text-kv-muted text-sm cursor-pointer hover:text-kv-dark" onClick={handleLogout}>
+              Выйти из аккаунта
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MAIN WORKSPACE
+  // ══════════════════════════════════════════════════════════════════════════
   return (
     <>
       <Header active="cabinet" />
@@ -506,11 +629,18 @@ export default function CabinetPage() {
             </div>
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="tag-kv">{track}</span>
-              <span className={`status-badge flex items-center gap-1.5 ${
-                published ? `${sc.bg} ${sc.color}` : 'bg-kv-light text-kv-muted'
-              }`}>
+              <span className={`status-badge flex items-center gap-1.5 ${published ? `${sc.bg} ${sc.color}` : 'bg-kv-light text-kv-muted'}`}>
                 {published ? <><sc.Icon className="w-3.5 h-3.5" /> {sc.label}</> : 'Черновик'}
               </span>
+              {published && (
+                <button
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs text-kv-muted border border-kv-border bg-white cursor-pointer hover:text-kv-dark transition-colors"
+                  onClick={refreshStatus} disabled={refreshing}
+                  title="Обновить статус"
+                >
+                  <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+                </button>
+              )}
               <button
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-kv-muted border border-kv-border bg-white cursor-pointer hover:text-kv-dark hover:border-kv-dark transition-colors"
                 onClick={handleLogout}
@@ -532,7 +662,6 @@ export default function CabinetPage() {
           )}
 
           <div className="flex gap-6 items-start max-[920px]:flex-col">
-
             {/* Sidebar */}
             <nav className="w-[200px] flex-shrink-0 space-y-1 max-[920px]:w-full max-[920px]:flex max-[920px]:flex-wrap max-[920px]:gap-2 max-[920px]:space-y-0">
               {visibleTabs.map(({ id, label, Icon }) => (
@@ -540,8 +669,7 @@ export default function CabinetPage() {
                   className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-left text-[0.88rem] cursor-pointer border-none transition-all max-[920px]:w-auto max-[920px]:flex-1 ${activeTab === id ? 'bg-kv-blue text-white font-medium' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
                   onClick={() => setActiveTab(id)}
                 >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  <span>{label}</span>
+                  <Icon className="w-4 h-4 flex-shrink-0" /> <span>{label}</span>
                 </button>
               ))}
             </nav>
@@ -559,9 +687,8 @@ export default function CabinetPage() {
                       <div className="absolute top-5 left-5 right-5 h-[2px] bg-kv-light" />
                       <div className="absolute top-5 left-5 h-[2px] bg-kv-blue transition-all duration-500"
                         style={{ width: currentStage === 0 ? 0 : currentStage >= 3 ? 'calc(100% - 40px)' : `${currentStage * 33.33}%` }} />
-                      {stages.map(({ Icon, label, hint }, i) => {
-                        const done = i < currentStage
-                        const active = i === currentStage
+                      {STAGES.map(({ Icon, label, hint }, i) => {
+                        const done = i < currentStage; const active = i === currentStage
                         return (
                           <div key={label} className="flex-1 flex flex-col items-center gap-2.5 relative z-10">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${done ? 'bg-kv-blue text-white' : active ? 'bg-white border-2 border-kv-blue text-kv-blue' : 'bg-kv-light text-kv-muted'}`}>
@@ -590,13 +717,13 @@ export default function CabinetPage() {
                     ))}
                   </div>
 
-                  {/* Status */}
+                  {/* Status block */}
                   {published && (
                     <div className={`rounded-[1.75rem] p-6 flex items-start gap-4 ${sc.bg}`}>
                       <sc.Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${sc.color}`} />
                       <div>
                         <p className={`font-medium ${sc.color}`}>Статус КОП: {sc.label}</p>
-                        {projectStatus === 'feedback_requested' && <p className="text-sm text-kv-muted mt-1">Куратор получил запрос и скоро оставит комментарий.</p>}
+                        {projectStatus === 'feedback_requested' && <p className="text-sm text-kv-muted mt-1">Куратор получил запрос и скоро оставит комментарий. Нажмите <RefreshCw className="w-3 h-3 inline" /> чтобы проверить.</p>}
                         {projectStatus === 'review'             && <p className="text-sm text-kv-muted mt-1">Проект направлен на публикацию — куратор рассматривает его.</p>}
                         {projectStatus === 'approved'           && <p className="text-sm text-kv-muted mt-1">КОП одобрен и опубликован в каталоге. Переходите к апробации!</p>}
                         {projectStatus === 'rejected'           && <p className="text-sm text-kv-muted mt-1">Куратор отклонил проект — уточните причины и внесите правки.</p>}
@@ -608,28 +735,17 @@ export default function CabinetPage() {
                   <div className="bg-white rounded-[2.5rem] p-8">
                     <h4 className="font-semibold mb-5 text-[1rem]">Быстрые действия</h4>
                     <div className="flex flex-wrap gap-3">
-                      <button className="btn-blue text-sm" onClick={() => setActiveTab('passport')}>
-                        <ClipboardList className="w-4 h-4" /> Паспорт
-                      </button>
-                      <button className="btn-blue text-sm" onClick={() => { openTask(); setActiveTab('tasks') }}>
-                        <Plus className="w-4 h-4" /> Новая задача
-                      </button>
-                      <button className="btn-blue text-sm" onClick={() => setActiveTab('chat')}>
-                        <MessageSquare className="w-4 h-4" /> Чат
-                      </button>
+                      <button className="btn-blue text-sm" onClick={() => setActiveTab('passport')}><ClipboardList className="w-4 h-4" /> Паспорт</button>
+                      <button className="btn-blue text-sm" onClick={() => { openTask(); setActiveTab('tasks') }}><Plus className="w-4 h-4" /> Новая задача</button>
+                      <button className="btn-blue text-sm" onClick={() => setActiveTab('chat')}><MessageSquare className="w-4 h-4" /> Чат</button>
                       {canFeedback && (
                         <button className="flex items-center gap-2 px-5 py-3 text-sm font-medium rounded-full bg-[#e3f2fd] text-[#1565c0] border-none cursor-pointer hover:bg-[#bbdefb] transition-colors" onClick={handleFeedbackRequest}>
                           <Bell className="w-4 h-4" /> Сообщить куратору
                         </button>
                       )}
                       {canPublish && (
-                        <button className="flex items-center gap-2 px-5 py-3 text-sm font-medium rounded-full bg-[#e8f5e9] text-[#2e7d32] border-none cursor-pointer hover:bg-[#c8e6c9] transition-colors" onClick={handlePublish}>
+                        <button className="flex items-center gap-2 px-5 py-3 text-sm font-medium rounded-full bg-[#e8f5e9] text-[#2e7d32] border-none cursor-pointer hover:bg-[#c8e6c9] transition-colors" onClick={() => setShowPublishConfirm(true)}>
                           <CheckCircle2 className="w-4 h-4" /> Опубликовать КОП
-                        </button>
-                      )}
-                      {published && projectStatus === 'approved' && (
-                        <button className="btn-ai text-sm" onClick={() => setActiveTab('approbation')}>
-                          <School className="w-4 h-4" /> Добавить апробацию
                         </button>
                       )}
                     </div>
@@ -642,7 +758,6 @@ export default function CabinetPage() {
                 <div className="bg-white rounded-[2.5rem] p-8">
                   <h3 className="text-[1.3rem] font-semibold mb-1">Паспорт проекта</h3>
                   <p className="text-kv-muted text-sm mb-7">Основной документ коробочного образовательного комплекта</p>
-
                   <div className="grid grid-cols-2 gap-5 max-[700px]:grid-cols-1">
                     <div>
                       <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Название КОП</label>
@@ -709,9 +824,10 @@ export default function CabinetPage() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-4 max-[700px]:grid-cols-1">
-                      {columns.map(({ status, label, Icon }) => (
+                      {KANBAN_COLS.map(({ status, label, Icon }) => (
                         <div key={status} className="bg-[#f9fbfe] rounded-[1.75rem] p-5 min-h-[200px]"
-                          onDragOver={(e) => e.preventDefault()} onDrop={() => onDrop(status)}>
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => { if (draggedId) { setTasks((p) => p.map((t) => t.id === draggedId ? { ...t, status } : t)); setDraggedId(null) } }}>
                           <h4 className="flex items-center gap-2 mb-4 text-kv-blue font-medium text-xs uppercase tracking-wide">
                             <Icon className="w-4 h-4" /> {label}
                             <span className="ml-auto bg-kv-light text-kv-muted rounded-full px-2 py-0.5 font-semibold">
@@ -730,11 +846,7 @@ export default function CabinetPage() {
                                   <span className={`text-[0.65rem] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${p.bg} ${p.color}`}>{p.label}</span>
                                 </div>
                                 {task.desc && <p className="text-kv-text text-xs mb-2 leading-relaxed">{task.desc}</p>}
-                                {task.dueDate && (
-                                  <p className={`text-xs flex items-center gap-1 mb-2 ${overdue ? 'text-[#ef4444]' : 'text-kv-muted'}`}>
-                                    <Calendar className="w-3 h-3" />{overdue ? '! ' : ''}{task.dueDate}
-                                  </p>
-                                )}
+                                {task.dueDate && <p className={`text-xs flex items-center gap-1 mb-2 ${overdue ? 'text-[#ef4444]' : 'text-kv-muted'}`}><Calendar className="w-3 h-3" />{overdue ? '! ' : ''}{task.dueDate}</p>}
                                 <div className="flex justify-end gap-1 mt-1">
                                   <button className="bg-transparent border-none cursor-pointer text-[#8b9bb5] hover:text-kv-blue p-1" onClick={() => openTask(task)}><Edit2 className="w-3.5 h-3.5" /></button>
                                   <button className="bg-transparent border-none cursor-pointer text-[#8b9bb5] hover:text-red-400 p-1" onClick={() => confirm('Удалить задачу?') && setTasks((p) => p.filter((t) => t.id !== task.id))}><Trash2 className="w-3.5 h-3.5" /></button>
@@ -760,13 +872,15 @@ export default function CabinetPage() {
                       <h3 className="text-[1.3rem] font-semibold">Рабочие файлы</h3>
                       <p className="text-kv-muted text-sm mt-0.5">{files.length} файл{files.length === 1 ? '' : files.length < 5 ? 'а' : 'ов'}</p>
                     </div>
-                    <button className="btn-blue" onClick={addFile}><Upload className="w-4 h-4" /> Загрузить</button>
+                    <button className="btn-blue" onClick={() => {
+                      const name = prompt('Название файла (например, product.dxf):')
+                      if (name?.trim()) setFiles((p) => [...p, { name: name.trim(), icon: name.endsWith('.pdf') ? 'FileText' : 'File', size: '—' }])
+                    }}><Upload className="w-4 h-4" /> Загрузить</button>
                   </div>
                   {files.length === 0 ? (
                     <div className="text-center py-16 text-kv-muted">
                       <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-20" />
                       <p className="text-sm">Файлов пока нет</p>
-                      <p className="text-xs mt-1">Добавьте DXF, STL, PDF или другие рабочие файлы КОП</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
@@ -792,24 +906,20 @@ export default function CabinetPage() {
               {activeTab === 'chat' && (
                 <div className="bg-white rounded-[2.5rem] p-8 flex flex-col" style={{ height: '580px' }}>
                   <h3 className="text-[1.3rem] font-semibold mb-0.5">Командный чат</h3>
-                  <p className="text-kv-muted text-sm mb-5">Команда: {teamName}</p>
+                  <p className="text-kv-muted text-sm mb-5">{teamName}</p>
                   <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1">
                     {chatMessages.map((msg) => (
                       <div key={msg.id}>
                         {msg.isSystem ? (
-                          <div className="text-center">
-                            <span className="text-xs text-kv-muted bg-kv-light px-4 py-1.5 rounded-full inline-block">{msg.text}</span>
-                          </div>
+                          <div className="text-center"><span className="text-xs text-kv-muted bg-kv-light px-4 py-1.5 rounded-full inline-block">{msg.text}</span></div>
                         ) : (
-                          <div className={`flex gap-2.5 ${msg.author === captainName ? 'flex-row-reverse' : ''}`}>
+                          <div className={`flex gap-2.5 ${msg.author === (captainName || teamName) ? 'flex-row-reverse' : ''}`}>
                             <div className="w-8 h-8 rounded-full bg-kv-light flex items-center justify-center flex-shrink-0 text-kv-blue font-semibold text-sm">
                               {msg.author.charAt(0).toUpperCase()}
                             </div>
-                            <div className={`max-w-[70%] flex flex-col gap-1 ${msg.author === captainName ? 'items-end' : 'items-start'}`}>
+                            <div className={`max-w-[70%] flex flex-col gap-1 ${msg.author === (captainName || teamName) ? 'items-end' : 'items-start'}`}>
                               <span className="text-[0.7rem] text-kv-muted">{msg.author} · {msg.time}</span>
-                              <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.author === captainName ? 'bg-kv-blue text-white rounded-tr-sm' : 'bg-[#f2f5fb] rounded-tl-sm'}`}>
-                                {msg.text}
-                              </div>
+                              <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.author === (captainName || teamName) ? 'bg-kv-blue text-white rounded-tr-sm' : 'bg-[#f2f5fb] rounded-tl-sm'}`}>{msg.text}</div>
                             </div>
                           </div>
                         )}
@@ -831,8 +941,7 @@ export default function CabinetPage() {
                 <div className="bg-white rounded-[2.5rem] p-8">
                   <h3 className="text-[1.3rem] font-semibold mb-1">Заметки проекта</h3>
                   <p className="text-kv-muted text-sm mb-6">Идеи, ссылки, наблюдения — записывайте по ходу работы</p>
-                  <textarea className="textarea-kv w-full min-h-[380px]" placeholder="Начните писать заметки о вашем КОП…" value={notes}
-                    onChange={(e) => setNotes(e.target.value)} />
+                  <textarea className="textarea-kv w-full min-h-[380px]" placeholder="Начните писать заметки о вашем КОП…" value={notes} onChange={(e) => setNotes(e.target.value)} />
                   {notesSaved && <div className="mt-3 bg-[#e8f5e9] px-5 py-3 rounded-2xl text-[#2e7d32] text-sm flex items-center gap-2"><CheckCircle className="w-4 h-4" />Заметки сохранены</div>}
                   <button className="bg-kv-blue text-white border-none rounded-full px-9 py-3.5 text-base font-medium cursor-pointer hover:bg-kv-dark transition-colors mt-5"
                     onClick={() => { try { localStorage.setItem(teamKey('cabinet_notes', teamName), notes) } catch {} setNotesSaved(true); setTimeout(() => setNotesSaved(false), 2500) }}>
@@ -845,21 +954,13 @@ export default function CabinetPage() {
               {activeTab === 'approbation' && published && (
                 <div className="space-y-5">
                   <div className="bg-white rounded-[2.5rem] p-8">
-                    <div className="flex justify-between items-start flex-wrap gap-4 mb-5">
-                      <div>
-                        <h3 className="text-[1.3rem] font-semibold mb-1">{projectName || 'Мой КОП'}</h3>
-                        <p className="text-kv-muted text-sm">{projectBlock} · {authors.join(', ')}</p>
-                      </div>
-                      <span className={`status-badge ${sc.bg} ${sc.color} flex items-center gap-1.5`}><sc.Icon className="w-4 h-4" />{sc.label}</span>
-                    </div>
-                    {projectDesc && <p className="text-kv-text text-sm leading-relaxed">{projectDesc}</p>}
-                  </div>
-
-                  <div className="bg-white rounded-[2.5rem] p-8">
-                    <h3 className="text-[1.3rem] font-semibold mb-1">Добавить результат апробации</h3>
-                    <p className="text-kv-muted text-sm mb-6">Заполните после проведения занятия с использованием КОП</p>
+                    <h3 className="text-[1.3rem] font-semibold mb-5">Добавить результат апробации</h3>
                     <div className="mb-5">
-                      <button className="btn-ai" onClick={generateAiQuestions}><Cpu className="w-4 h-4" />Сгенерировать вопросы для анкеты</button>
+                      <button className="btn-ai" onClick={() => {
+                        const subject = prompt('Укажите предмет (математика, биология, физика, информатика, экономика, педагогика):', 'математика')?.toLowerCase() || 'математика'
+                        setAiQuestions(AI_QUESTIONS[subject] ?? AI_QUESTIONS.математика)
+                        setShowAiQuestions(true)
+                      }}><Cpu className="w-4 h-4" />Сгенерировать вопросы для анкеты</button>
                       {showAiQuestions && aiQuestions.length > 0 && (
                         <div className="mt-4 bg-[#f9fbfe] rounded-2xl p-5 border border-kv-border">
                           <strong className="block mb-3 text-sm">Рекомендуемые вопросы:</strong>
@@ -933,7 +1034,7 @@ export default function CabinetPage() {
                     <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full bg-[#e3f2fd] text-[#1565c0] border-none cursor-pointer hover:bg-[#bbdefb] transition-colors" onClick={handleFeedbackRequest}>
                       <Bell className="w-4 h-4" /> Сообщить куратору
                     </button>
-                    <button className="bg-kv-blue text-white border-none rounded-full px-5 py-2.5 text-sm cursor-pointer hover:bg-kv-dark transition-colors flex items-center gap-2" onClick={handlePublish}>
+                    <button className="bg-kv-blue text-white border-none rounded-full px-5 py-2.5 text-sm cursor-pointer hover:bg-kv-dark transition-colors flex items-center gap-2" onClick={() => setShowPublishConfirm(true)}>
                       <CheckCircle2 className="w-4 h-4" /> Опубликовать КОП
                     </button>
                   </div>
@@ -999,7 +1100,7 @@ export default function CabinetPage() {
         </div>
       )}
 
-      {/* Publish confirm modal */}
+      {/* Publish confirm */}
       {showPublishConfirm && (
         <div className="modal-overlay" onClick={() => setShowPublishConfirm(false)}>
           <div className="bg-white max-w-[460px] w-[90%] rounded-[2.5rem] p-10 text-center" onClick={(e) => e.stopPropagation()}>
@@ -1008,22 +1109,17 @@ export default function CabinetPage() {
             </div>
             <h3 className="text-[1.7rem] font-semibold mb-3">Направить КОП куратору?</h3>
             <p className="text-kv-text text-sm leading-relaxed mb-8">
-              Вы направите проект <strong>«{projectName || 'без названия'}»</strong> куратору для публикации в каталоге.<br />
-              Перед отправкой убедитесь, что все материалы готовы.
+              Вы направите проект <strong>«{projectName || 'без названия'}»</strong> куратору для публикации в каталоге. Перед отправкой убедитесь, что все материалы готовы.
             </p>
             <div className="flex gap-3">
-              <button className="flex-1 py-3.5 border border-kv-border rounded-full text-kv-text text-sm font-medium cursor-pointer hover:bg-kv-light transition-colors" onClick={() => setShowPublishConfirm(false)}>
-                Отмена
-              </button>
-              <button className="flex-1 py-3.5 bg-kv-blue text-white rounded-full border-none cursor-pointer text-sm font-medium hover:bg-kv-dark transition-colors" onClick={confirmPublish}>
-                Направить
-              </button>
+              <button className="flex-1 py-3.5 border border-kv-border rounded-full text-kv-text text-sm font-medium cursor-pointer hover:bg-kv-light transition-colors" onClick={() => setShowPublishConfirm(false)}>Отмена</button>
+              <button className="flex-1 py-3.5 bg-kv-blue text-white rounded-full border-none cursor-pointer text-sm font-medium hover:bg-kv-dark transition-colors" onClick={confirmPublish}>Направить</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Feedback sent notification */}
+      {/* Feedback sent */}
       {showFeedbackSent && (
         <div className="modal-overlay" onClick={() => setShowFeedbackSent(false)}>
           <div className="bg-white max-w-[420px] w-[90%] rounded-[2.5rem] p-10 text-center" onClick={(e) => e.stopPropagation()}>
@@ -1040,7 +1136,7 @@ export default function CabinetPage() {
         </div>
       )}
 
-      {/* Published notification */}
+      {/* Published */}
       {showNotification && (
         <div className="modal-overlay" onClick={() => setShowNotification(false)}>
           <div className="bg-white max-w-[420px] w-[90%] rounded-[2.5rem] p-10 text-center" onClick={(e) => e.stopPropagation()}>
@@ -1057,5 +1153,15 @@ export default function CabinetPage() {
         </div>
       )}
     </>
+  )
+}
+
+// Inline Users icon used in team setup screen
+function Users({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
   )
 }
