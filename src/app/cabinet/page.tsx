@@ -90,8 +90,9 @@ export default function CabinetPage() {
   const [authors,     setAuthors]     = useState<string[]>([])
 
   // ── team setup (shown after first login before workspace) ─────────────────
-  const [setupInput,     setSetupInput]     = useState('')
-  const [setupMembers,   setSetupMembers]   = useState<string[]>([])
+  const [setupTeamName,    setSetupTeamName]    = useState('')
+  const [setupInput,       setSetupInput]       = useState('')
+  const [setupMembers,     setSetupMembers]     = useState<string[]>([])
   const [setupMemberInput, setSetupMemberInput] = useState('')
 
   // ── navigation ────────────────────────────────────────────────────────────
@@ -154,12 +155,13 @@ export default function CabinetPage() {
   const projectId = useRef<string>('')
 
   // ── helpers ───────────────────────────────────────────────────────────────
-  const loadTeamData = (tn: string) => {
-    const savedTasks = localStorage.getItem(teamKey('cabinet_tasks', tn))
+  // All localStorage data is keyed by the team code (stable, never changes)
+  const loadTeamData = (code: string) => {
+    const savedTasks = localStorage.getItem(teamKey('cabinet_tasks', code))
     setTasks(savedTasks ? JSON.parse(savedTasks) : [])
-    const savedFiles = localStorage.getItem(teamKey('cabinet_files', tn))
+    const savedFiles = localStorage.getItem(teamKey('cabinet_files', code))
     setFiles(savedFiles ? JSON.parse(savedFiles) : [])
-    const savedChat = localStorage.getItem(teamKey('cabinet_chat', tn))
+    const savedChat = localStorage.getItem(teamKey('cabinet_chat', code))
     if (savedChat) {
       setChatMessages([
         { id: 'sys0', author: 'Система', isSystem: true, time: '',
@@ -167,11 +169,11 @@ export default function CabinetPage() {
         ...JSON.parse(savedChat),
       ])
     }
-    setNotes(         localStorage.getItem(teamKey('cabinet_notes',         tn)) || '')
-    setProjectName(   localStorage.getItem(teamKey('cabinet_projectName',   tn)) || '')
-    setProjectBlock(  localStorage.getItem(teamKey('cabinet_projectBlock',  tn)) || '')
-    setProjectDesc(   localStorage.getItem(teamKey('cabinet_projectDesc',   tn)) || '')
-    setProductionFile(localStorage.getItem(teamKey('cabinet_productionFile',tn)) || '')
+    setNotes(         localStorage.getItem(teamKey('cabinet_notes',         code)) || '')
+    setProjectName(   localStorage.getItem(teamKey('cabinet_projectName',   code)) || '')
+    setProjectBlock(  localStorage.getItem(teamKey('cabinet_projectBlock',  code)) || '')
+    setProjectDesc(   localStorage.getItem(teamKey('cabinet_projectDesc',   code)) || '')
+    setProductionFile(localStorage.getItem(teamKey('cabinet_productionFile',code)) || '')
   }
 
   const refreshStatus = async () => {
@@ -192,20 +194,21 @@ export default function CabinetPage() {
   useEffect(() => {
     ;(async () => {
       try {
-        const savedCode = localStorage.getItem('cabinet_teamCode')
-        const savedTeam = localStorage.getItem('cabinet_teamName')
+        const savedCode  = localStorage.getItem('cabinet_teamCode')
+        const savedTeam  = localStorage.getItem('cabinet_teamName') || ''
         const savedTrack = localStorage.getItem('cabinet_track') as 'А1' | 'А2' | null
-        if (savedCode && savedTeam) {
+        if (savedCode) {
           const account = TEAM_ACCOUNTS.find((a) => a.code === savedCode)
           if (!account) return
-          setTeamName(savedTeam)
+          setTeamCode(savedCode)         // restore so persist-useEffects use correct key
+          if (savedTeam) setTeamName(savedTeam)
           if (savedTrack) setTrack(savedTrack)
           setCuratorLogin(account.curatorLogin)
-          const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', savedTeam)) || ''
+          const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', savedCode)) || ''
           setCaptainName(savedCaptain)
-          const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', savedTeam))
+          const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', savedCode))
           setAuthors(savedAuthors ? JSON.parse(savedAuthors) : savedCaptain ? [savedCaptain] : [])
-          loadTeamData(savedTeam)
+          loadTeamData(savedCode)
           setLoggedIn(true)
         }
       } catch {}
@@ -235,16 +238,16 @@ export default function CabinetPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [published])
 
-  // persist tasks / files / authors
+  // persist tasks / files / authors (keyed by team code)
   useEffect(() => {
-    if (teamName) try { localStorage.setItem(teamKey('cabinet_tasks', teamName), JSON.stringify(tasks)) } catch {}
-  }, [tasks, teamName])
+    if (teamCode) try { localStorage.setItem(teamKey('cabinet_tasks', teamCode), JSON.stringify(tasks)) } catch {}
+  }, [tasks, teamCode])
   useEffect(() => {
-    if (teamName) try { localStorage.setItem(teamKey('cabinet_files', teamName), JSON.stringify(files)) } catch {}
-  }, [files, teamName])
+    if (teamCode) try { localStorage.setItem(teamKey('cabinet_files', teamCode), JSON.stringify(files)) } catch {}
+  }, [files, teamCode])
   useEffect(() => {
-    if (loggedIn && teamName) try { localStorage.setItem(teamKey('cabinet_authors', teamName), JSON.stringify(authors)) } catch {}
-  }, [authors, loggedIn, teamName])
+    if (loggedIn && teamCode) try { localStorage.setItem(teamKey('cabinet_authors', teamCode), JSON.stringify(authors)) } catch {}
+  }, [authors, loggedIn, teamCode])
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
 
@@ -265,21 +268,22 @@ export default function CabinetPage() {
       }
       const id = localStorage.getItem('currentProjectId') || Date.now().toString()
       projectId.current = id
+      const code = account.code
       try {
-        localStorage.setItem('cabinet_teamCode',    account.code)
-        localStorage.setItem('cabinet_teamName',    account.teamName)
+        localStorage.setItem('cabinet_teamCode',    code)
         localStorage.setItem('cabinet_track',       account.track)
         localStorage.setItem('cabinet_curatorLogin',account.curatorLogin)
         localStorage.setItem('currentProjectId',    id)
       } catch {}
-      setTeamName(account.teamName)
+      const savedTeamName = localStorage.getItem('cabinet_teamName') || ''
+      if (savedTeamName) setTeamName(savedTeamName)
       setTrack(account.track)
       setCuratorLogin(account.curatorLogin)
-      const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', account.teamName)) || ''
+      const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', code)) || ''
       setCaptainName(savedCaptain)
-      const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', account.teamName))
+      const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', code))
       setAuthors(savedAuthors ? JSON.parse(savedAuthors) : savedCaptain ? [savedCaptain] : [])
-      loadTeamData(account.teamName)
+      loadTeamData(code)
       setLoggedIn(true)
     } else {
       const curator = CURATOR_ACCOUNTS.find(
@@ -296,15 +300,20 @@ export default function CabinetPage() {
   }
 
   const handleSetupComplete = () => {
-    if (!setupInput.trim()) { setLoginError('Введите ФИО капитана'); return }
-    const name = setupInput.trim()
-    const all = [name, ...setupMembers.filter((m) => m !== name)]
+    if (!setupTeamName.trim()) { setLoginError('Введите название команды'); return }
+    if (!setupInput.trim())    { setLoginError('Введите ФИО капитана'); return }
+    const tName = setupTeamName.trim()
+    const name  = setupInput.trim()
+    const all   = [name, ...setupMembers.filter((m) => m !== name)]
+    setTeamName(tName)
     setCaptainName(name)
     setAuthors(all)
     try {
-      localStorage.setItem(teamKey('cabinet_captainName', teamName), name)
-      localStorage.setItem(teamKey('cabinet_authors',     teamName), JSON.stringify(all))
+      localStorage.setItem('cabinet_teamName',                          tName)
+      localStorage.setItem(teamKey('cabinet_captainName', teamCode),    name)
+      localStorage.setItem(teamKey('cabinet_authors',     teamCode),    JSON.stringify(all))
     } catch {}
+    setSetupTeamName('')
     setSetupInput('')
     setSetupMembers([])
     setLoginError('')
@@ -332,10 +341,10 @@ export default function CabinetPage() {
 
   const savePassport = () => {
     try {
-      localStorage.setItem(teamKey('cabinet_projectName',    teamName), projectName)
-      localStorage.setItem(teamKey('cabinet_projectBlock',   teamName), projectBlock)
-      localStorage.setItem(teamKey('cabinet_projectDesc',    teamName), projectDesc)
-      localStorage.setItem(teamKey('cabinet_productionFile', teamName), productionFile)
+      localStorage.setItem(teamKey('cabinet_projectName',    teamCode), projectName)
+      localStorage.setItem(teamKey('cabinet_projectBlock',   teamCode), projectBlock)
+      localStorage.setItem(teamKey('cabinet_projectDesc',    teamCode), projectDesc)
+      localStorage.setItem(teamKey('cabinet_productionFile', teamCode), productionFile)
     } catch {}
     setPassportSaved(true)
     setTimeout(() => setPassportSaved(false), 3000)
@@ -428,7 +437,7 @@ export default function CabinetPage() {
     const next = [...chatMessages, msg]
     setChatMessages(next)
     setChatInput('')
-    try { localStorage.setItem(teamKey('cabinet_chat', teamName), JSON.stringify(next.filter((m) => !m.isSystem))) } catch {}
+    try { localStorage.setItem(teamKey('cabinet_chat', teamCode), JSON.stringify(next.filter((m) => !m.isSystem))) } catch {}
   }
 
   // ── derived ───────────────────────────────────────────────────────────────
@@ -545,19 +554,27 @@ export default function CabinetPage() {
               <Users className="w-6 h-6 text-kv-blue" />
             </div>
             <h2 className="text-[2rem] font-semibold mb-1">Добро пожаловать!</h2>
-            <p className="text-kv-muted text-sm mb-2">{teamName} · Трек {track}</p>
+            <p className="text-kv-muted text-sm mb-2">Трек {track} · код {teamCode}</p>
             <p className="text-kv-text text-sm mb-8">
-              Укажите состав команды. Эта информация отобразится в паспорте проекта.
+              Заполните состав команды — эти данные отобразятся в паспорте проекта.
             </p>
+
+            <div className="mb-5">
+              <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">
+                Название команды <span className="text-[#dc2626]">*</span>
+              </label>
+              <input className="input-kv" placeholder="Команда «Конструктор»" value={setupTeamName}
+                onChange={(e) => setSetupTeamName(e.target.value)} autoFocus />
+            </div>
 
             <div className="mb-6">
               <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">
-                ФИО капитана команды <span className="text-[#dc2626]">*</span>
+                ФИО капитана <span className="text-[#dc2626]">*</span>
               </label>
               <input className="input-kv" placeholder="Иванова Мария Ивановна" value={setupInput}
                 onChange={(e) => setSetupInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSetupComplete()} />
-              <p className="text-kv-muted text-xs mt-1.5">Вы вошли как представитель команды — капитан выступает от имени всех</p>
+              <p className="text-kv-muted text-xs mt-1.5">Капитан выступает от имени команды при публикации КОП</p>
             </div>
 
             <div className="mb-6">
@@ -944,7 +961,7 @@ export default function CabinetPage() {
                   <textarea className="textarea-kv w-full min-h-[380px]" placeholder="Начните писать заметки о вашем КОП…" value={notes} onChange={(e) => setNotes(e.target.value)} />
                   {notesSaved && <div className="mt-3 bg-[#e8f5e9] px-5 py-3 rounded-2xl text-[#2e7d32] text-sm flex items-center gap-2"><CheckCircle className="w-4 h-4" />Заметки сохранены</div>}
                   <button className="bg-kv-blue text-white border-none rounded-full px-9 py-3.5 text-base font-medium cursor-pointer hover:bg-kv-dark transition-colors mt-5"
-                    onClick={() => { try { localStorage.setItem(teamKey('cabinet_notes', teamName), notes) } catch {} setNotesSaved(true); setTimeout(() => setNotesSaved(false), 2500) }}>
+                    onClick={() => { try { localStorage.setItem(teamKey('cabinet_notes', teamCode), notes) } catch {} setNotesSaved(true); setTimeout(() => setNotesSaved(false), 2500) }}>
                     Сохранить
                   </button>
                 </div>
