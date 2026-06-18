@@ -12,6 +12,13 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 
+type SubmittedProject = {
+  id: string; projectName: string; projectBlock: string; projectDesc: string
+  teamName: string; captain: string; track: string; authors: string[]
+  productionFile: string; files: Array<{ name: string; icon: string; size?: string }>
+  status: 'review' | 'approved' | 'rejected'; submittedAt: string
+}
+
 type Task = {
   id: string; title: string; desc: string
   status: 'planned' | 'inprogress' | 'done'
@@ -142,16 +149,32 @@ export default function CabinetPage() {
   // ── load from localStorage ────────────────────────────────────────────────
   useEffect(() => {
     try {
-      const pub     = localStorage.getItem('projectPublished') === 'true'
-      const status  = (localStorage.getItem('projectStatus') as 'review' | 'approved' | 'rejected') || 'review'
-      const pid     = localStorage.getItem('currentProjectId') || ''
+      // Auto-login if previous session exists
+      const savedCaptain = localStorage.getItem('cabinet_captainName')
+      const savedTeam    = localStorage.getItem('cabinet_teamName')
+      const savedTrack   = localStorage.getItem('cabinet_track') as 'А1' | 'А2' | null
+      if (savedCaptain && savedTeam) {
+        setCaptainName(savedCaptain)
+        setTeamName(savedTeam)
+        if (savedTrack) setTrack(savedTrack)
+        const savedAuthors = localStorage.getItem('cabinet_authors')
+        setAuthors(savedAuthors ? JSON.parse(savedAuthors) : [savedCaptain])
+        setLoggedIn(true)
+      }
+
+      // Load project status from shared submittedProjects
+      const pid = localStorage.getItem('currentProjectId') || ''
+      const pub = localStorage.getItem('projectPublished') === 'true'
       projectId.current = pid
-      if (pub) {
+      if (pub && pid) {
+        const subs: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
+        const mine = subs.find((s) => s.id === pid)
         setPublished(true)
-        setProjectStatus(status)
+        setProjectStatus(mine?.status || 'review')
         const hist = JSON.parse(localStorage.getItem(`approbationHistory_${pid}`) || '[]')
         setApprobationHistory(hist)
       }
+
       const savedTasks = localStorage.getItem('cabinet_tasks')
       if (savedTasks) setTasks(JSON.parse(savedTasks))
 
@@ -170,15 +193,20 @@ export default function CabinetPage() {
       const savedNotes = localStorage.getItem('cabinet_notes') || ''
       if (savedNotes) setNotes(savedNotes)
 
-      setProjectName(  localStorage.getItem('cabinet_projectName')   || '')
-      setProjectBlock( localStorage.getItem('cabinet_projectBlock')  || '')
-      setProjectDesc(  localStorage.getItem('cabinet_projectDesc')   || '')
+      setProjectName(   localStorage.getItem('cabinet_projectName')    || '')
+      setProjectBlock(  localStorage.getItem('cabinet_projectBlock')   || '')
+      setProjectDesc(   localStorage.getItem('cabinet_projectDesc')    || '')
       setProductionFile(localStorage.getItem('cabinet_productionFile') || '')
     } catch {}
   }, [])
 
-  useEffect(() => { try { localStorage.setItem('cabinet_tasks', JSON.stringify(tasks)) } catch {} }, [tasks])
-  useEffect(() => { try { localStorage.setItem('cabinet_files', JSON.stringify(files)) } catch {} }, [files])
+  useEffect(() => { try { localStorage.setItem('cabinet_tasks',   JSON.stringify(tasks))   } catch {} }, [tasks])
+  useEffect(() => { try { localStorage.setItem('cabinet_files',   JSON.stringify(files))   } catch {} }, [files])
+  useEffect(() => {
+    if (loggedIn && authors.length > 0) {
+      try { localStorage.setItem('cabinet_authors', JSON.stringify(authors)) } catch {}
+    }
+  }, [authors, loggedIn])
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
 
   // ── handlers ──────────────────────────────────────────────────────────────
@@ -192,6 +220,10 @@ export default function CabinetPage() {
         localStorage.setItem('currentProjectId', id)
         localStorage.setItem('projectPublished', 'false')
         localStorage.removeItem('projectStatus')
+        localStorage.setItem('cabinet_captainName', captainName.trim())
+        localStorage.setItem('cabinet_teamName',    teamName.trim())
+        localStorage.setItem('cabinet_track',       track)
+        localStorage.setItem('cabinet_authors',     JSON.stringify([captainName.trim()]))
       } catch {}
       setAuthors([captainName.trim()])
       setLoggedIn(true)
@@ -219,9 +251,25 @@ export default function CabinetPage() {
   const handlePublish = () => {
     const id = projectId.current || Date.now().toString()
     projectId.current = id
+    const submission: SubmittedProject = {
+      id,
+      projectName:    projectName  || 'Без названия',
+      projectBlock:   projectBlock || '',
+      projectDesc:    projectDesc  || '',
+      teamName,
+      captain:        captainName,
+      track,
+      authors,
+      productionFile,
+      files: files.map((f) => ({ name: f.name, icon: f.icon, size: f.size || '—' })),
+      status: 'review',
+      submittedAt: new Date().toISOString(),
+    }
     try {
+      const existing: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
+      localStorage.setItem('submittedProjects', JSON.stringify([...existing.filter((p) => p.id !== id), submission]))
       localStorage.setItem('projectPublished', 'true')
-      localStorage.setItem('projectStatus', 'review')
+      localStorage.setItem('projectStatus',   'review')
       localStorage.setItem('currentProjectId', id)
     } catch {}
     setPublished(true)

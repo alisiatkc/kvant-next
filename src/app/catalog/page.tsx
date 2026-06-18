@@ -36,14 +36,21 @@ export default function CatalogPage() {
 
   useEffect(() => {
     try {
+      // Merge static projects with curator-approved dynamic projects
+      const approved: Project[] = JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
+      const staticIds = new Set(initialProjects.map((p) => p.id))
+      const freshDynamic = approved.filter((p) => !staticIds.has(p.id))
+
       const savedLikes = localStorage.getItem('projectLikes')
       const savedLikedIds = localStorage.getItem('likedProjectIds')
-      if (savedLikes) {
-        const likesData: Record<number, number> = JSON.parse(savedLikes)
-        setProjects((prev) =>
-          prev.map((p) => ({ ...p, likes: likesData[p.id] ?? p.likes }))
-        )
-      }
+      const likesData: Record<number, number> = savedLikes ? JSON.parse(savedLikes) : {}
+
+      const merged = [...initialProjects, ...freshDynamic].map((p) => ({
+        ...p,
+        likes: likesData[p.id] ?? p.likes,
+      }))
+
+      setProjects(merged)
       if (savedLikedIds) {
         setLikedIds(new Set(JSON.parse(savedLikedIds)))
       }

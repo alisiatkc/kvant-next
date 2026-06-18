@@ -1,48 +1,66 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, XCircle, Clock, LogOut, Eye, Users } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, LogOut, Eye, Users, ChevronDown, ChevronUp, Paperclip, File, FileText } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
 type SubmittedProject = {
-  id: string
-  projectName: string
-  teamName: string
-  captain: string
-  track: string
-  status: 'review' | 'approved' | 'rejected'
+  id: string; projectName: string; projectBlock: string; projectDesc: string
+  teamName: string; captain: string; track: string; authors: string[]
+  productionFile: string; files: Array<{ name: string; icon: string; size?: string }>
+  status: 'review' | 'approved' | 'rejected'; submittedAt: string
+}
+
+type CatalogProject = {
+  id: number; title: string; excerpt: string; fullDesc: string; subject: string
+  authors: string[]; files: Array<{ name: string; icon: string; size: string }>
+  image: string; tech: string[]; contact: string; likes: number
+}
+
+function detectSubject(text: string): string {
+  const t = text.toLowerCase()
+  if (t.includes('математик') || t.includes('алгебр') || t.includes('геометр')) return 'math'
+  if (t.includes('биолог') || t.includes('природ') || t.includes('экологи')) return 'bio'
+  if (t.includes('физик')) return 'physics'
+  if (t.includes('информатик') || t.includes('програм') || t.includes('алгоритм') || t.includes('код')) return 'it'
+  if (t.includes('экономик') || t.includes('финанс') || t.includes('бизнес')) return 'economics'
+  if (t.includes('педагогик') || t.includes('дошкол') || t.includes('речь') || t.includes('детск') || t.includes('логопед')) return 'pedagogy'
+  return 'it'
+}
+
+const SUBJECT_EMOJI: Record<string, string> = {
+  math: '📐', bio: '🧬', physics: '⚡', it: '💻', economics: '💰', pedagogy: '📚',
+}
+const SUBJECT_TECH: Record<string, string[]> = {
+  math:      ['Лазерная резка', 'Фанера 3мм'],
+  bio:       ['3D-печать', 'PLA пластик'],
+  physics:   ['Лазерная резка', 'Электроника'],
+  it:        ['Программирование', 'Arduino'],
+  economics: ['Полиграфия', 'Дизайн'],
+  pedagogy:  ['Печать', 'Ламинация'],
+}
+
+const STATUS_CFG = {
+  review:   { label: 'На рассмотрении', Icon: Clock,         cls: 'bg-[#fff3e0] text-[#ef6c00]' },
+  approved: { label: 'Одобрено',         Icon: CheckCircle,  cls: 'bg-[#e8f5e9] text-[#2e7d32]' },
+  rejected: { label: 'Отклонено',        Icon: XCircle,      cls: 'bg-[#ffebee] text-[#c62828]' },
 }
 
 export default function CuratorPage() {
   const router = useRouter()
   const [authorized, setAuthorized] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [projects, setProjects] = useState<SubmittedProject[]>([])
+  const [loading,    setLoading]    = useState(true)
+  const [projects,   setProjects]   = useState<SubmittedProject[]>([])
+  const [expanded,   setExpanded]   = useState<string | null>(null)
 
   useEffect(() => {
     try {
       const loggedIn = localStorage.getItem('curatorLoggedIn') === 'true'
-      if (!loggedIn) {
-        router.push('/cabinet')
-        return
-      }
+      if (!loggedIn) { router.push('/cabinet'); return }
       setAuthorized(true)
-
-      // Load demo submitted project
-      const published = localStorage.getItem('projectPublished') === 'true'
-      if (published) {
-        setProjects([
-          {
-            id: localStorage.getItem('currentProjectId') || '1',
-            projectName: 'Проект команды',
-            teamName: 'Команда',
-            captain: 'Студент',
-            track: 'А1',
-            status: (localStorage.getItem('projectStatus') as 'review' | 'approved' | 'rejected') || 'review',
-          },
-        ])
-      }
+      const subs: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
+      setProjects(subs)
     } catch {
       router.push('/cabinet')
     } finally {
@@ -56,105 +74,218 @@ export default function CuratorPage() {
   }
 
   const updateStatus = (id: string, status: 'approved' | 'rejected') => {
-    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, status } : p))
-    try { localStorage.setItem('projectStatus', status) } catch {}
+    try {
+      const subs: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
+      const updated = subs.map((p) => p.id === id ? { ...p, status } : p)
+      localStorage.setItem('submittedProjects', JSON.stringify(updated))
+
+      if (status === 'approved') {
+        const sub = subs.find((p) => p.id === id)
+        if (sub) addToCatalog(sub)
+      } else {
+        // Remove from catalog if previously approved
+        removefromCatalog(id)
+      }
+
+      setProjects(updated)
+    } catch {}
   }
 
-  const statusConfig = {
-    review: { label: 'На рассмотрении', icon: Clock, cls: 'bg-[#fff3e0] text-[#ef6c00]' },
-    approved: { label: 'Одобрено', icon: CheckCircle, cls: 'bg-[#c8e6c9] text-[#2e7d32]' },
-    rejected: { label: 'Отклонено', icon: XCircle, cls: 'bg-[#ffebee] text-[#c62828]' },
+  const addToCatalog = (sub: SubmittedProject) => {
+    try {
+      const existing: CatalogProject[] = JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
+      // Avoid duplicates — remove old entry for this submission then re-add
+      const withoutOld = existing.filter((p) => p.id !== numericId(sub.id))
+      const subject = detectSubject(sub.projectBlock + ' ' + sub.projectName + ' ' + sub.projectDesc)
+      const entry: CatalogProject = {
+        id:       numericId(sub.id),
+        title:    sub.projectName || 'Без названия',
+        excerpt:  sub.projectBlock || sub.projectDesc.slice(0, 80),
+        fullDesc: sub.projectDesc  || 'Описание не указано',
+        subject,
+        authors:  sub.authors,
+        files:    sub.files.length > 0
+                    ? sub.files.map((f) => ({ name: f.name, icon: f.icon, size: f.size || '—' }))
+                    : [{ name: sub.productionFile || 'Файл проекта', icon: 'File', size: '—' }],
+        image:    SUBJECT_EMOJI[subject] || '🎓',
+        tech:     SUBJECT_TECH[subject]  || ['Технопарк'],
+        contact:  'https://vk.com/technoparkrgpu',
+        likes:    0,
+      }
+      localStorage.setItem('approvedCatalogProjects', JSON.stringify([...withoutOld, entry]))
+    } catch {}
   }
 
-  if (loading) {
-    return (
-      <>
-        <Header />
-        <main className="container-kv py-24 text-center text-kv-muted">Загрузка…</main>
-        <Footer />
-      </>
-    )
+  const removefromCatalog = (submissionId: string) => {
+    try {
+      const existing: CatalogProject[] = JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
+      localStorage.setItem('approvedCatalogProjects', JSON.stringify(existing.filter((p) => p.id !== numericId(submissionId))))
+    } catch {}
   }
+
+  // Convert string timestamp ID to a stable numeric catalog ID (stays > 10000, < 10000000)
+  const numericId = (sid: string): number => parseInt(sid.slice(-7)) + 10000
+
+  if (loading) return (
+    <>
+      <Header />
+      <main className="container-kv py-24 text-center text-kv-muted">Загрузка…</main>
+      <Footer />
+    </>
+  )
 
   if (!authorized) return null
+
+  const counts = {
+    review:   projects.filter((p) => p.status === 'review').length,
+    approved: projects.filter((p) => p.status === 'approved').length,
+    rejected: projects.filter((p) => p.status === 'rejected').length,
+  }
 
   return (
     <>
       <Header />
       <main>
         <div className="container-kv py-10">
-          {/* Header block */}
-          <div className="bg-white rounded-[3rem] p-10 mb-10 flex items-center justify-between flex-wrap gap-4">
+
+          {/* Header */}
+          <div className="bg-white rounded-[3rem] p-10 mb-8 flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-[2.4rem] font-medium mb-2">Панель куратора</h1>
-              <p className="text-kv-text">Управление проектами студентов</p>
+              <h1 className="text-[2.4rem] font-medium mb-1">Панель куратора</h1>
+              <p className="text-kv-text">Проверка и публикация студенческих КОП</p>
             </div>
-            <button
-              className="flex items-center gap-2 px-6 py-3 rounded-full border border-[#e2e8f0] text-kv-text cursor-pointer hover:bg-kv-light transition-colors bg-white text-base"
-              onClick={logout}
-            >
+            <button className="flex items-center gap-2 px-6 py-3 rounded-full border border-[#e2e8f0] text-kv-text cursor-pointer hover:bg-kv-light transition-colors bg-white text-base" onClick={logout}>
               <LogOut className="w-4 h-4" /> Выйти
             </button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-6 mb-10 max-[700px]:grid-cols-1">
-            {[
-              { label: 'На рассмотрении', count: projects.filter((p) => p.status === 'review').length, color: 'text-[#ef6c00]', bg: 'bg-[#fff3e0]' },
-              { label: 'Одобрено', count: projects.filter((p) => p.status === 'approved').length, color: 'text-[#2e7d32]', bg: 'bg-[#c8e6c9]' },
-              { label: 'Отклонено', count: projects.filter((p) => p.status === 'rejected').length, color: 'text-[#c62828]', bg: 'bg-[#ffebee]' },
-            ].map((s) => (
+          <div className="grid grid-cols-3 gap-5 mb-8 max-[700px]:grid-cols-1">
+            {([
+              { label: 'На рассмотрении', count: counts.review,   color: 'text-[#ef6c00]', bg: 'bg-[#fff3e0]' },
+              { label: 'Одобрено',         count: counts.approved, color: 'text-[#2e7d32]', bg: 'bg-[#e8f5e9]' },
+              { label: 'Отклонено',        count: counts.rejected, color: 'text-[#c62828]', bg: 'bg-[#ffebee]' },
+            ] as const).map((s) => (
               <div key={s.label} className={`${s.bg} rounded-[2rem] p-8 text-center`}>
-                <div className={`text-[2.5rem] font-semibold ${s.color} mb-2`}>{s.count}</div>
-                <div className="font-medium">{s.label}</div>
+                <div className={`text-[2.5rem] font-semibold ${s.color} mb-1`}>{s.count}</div>
+                <div className="font-medium text-sm">{s.label}</div>
               </div>
             ))}
           </div>
 
           {/* Projects list */}
           <div className="bg-white rounded-[3rem] p-10">
-            <h2 className="text-[2rem] font-medium mb-8 flex items-center gap-3">
+            <h2 className="text-[2rem] font-medium mb-7 flex items-center gap-3">
               <Users className="w-6 h-6 text-kv-blue" /> Поданные проекты
             </h2>
 
             {projects.length === 0 ? (
               <div className="text-center py-16 text-kv-muted">
                 <Eye className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                <p>Нет проектов на рассмотрении</p>
+                <p>Ещё нет поданных проектов</p>
+                <p className="text-sm mt-2">Студенты увидят эту панель после того, как опубликуют КОП из личного кабинета</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {projects.map((project) => {
-                  const { label, icon: Icon, cls } = statusConfig[project.status]
+                  const sc = STATUS_CFG[project.status]
+                  const isOpen = expanded === project.id
+                  const date = project.submittedAt
+                    ? new Date(project.submittedAt).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    : '—'
                   return (
-                    <div key={project.id} className="border border-kv-border rounded-[2rem] p-7 flex items-center justify-between flex-wrap gap-4">
-                      <div>
-                        <h3 className="text-xl font-medium mb-1">{project.projectName}</h3>
-                        <p className="text-kv-muted text-sm">
-                          Команда: {project.teamName} · Капитан: {project.captain} · Трек: {project.track}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className={`status-badge ${cls} flex items-center gap-1.5`}>
-                          <Icon className="w-4 h-4" /> {label}
-                        </span>
-                        {project.status === 'review' && (
-                          <>
+                    <div key={project.id} className="border border-kv-border rounded-[2rem] overflow-hidden">
+                      {/* Summary row */}
+                      <div className="p-7 flex items-center justify-between flex-wrap gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-xl font-medium mb-1 truncate">{project.projectName || 'Без названия'}</h3>
+                          <p className="text-kv-muted text-sm">
+                            Команда: <strong className="text-kv-dark">{project.teamName}</strong> · Капитан: {project.captain} · Трек: {project.track} · {date}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
+                          <span className={`status-badge ${sc.cls} flex items-center gap-1.5`}>
+                            <sc.Icon className="w-4 h-4" /> {sc.label}
+                          </span>
+                          {project.status === 'review' && (
+                            <>
+                              <button
+                                className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#e8f5e9] text-[#2e7d32] border-none cursor-pointer font-medium hover:bg-[#c8e6c9] transition-colors text-sm"
+                                onClick={() => updateStatus(project.id, 'approved')}
+                              >
+                                <CheckCircle className="w-4 h-4" /> Одобрить
+                              </button>
+                              <button
+                                className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#ffebee] text-[#c62828] border-none cursor-pointer font-medium hover:bg-[#ffcdd2] transition-colors text-sm"
+                                onClick={() => updateStatus(project.id, 'rejected')}
+                              >
+                                <XCircle className="w-4 h-4" /> Отклонить
+                              </button>
+                            </>
+                          )}
+                          {project.status !== 'review' && (
                             <button
-                              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#c8e6c9] text-[#2e7d32] border-none cursor-pointer font-medium hover:bg-[#a5d6a7] transition-colors text-sm"
-                              onClick={() => updateStatus(project.id, 'approved')}
+                              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-kv-light text-kv-muted border-none cursor-pointer font-medium hover:bg-[#e2e8f0] transition-colors text-sm"
+                              onClick={() => updateStatus(project.id, 'review')}
                             >
-                              <CheckCircle className="w-4 h-4" /> Одобрить
+                              Вернуть на рассмотрение
                             </button>
-                            <button
-                              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#ffebee] text-[#c62828] border-none cursor-pointer font-medium hover:bg-[#ffcdd2] transition-colors text-sm"
-                              onClick={() => updateStatus(project.id, 'rejected')}
-                            >
-                              <XCircle className="w-4 h-4" /> Отклонить
-                            </button>
-                          </>
-                        )}
+                          )}
+                          <button
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-kv-light border-none cursor-pointer text-kv-muted hover:text-kv-dark hover:bg-[#e2e8f0] transition-colors text-sm"
+                            onClick={() => setExpanded(isOpen ? null : project.id)}
+                          >
+                            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            {isOpen ? 'Свернуть' : 'Подробнее'}
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Expanded details */}
+                      {isOpen && (
+                        <div className="border-t border-kv-border p-7 bg-[#f9fbfe] space-y-5">
+                          {project.projectBlock && (
+                            <div>
+                              <span className="text-xs font-semibold uppercase tracking-wide text-kv-muted">Предметная область</span>
+                              <p className="mt-1">{project.projectBlock}</p>
+                            </div>
+                          )}
+                          {project.projectDesc && (
+                            <div>
+                              <span className="text-xs font-semibold uppercase tracking-wide text-kv-muted">Описание КОП</span>
+                              <p className="mt-1 text-kv-text leading-relaxed">{project.projectDesc}</p>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-kv-muted">Состав команды</span>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {project.authors.map((a, i) => (
+                                <span key={i} className="bg-white px-4 py-1.5 rounded-full text-sm border border-kv-border">
+                                  {a}{i === 0 ? ' (капитан)' : ''}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          {(project.files.length > 0 || project.productionFile) && (
+                            <div>
+                              <span className="text-xs font-semibold uppercase tracking-wide text-kv-muted">Файлы</span>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {project.productionFile && (
+                                  <span className="bg-white px-4 py-1.5 rounded-full text-sm border border-kv-blue text-kv-blue flex items-center gap-1.5">
+                                    <Paperclip className="w-3.5 h-3.5" /> {project.productionFile}
+                                  </span>
+                                )}
+                                {project.files.slice(0, 4).map((f, i) => (
+                                  <span key={i} className="bg-white px-4 py-1.5 rounded-full text-sm border border-kv-border flex items-center gap-1.5">
+                                    {f.icon === 'FileText' ? <FileText className="w-3.5 h-3.5 text-kv-blue" /> : <File className="w-3.5 h-3.5 text-kv-blue" />}
+                                    {f.name}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
