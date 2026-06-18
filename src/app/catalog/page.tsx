@@ -72,7 +72,7 @@ export default function CatalogPage() {
       const likesData: Record<number, number> = {}
       newProjects.forEach((p) => (likesData[p.id] = p.likes))
       localStorage.setItem('projectLikes', JSON.stringify(likesData))
-      localStorage.setItem('likedProjectIds', JSON.stringify([...newLikedIds]))
+      localStorage.setItem('likedProjectIds', JSON.stringify(Array.from(newLikedIds)))
     } catch {}
   }
 
