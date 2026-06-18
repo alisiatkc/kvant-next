@@ -8,6 +8,7 @@ import {
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { projects as initialProjects, type Project } from '@/data'
+import { getApprovedCatalog } from '@/lib/storage'
 
 const subjectIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   math: Hash, bio: Activity, physics: Zap, it: Code, economics: TrendingUp, pedagogy: BookOpen,
@@ -35,26 +36,28 @@ export default function CatalogPage() {
   const [selected, setSelected] = useState<Project | null>(null)
 
   useEffect(() => {
-    try {
-      // Merge static projects with curator-approved dynamic projects
-      const approved: Project[] = JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
-      const staticIds = new Set(initialProjects.map((p) => p.id))
-      const freshDynamic = approved.filter((p) => !staticIds.has(p.id))
+    (async () => {
+      try {
+        // Merge static projects with curator-approved dynamic projects
+        const approved = await getApprovedCatalog()
+        const staticIds = new Set(initialProjects.map((p) => p.id))
+        const freshDynamic = (approved as unknown as Project[]).filter((p) => !staticIds.has(p.id))
 
-      const savedLikes = localStorage.getItem('projectLikes')
-      const savedLikedIds = localStorage.getItem('likedProjectIds')
-      const likesData: Record<number, number> = savedLikes ? JSON.parse(savedLikes) : {}
+        const savedLikes = localStorage.getItem('projectLikes')
+        const savedLikedIds = localStorage.getItem('likedProjectIds')
+        const likesData: Record<number, number> = savedLikes ? JSON.parse(savedLikes) : {}
 
-      const merged = [...initialProjects, ...freshDynamic].map((p) => ({
-        ...p,
-        likes: likesData[p.id] ?? p.likes,
-      }))
+        const merged = [...initialProjects, ...freshDynamic].map((p) => ({
+          ...p,
+          likes: likesData[p.id] ?? p.likes,
+        }))
 
-      setProjects(merged)
-      if (savedLikedIds) {
-        setLikedIds(new Set(JSON.parse(savedLikedIds)))
-      }
-    } catch {}
+        setProjects(merged)
+        if (savedLikedIds) {
+          setLikedIds(new Set(JSON.parse(savedLikedIds)))
+        }
+      } catch {}
+    })()
   }, [])
 
   const toggleLike = (e: React.MouseEvent, projectId: number) => {

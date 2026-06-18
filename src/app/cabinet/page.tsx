@@ -11,13 +11,7 @@ import {
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
-
-type SubmittedProject = {
-  id: string; projectName: string; projectBlock: string; projectDesc: string
-  teamName: string; captain: string; track: string; authors: string[]
-  productionFile: string; files: Array<{ name: string; icon: string; size?: string }>
-  status: 'review' | 'approved' | 'rejected'; submittedAt: string
-}
+import { type SubmittedProject, submitProject, getSubmittedProjects } from '@/lib/storage'
 
 type Task = {
   id: string; title: string; desc: string
@@ -146,58 +140,62 @@ export default function CabinetPage() {
 
   const projectId = useRef<string>('')
 
-  // ── load from localStorage ────────────────────────────────────────────────
+  // ── load from localStorage / API ─────────────────────────────────────────
   useEffect(() => {
-    try {
-      // Auto-login if previous session exists
-      const savedCaptain = localStorage.getItem('cabinet_captainName')
-      const savedTeam    = localStorage.getItem('cabinet_teamName')
-      const savedTrack   = localStorage.getItem('cabinet_track') as 'А1' | 'А2' | null
-      if (savedCaptain && savedTeam) {
-        setCaptainName(savedCaptain)
-        setTeamName(savedTeam)
-        if (savedTrack) setTrack(savedTrack)
-        const savedAuthors = localStorage.getItem('cabinet_authors')
-        setAuthors(savedAuthors ? JSON.parse(savedAuthors) : [savedCaptain])
-        setLoggedIn(true)
-      }
+    (async () => {
+      try {
+        // Auto-login if previous session exists
+        const savedCaptain = localStorage.getItem('cabinet_captainName')
+        const savedTeam    = localStorage.getItem('cabinet_teamName')
+        const savedTrack   = localStorage.getItem('cabinet_track') as 'А1' | 'А2' | null
+        if (savedCaptain && savedTeam) {
+          setCaptainName(savedCaptain)
+          setTeamName(savedTeam)
+          if (savedTrack) setTrack(savedTrack)
+          const savedAuthors = localStorage.getItem('cabinet_authors')
+          setAuthors(savedAuthors ? JSON.parse(savedAuthors) : [savedCaptain])
+          setLoggedIn(true)
+        }
 
-      // Load project status from shared submittedProjects
-      const pid = localStorage.getItem('currentProjectId') || ''
-      const pub = localStorage.getItem('projectPublished') === 'true'
-      projectId.current = pid
-      if (pub && pid) {
-        const subs: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
-        const mine = subs.find((s) => s.id === pid)
-        setPublished(true)
-        setProjectStatus(mine?.status || 'review')
-        const hist = JSON.parse(localStorage.getItem(`approbationHistory_${pid}`) || '[]')
-        setApprobationHistory(hist)
-      }
+        const savedTasks = localStorage.getItem('cabinet_tasks')
+        if (savedTasks) setTasks(JSON.parse(savedTasks))
 
-      const savedTasks = localStorage.getItem('cabinet_tasks')
-      if (savedTasks) setTasks(JSON.parse(savedTasks))
+        const savedFiles = localStorage.getItem('cabinet_files')
+        if (savedFiles) setFiles(JSON.parse(savedFiles))
 
-      const savedFiles = localStorage.getItem('cabinet_files')
-      if (savedFiles) setFiles(JSON.parse(savedFiles))
+        const savedChat = localStorage.getItem('cabinet_chat')
+        if (savedChat) {
+          setChatMessages([
+            { id: 'sys0', author: 'Система', isSystem: true, time: '',
+              text: 'Добро пожаловать! Здесь вы можете общаться с участниками команды.' },
+            ...JSON.parse(savedChat),
+          ])
+        }
 
-      const savedChat = localStorage.getItem('cabinet_chat')
-      if (savedChat) {
-        setChatMessages([
-          { id: 'sys0', author: 'Система', isSystem: true, time: '',
-            text: 'Добро пожаловать! Здесь вы можете общаться с участниками команды.' },
-          ...JSON.parse(savedChat),
-        ])
-      }
+        const savedNotes = localStorage.getItem('cabinet_notes') || ''
+        if (savedNotes) setNotes(savedNotes)
 
-      const savedNotes = localStorage.getItem('cabinet_notes') || ''
-      if (savedNotes) setNotes(savedNotes)
+        setProjectName(   localStorage.getItem('cabinet_projectName')    || '')
+        setProjectBlock(  localStorage.getItem('cabinet_projectBlock')   || '')
+        setProjectDesc(   localStorage.getItem('cabinet_projectDesc')    || '')
+        setProductionFile(localStorage.getItem('cabinet_productionFile') || '')
+      } catch {}
 
-      setProjectName(   localStorage.getItem('cabinet_projectName')    || '')
-      setProjectBlock(  localStorage.getItem('cabinet_projectBlock')   || '')
-      setProjectDesc(   localStorage.getItem('cabinet_projectDesc')    || '')
-      setProductionFile(localStorage.getItem('cabinet_productionFile') || '')
-    } catch {}
+      // Load project status — may call API, keep separate from sync block
+      try {
+        const pid = localStorage.getItem('currentProjectId') || ''
+        const pub = localStorage.getItem('projectPublished') === 'true'
+        projectId.current = pid
+        if (pub && pid) {
+          const subs = await getSubmittedProjects()
+          const mine = subs.find((s) => s.id === pid)
+          setPublished(true)
+          setProjectStatus(mine?.status || 'review')
+          const hist = JSON.parse(localStorage.getItem(`approbationHistory_${pid}`) || '[]')
+          setApprobationHistory(hist)
+        }
+      } catch {}
+    })()
   }, [])
 
   useEffect(() => { try { localStorage.setItem('cabinet_tasks',   JSON.stringify(tasks))   } catch {} }, [tasks])
@@ -248,7 +246,7 @@ export default function CabinetPage() {
     setTimeout(() => setPassportSaved(false), 3000)
   }
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const id = projectId.current || Date.now().toString()
     projectId.current = id
     const submission: SubmittedProject = {
@@ -266,8 +264,7 @@ export default function CabinetPage() {
       submittedAt: new Date().toISOString(),
     }
     try {
-      const existing: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
-      localStorage.setItem('submittedProjects', JSON.stringify([...existing.filter((p) => p.id !== id), submission]))
+      await submitProject(submission)
       localStorage.setItem('projectPublished', 'true')
       localStorage.setItem('projectStatus',   'review')
       localStorage.setItem('currentProjectId', id)

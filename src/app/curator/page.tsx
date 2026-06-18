@@ -4,19 +4,12 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, Clock, LogOut, Eye, Users, ChevronDown, ChevronUp, Paperclip, File, FileText } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-
-type SubmittedProject = {
-  id: string; projectName: string; projectBlock: string; projectDesc: string
-  teamName: string; captain: string; track: string; authors: string[]
-  productionFile: string; files: Array<{ name: string; icon: string; size?: string }>
-  status: 'review' | 'approved' | 'rejected'; submittedAt: string
-}
-
-type CatalogProject = {
-  id: number; title: string; excerpt: string; fullDesc: string; subject: string
-  authors: string[]; files: Array<{ name: string; icon: string; size: string }>
-  image: string; tech: string[]; contact: string; likes: number
-}
+import {
+  type SubmittedProject,
+  type CatalogEntry,
+  getSubmittedProjects,
+  updateProjectStatus,
+} from '@/lib/storage'
 
 function detectSubject(text: string): string {
   const t = text.toLowerCase()
@@ -47,6 +40,29 @@ const STATUS_CFG = {
   rejected: { label: 'Отклонено',        Icon: XCircle,      cls: 'bg-[#ffebee] text-[#c62828]' },
 }
 
+function numericId(sid: string): number {
+  return parseInt(sid.slice(-7)) + 10000
+}
+
+function buildCatalogEntry(sub: SubmittedProject): CatalogEntry {
+  const subject = detectSubject(sub.projectBlock + ' ' + sub.projectName + ' ' + sub.projectDesc)
+  return {
+    id:       numericId(sub.id),
+    title:    sub.projectName || 'Без названия',
+    excerpt:  sub.projectBlock || sub.projectDesc.slice(0, 80),
+    fullDesc: sub.projectDesc  || 'Описание не указано',
+    subject,
+    authors:  sub.authors,
+    files:    sub.files.length > 0
+                ? sub.files.map((f) => ({ name: f.name, icon: f.icon, size: f.size || '—' }))
+                : [{ name: sub.productionFile || 'Файл проекта', icon: 'File', size: '—' }],
+    image:    SUBJECT_EMOJI[subject] || '🎓',
+    tech:     SUBJECT_TECH[subject]  || ['Технопарк'],
+    contact:  'https://vk.com/technoparkrgpu',
+    likes:    0,
+  }
+}
+
 export default function CuratorPage() {
   const router = useRouter()
   const [authorized, setAuthorized] = useState(false)
@@ -55,17 +71,19 @@ export default function CuratorPage() {
   const [expanded,   setExpanded]   = useState<string | null>(null)
 
   useEffect(() => {
-    try {
-      const loggedIn = localStorage.getItem('curatorLoggedIn') === 'true'
-      if (!loggedIn) { router.push('/cabinet'); return }
-      setAuthorized(true)
-      const subs: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
-      setProjects(subs)
-    } catch {
-      router.push('/cabinet')
-    } finally {
-      setLoading(false)
-    }
+    (async () => {
+      try {
+        const loggedIn = localStorage.getItem('curatorLoggedIn') === 'true'
+        if (!loggedIn) { router.push('/cabinet'); return }
+        setAuthorized(true)
+        const subs = await getSubmittedProjects()
+        setProjects(subs)
+      } catch {
+        router.push('/cabinet')
+      } finally {
+        setLoading(false)
+      }
+    })()
   }, [router])
 
   const logout = () => {
@@ -73,58 +91,14 @@ export default function CuratorPage() {
     router.push('/cabinet')
   }
 
-  const updateStatus = (id: string, status: 'approved' | 'rejected' | 'review') => {
+  const handleStatus = async (id: string, status: 'approved' | 'rejected' | 'review') => {
     try {
-      const subs: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
-      const updated = subs.map((p) => p.id === id ? { ...p, status } : p)
-      localStorage.setItem('submittedProjects', JSON.stringify(updated))
-
-      if (status === 'approved') {
-        const sub = subs.find((p) => p.id === id)
-        if (sub) addToCatalog(sub)
-      } else {
-        // Remove from catalog if previously approved
-        removefromCatalog(id)
-      }
-
-      setProjects(updated)
+      const sub = projects.find((p) => p.id === id)
+      const catalogEntry = (status === 'approved' && sub) ? buildCatalogEntry(sub) : undefined
+      await updateProjectStatus(id, status, catalogEntry)
+      setProjects((prev) => prev.map((p) => p.id === id ? { ...p, status } : p))
     } catch {}
   }
-
-  const addToCatalog = (sub: SubmittedProject) => {
-    try {
-      const existing: CatalogProject[] = JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
-      // Avoid duplicates — remove old entry for this submission then re-add
-      const withoutOld = existing.filter((p) => p.id !== numericId(sub.id))
-      const subject = detectSubject(sub.projectBlock + ' ' + sub.projectName + ' ' + sub.projectDesc)
-      const entry: CatalogProject = {
-        id:       numericId(sub.id),
-        title:    sub.projectName || 'Без названия',
-        excerpt:  sub.projectBlock || sub.projectDesc.slice(0, 80),
-        fullDesc: sub.projectDesc  || 'Описание не указано',
-        subject,
-        authors:  sub.authors,
-        files:    sub.files.length > 0
-                    ? sub.files.map((f) => ({ name: f.name, icon: f.icon, size: f.size || '—' }))
-                    : [{ name: sub.productionFile || 'Файл проекта', icon: 'File', size: '—' }],
-        image:    SUBJECT_EMOJI[subject] || '🎓',
-        tech:     SUBJECT_TECH[subject]  || ['Технопарк'],
-        contact:  'https://vk.com/technoparkrgpu',
-        likes:    0,
-      }
-      localStorage.setItem('approvedCatalogProjects', JSON.stringify([...withoutOld, entry]))
-    } catch {}
-  }
-
-  const removefromCatalog = (submissionId: string) => {
-    try {
-      const existing: CatalogProject[] = JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
-      localStorage.setItem('approvedCatalogProjects', JSON.stringify(existing.filter((p) => p.id !== numericId(submissionId))))
-    } catch {}
-  }
-
-  // Convert string timestamp ID to a stable numeric catalog ID (stays > 10000, < 10000000)
-  const numericId = (sid: string): number => parseInt(sid.slice(-7)) + 10000
 
   if (loading) return (
     <>
@@ -211,13 +185,13 @@ export default function CuratorPage() {
                             <>
                               <button
                                 className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#e8f5e9] text-[#2e7d32] border-none cursor-pointer font-medium hover:bg-[#c8e6c9] transition-colors text-sm"
-                                onClick={() => updateStatus(project.id, 'approved')}
+                                onClick={() => handleStatus(project.id, 'approved')}
                               >
                                 <CheckCircle className="w-4 h-4" /> Одобрить
                               </button>
                               <button
                                 className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#ffebee] text-[#c62828] border-none cursor-pointer font-medium hover:bg-[#ffcdd2] transition-colors text-sm"
-                                onClick={() => updateStatus(project.id, 'rejected')}
+                                onClick={() => handleStatus(project.id, 'rejected')}
                               >
                                 <XCircle className="w-4 h-4" /> Отклонить
                               </button>
@@ -226,7 +200,7 @@ export default function CuratorPage() {
                           {project.status !== 'review' && (
                             <button
                               className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-kv-light text-kv-muted border-none cursor-pointer font-medium hover:bg-[#e2e8f0] transition-colors text-sm"
-                              onClick={() => updateStatus(project.id, 'review')}
+                              onClick={() => handleStatus(project.id, 'review')}
                             >
                               Вернуть на рассмотрение
                             </button>
