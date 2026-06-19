@@ -3,7 +3,7 @@ import Link from 'next/link'
 import {
   Box, Calendar, Zap, MapPin, Globe, Mail, MessageCircle,
   Hash, MessageSquare, Layers, Pencil, Hammer, Eye,
-  School, BarChart3, ArrowRight, Cpu, CheckCircle2, Users,
+  BarChart3, ArrowRight, Cpu, CheckCircle2, Users,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -19,108 +19,108 @@ const contactIconMap: Record<string, React.ComponentType<{ className?: string }>
 
 const agileCycle = [
   {
-    icon: Layers,
-    sprint: 'Старт',
+    icon: Zap,
+    tag: 'Старт',
     num: '01',
     accent: '#2b3b6b',
     accentBg: '#eff3ff',
-    title: 'Бэклог и планирование',
-    desc: 'Первый шаг любого Agile-проекта — сформировать бэклог: список всех задач, упорядоченных по важности. Команда договаривается о теме, аудитории и ожидаемом результате КОП.',
+    title: 'Идея и референсы',
+    desc: 'Команда формулирует тему КОП, исследует аналоги и изучает предметную область. Главный Agile-принцип: начать с вопроса «Какую образовательную проблему мы решаем?»',
     tasks: [
-      'Выбор темы и предмета КОП',
+      'Формулировка темы и образовательной цели',
+      'Поиск и анализ аналогов и референсов',
       'Определение целевой аудитории',
-      'Создание бэклога задач в КвантЛаб',
+      'Выбор подходящих технологий технопарка',
+    ],
+    result: 'Концепция КОП',
+  },
+  {
+    icon: Layers,
+    tag: 'Планирование',
+    num: '02',
+    accent: '#7c3aed',
+    accentBg: '#f5f0ff',
+    title: 'Бэклог и планирование',
+    desc: 'Создаётся бэклог — список всех задач, упорядоченных по приоритету. Команда распределяет роли, планирует спринты и договаривается о критериях готовности продукта.',
+    tasks: [
+      'Создание и приоритизация бэклога в КвантЛаб',
       'Распределение ролей в команде',
+      'Заполнение паспорта проекта',
+      'Планирование итераций и дедлайнов',
     ],
     result: 'Бэклог + паспорт проекта',
   },
   {
-    icon: Pencil,
-    sprint: 'Спринт 1',
-    num: '02',
-    accent: '#7c3aed',
-    accentBg: '#f5f0ff',
-    title: 'Концепция и проектирование',
-    desc: 'В первом спринте команда создаёт концепцию комплекта: прорабатывает методику, определяет, какое оборудование технопарка использовать, и набрасывает эскиз.',
-    tasks: [
-      'Разработка структуры КОП',
-      'Выбор технологии: лазерная резка / 3D-печать / полиграфия',
-      'Создание методических задач',
-      'Эскиз и первичный дизайн',
-    ],
-    result: 'Концепция + технологическая карта',
-  },
-  {
     icon: Hammer,
-    sprint: 'Спринт 2',
+    tag: 'Создание',
     num: '03',
     accent: '#0ea5e9',
     accentBg: '#f0f9ff',
-    title: 'Создание прототипа',
-    desc: 'Команда работает с оборудованием технопарка и создаёт первый рабочий прототип. Главное правило Agile — сделать что-то работающее как можно быстрее и проверить гипотезы.',
+    title: 'Прототипирование',
+    desc: 'Команда работает с оборудованием технопарка и создаёт первый рабочий прототип. Ключевой принцип Agile: сделать работающее решение как можно быстрее и проверить гипотезы.',
     tasks: [
       'Работа на оборудовании технопарка',
-      'Изготовление составляющих КОП',
+      'Изготовление элементов КОП',
       'Сборка первого рабочего прототипа',
-      'Самостоятельная проверка и доработка',
+      'Первичная самооценка и отладка',
     ],
     result: 'Рабочий прототип КОП',
   },
   {
     icon: Eye,
-    sprint: 'Ревью',
+    tag: 'Ревью',
     num: '04',
     accent: '#f59e0b',
     accentBg: '#fffbeb',
-    title: 'Демо и обратная связь',
-    desc: 'Спринт-ревью — сердце Agile. Команда демонстрирует прототип куратору через КвантЛаб и получает детальные комментарии. Правки вносятся до следующей итерации.',
+    title: 'Тестирование и обратная связь',
+    desc: 'Команда демонстрирует прототип куратору через КвантЛаб и получает детальные комментарии. Непрерывная обратная связь — топливо Agile-итераций.',
     tasks: [
       'Публикация прототипа в КвантЛаб',
-      'Получение обратной связи от куратора',
-      'Анализ замечаний и приоритизация правок',
-      'Итерация — улучшение продукта',
+      'Ревью куратора и сбор замечаний',
+      'Анализ и приоритизация правок',
+      'Постановка задач на следующую итерацию',
     ],
-    result: 'Список правок + улучшенный прототип',
+    result: 'Список правок от куратора',
   },
   {
-    icon: School,
-    sprint: 'Спринт 3',
+    icon: Pencil,
+    tag: 'Апробация',
     num: '05',
     accent: '#10b981',
     accentBg: '#f0fdf4',
-    title: 'Апробация в школе',
-    desc: 'Готовый КОП тестируется в реальных образовательных условиях. Команда посещает школу, проводит занятие и фиксирует реакцию учеников и педагогов по специальной анкете.',
+    title: 'Апробация и доработка',
+    desc: 'Доработанный КОП тестируется в реальных образовательных условиях. Команда посещает образовательное учреждение, фиксирует реакцию участников и вносит финальные правки.',
     tasks: [
-      'Организация занятия в образовательном учреждении',
-      'Проведение урока / мастер-класса с КОП',
-      'Сбор анкет учеников (вовлечённость 1–5)',
-      'Запись наблюдений и замечаний педагога',
+      'Проведение занятия в образовательном учреждении',
+      'Сбор обратной связи от педагога и учеников',
+      'Анализ вовлечённости и выводы',
+      'Финальная доработка КОП по итогам апробации',
     ],
-    result: 'Протокол апробации + анкеты',
+    result: 'Протокол апробации + доработки',
   },
   {
     icon: BarChart3,
-    sprint: 'Ретроспектива',
+    tag: 'Итог',
     num: '06',
     accent: '#ef4444',
     accentBg: '#fff1f2',
-    title: 'Анализ и публикация',
-    desc: 'Финальный этап — ретроспектива: что сработало, что нет и что изменить в следующий раз. По итогам анализа КОП дорабатывается и публикуется в открытом каталоге технопарка.',
+    title: 'Ретроспектива и публикация',
+    desc: 'Финальный Agile-этап — ретроспектива: что сработало, что улучшить в следующий раз. КОП публикуется в открытом каталоге и становится доступен для всех образовательных учреждений.',
     tasks: [
-      'Анализ результатов апробации',
-      'Финальная доработка КОП по итогам обратной связи',
-      'Оформление каталожной карточки',
-      'Публикация в открытом каталоге КвантЛаб',
+      'Ретроспектива команды: плюсы и точки роста',
+      'Финальное оформление каталожной карточки',
+      'Публикация КОП в открытом каталоге',
+      'Демонстрация результата руководителю практики',
     ],
     result: 'КОП в каталоге технопарка',
   },
 ]
 
 const statItems = [
-  { value: '3',    label: 'Трека практики',    Icon: Calendar },
-  { value: '12+',  label: 'Команд ежегодно',   Icon: Users },
-  { value: '6',    label: 'Этапов по Agile',   Icon: CheckCircle2 },
-  { value: '100%', label: 'С апробацией в школе', Icon: School },
+  { value: '3',    label: 'Трека практики',              color: '#2b3b6b', bg: '#eff3ff' },
+  { value: '12+',  label: 'Команд ежегодно',             color: '#7c3aed', bg: '#f5f0ff' },
+  { value: '6',    label: 'Этапов по Agile',             color: '#0ea5e9', bg: '#f0f9ff' },
+  { value: '100%', label: 'Апробация в учреждениях СПб', color: '#10b981', bg: '#f0fdf4' },
 ]
 
 export default function HomePage() {
@@ -167,7 +167,7 @@ export default function HomePage() {
             </h1>
 
             <p className="anim-fade-up anim-d2 text-base min-[640px]:text-[1.2rem] font-light text-kv-text mb-8 min-[640px]:mb-10 max-w-[600px] leading-relaxed">
-              Цифровая среда для практики студентов. Управляйте проектом по Agile, работайте с оборудованием технопарка и апробируйте результаты в реальных школах.
+              Цифровая среда для практики студентов. Управляйте проектом по Agile, работайте с оборудованием технопарка и апробируйте результаты в образовательных учреждениях.
             </p>
 
             <div className="anim-fade-up anim-d3 flex flex-col min-[480px]:flex-row gap-3">
@@ -181,12 +181,11 @@ export default function HomePage() {
 
             {/* Stats strip */}
             <div className="anim-fade-up anim-d4 grid grid-cols-2 min-[600px]:grid-cols-4 gap-3 mt-10 min-[640px]:mt-16">
-              {statItems.map(({ value, label, Icon }) => (
-                <div key={label} className="bg-white/80 backdrop-blur-sm rounded-[1.25rem] min-[640px]:rounded-[1.5rem] px-4 min-[640px]:px-5 py-3 min-[640px]:py-4 border border-kv-border">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon className="w-3 h-3 min-[640px]:w-3.5 min-[640px]:h-3.5 text-kv-blue" />
-                    <span className="text-[1.2rem] min-[640px]:text-[1.5rem] font-bold text-kv-dark">{value}</span>
-                  </div>
+              {statItems.map(({ value, label, color, bg }) => (
+                <div key={label} className="rounded-[1.25rem] min-[640px]:rounded-[1.5rem] px-4 min-[640px]:px-5 py-3 min-[640px]:py-4 border"
+                  style={{ background: bg, borderColor: `${color}22` }}>
+                  <span className="block text-[1.5rem] min-[640px]:text-[1.8rem] font-bold leading-none mb-1"
+                    style={{ color }}>{value}</span>
                   <p className="text-kv-muted text-[0.65rem] min-[640px]:text-xs leading-tight">{label}</p>
                 </div>
               ))}
@@ -201,12 +200,11 @@ export default function HomePage() {
               <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Форматы практики</span>
               <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Два пути — один результат</h2>
               <p className="text-kv-text font-light text-lg max-w-[560px] leading-relaxed">
-                Выберите формат, подходящий вашему расписанию. Оба трека заканчиваются разработанным и апробированным КОП.
+                Мы работаем с двумя форматами практики — оба завершаются разработанным и апробированным КОП в образовательных учреждениях.
               </p>
             </div>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
-              <div className="relative bg-white rounded-[2.5rem] p-10 border border-kv-border shadow-card overflow-hidden group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-kv-blue to-[#4f6ad0] rounded-t-[2.5rem]" />
+              <div className="relative bg-white rounded-[2.5rem] p-10 border border-kv-border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
                 <div className="w-14 h-14 rounded-2xl bg-[#eff3ff] flex items-center justify-center mb-7">
                   <Calendar className="w-7 h-7 text-kv-blue stroke-[1.5]" />
                 </div>
@@ -226,8 +224,7 @@ export default function HomePage() {
                 </ul>
               </div>
 
-              <div className="relative bg-white rounded-[2.5rem] p-10 border border-kv-border shadow-card overflow-hidden group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] rounded-t-[2.5rem]" />
+              <div className="relative bg-white rounded-[2.5rem] p-10 border border-kv-border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
                 <div className="w-14 h-14 rounded-2xl bg-[#f5f0ff] flex items-center justify-center mb-7">
                   <Zap className="w-7 h-7 text-[#7c3aed] stroke-[1.5]" />
                 </div>
@@ -268,29 +265,26 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 min-[760px]:grid-cols-2 gap-6">
-              {agileCycle.map(({ icon: Icon, sprint, num, accent, accentBg, title, desc, tasks, result }) => (
-                <div key={sprint}
-                  className="relative bg-white rounded-[2rem] p-8 border border-kv-border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300 overflow-hidden flex flex-col">
-
-                  {/* Top accent strip */}
-                  <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[2rem]"
-                    style={{ background: `linear-gradient(90deg, ${accent}, ${accent}88)` }} />
+              {agileCycle.map(({ icon: Icon, tag, num, accent, accentBg, title, desc, tasks, result }) => (
+                <div key={num}
+                  className="relative rounded-[2rem] p-8 border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300 flex flex-col"
+                  style={{ background: accentBg, borderColor: `${accent}20` }}>
 
                   {/* Header row */}
                   <div className="flex items-start justify-between gap-4 mb-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: accentBg }}>
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 bg-white shadow-sm">
                         <Icon className="w-6 h-6" style={{ color: accent }} />
                       </div>
                       <div>
-                        <div className="text-[0.68rem] text-kv-muted font-bold uppercase tracking-widest mb-0.5">{num}</div>
-                        <h3 className="text-[1.1rem] font-semibold leading-tight">{title}</h3>
+                        <div className="text-[0.68rem] font-bold uppercase tracking-widest mb-0.5"
+                          style={{ color: accent }}>{num}</div>
+                        <h3 className="text-[1.1rem] font-semibold leading-tight text-kv-dark">{title}</h3>
                       </div>
                     </div>
-                    <span className="flex-shrink-0 text-[0.7rem] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full"
-                      style={{ background: accentBg, color: accent }}>
-                      {sprint}
+                    <span className="flex-shrink-0 text-[0.7rem] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full text-white"
+                      style={{ background: accent }}>
+                      {tag}
                     </span>
                   </div>
 
@@ -308,10 +302,11 @@ export default function HomePage() {
                   </ul>
 
                   {/* Result badge */}
-                  <div className="flex items-center gap-2 pt-4 border-t border-kv-border">
-                    <span className="text-[0.72rem] text-kv-muted font-semibold uppercase tracking-widest">Результат:</span>
-                    <span className="text-[0.82rem] font-semibold px-3 py-1 rounded-full"
-                      style={{ background: accentBg, color: accent }}>
+                  <div className="flex items-center gap-2 pt-4 border-t border-white/60">
+                    <span className="text-[0.72rem] font-semibold uppercase tracking-widest"
+                      style={{ color: accent }}>Результат:</span>
+                    <span className="text-[0.82rem] font-semibold px-3 py-1 rounded-full bg-white"
+                      style={{ color: accent }}>
                       {result}
                     </span>
                   </div>
@@ -353,7 +348,7 @@ export default function HomePage() {
                   Готовое образовательное решение, которое любой учитель может взять и применить на уроке без дополнительной подготовки. В состав входят продукт, инструкция и методические материалы.
                 </p>
                 <p className="text-kv-muted text-sm leading-relaxed mb-8">
-                  Каждый КОП проходит апробацию в образовательных учреждениях Санкт-Петербурга — школах и детских садах — и публикуется в открытом каталоге технопарка.
+                  Каждый КОП проходит апробацию в образовательных учреждениях Санкт-Петербурга и публикуется в открытом каталоге технопарка.
                 </p>
                 <div className="flex gap-3 flex-wrap">
                   <Link href="/catalog" className="btn-primary inline-flex items-center gap-2">
@@ -365,21 +360,8 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="flex-1 min-w-[180px] flex flex-col items-center gap-5">
-                <div className="w-28 h-28 rounded-[2rem] bg-kv-light flex items-center justify-center">
-                  <Box className="w-16 h-16 text-kv-blue stroke-[1.2]" />
-                </div>
-                <div className="grid grid-cols-2 gap-3 w-full max-w-[220px]">
-                  {[
-                    { label: 'Лазерная резка',    color: '#eff3ff' },
-                    { label: '3D-печать',          color: '#f5f0ff' },
-                    { label: 'Электроника',        color: '#ecfdf5' },
-                    { label: 'Полиграфия',         color: '#fff7ed' },
-                  ].map(({ label, color }) => (
-                    <div key={label} className="rounded-xl px-3 py-2 text-center text-xs font-medium text-kv-dark"
-                      style={{ background: color }}>
-                      {label}
-                    </div>
-                  ))}
+                <div className="w-36 h-36 rounded-[2.5rem] bg-kv-light flex items-center justify-center">
+                  <Box className="w-20 h-20 text-kv-blue stroke-[1.2]" />
                 </div>
               </div>
             </div>
@@ -432,7 +414,7 @@ export default function HomePage() {
                     Каталог коробочных комплектов
                   </h4>
                   <p className="text-white/60 text-lg max-w-[520px] leading-relaxed">
-                    Посмотрите КОП, созданные студентами и прошедшие апробацию в школах Санкт-Петербурга.
+                    Посмотрите КОП, созданные студентами и прошедшие апробацию в образовательных учреждениях Санкт-Петербурга.
                   </p>
                 </div>
                 <Link href="/catalog"
@@ -458,7 +440,7 @@ export default function HomePage() {
                 Образовательные учреждения могут просматривать каталог КОП, запрашивать апробацию и оставлять обратную связь по итогам занятий.
               </p>
               <p className="text-kv-muted mb-10">
-                Студенты — подать заявку на практику и начать работу в технопарке.
+                Заявки на практику подаёт администрация технопарка РГПУ им. А.И. Герцена — место практики согласовывается заранее.
               </p>
               <a href="https://technopark.herzen.spb.ru" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-kv-blue text-white px-12 py-4 rounded-full text-[1.05rem] font-medium no-underline hover:bg-kv-dark transition-colors">

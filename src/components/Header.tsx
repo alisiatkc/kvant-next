@@ -14,11 +14,26 @@ export default function Header({ active }: HeaderProps) {
     <header className="py-4 bg-white border-b border-black/[0.05] sticky top-0 z-40">
       <div className="container-kv flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="no-underline flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="w-8 h-8 rounded-[10px] bg-kv-blue flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-[11px] font-bold tracking-tight">КЛ</span>
-          </span>
-          <span className="text-[1.2rem] font-semibold text-kv-dark">КвантЛаб</span>
+        <Link href="/" className="no-underline flex items-center gap-3" onClick={() => setOpen(false)}>
+          <div className="w-9 h-9 flex-shrink-0 relative rounded-[10px] overflow-hidden">
+            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-9 h-9">
+              <defs>
+                <linearGradient id="logo-g" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#1a2d5a"/>
+                  <stop offset="0.55" stopColor="#2b3b6b"/>
+                  <stop offset="1" stopColor="#4f6ad0"/>
+                </linearGradient>
+              </defs>
+              <rect width="36" height="36" rx="10" fill="url(#logo-g)"/>
+              <circle cx="18" cy="18" r="13.5" stroke="rgba(255,255,255,0.18)" strokeWidth="1.2"/>
+              <circle cx="18" cy="4.5"  r="1.8" fill="rgba(255,255,255,0.55)"/>
+              <circle cx="30"  cy="25"  r="1.8" fill="rgba(255,255,255,0.55)"/>
+              <circle cx="6"   cy="25"  r="1.8" fill="rgba(255,255,255,0.55)"/>
+              <circle cx="18" cy="18"   r="3.5" fill="rgba(255,255,255,0.15)"/>
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-white text-[12px] font-bold z-10 tracking-tight">К</span>
+          </div>
+          <span className="text-[1.2rem] font-semibold text-kv-dark tracking-tight">КвантЛаб</span>
         </Link>
 
         {/* Desktop nav */}
