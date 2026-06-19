@@ -22,8 +22,8 @@ const agileCycle = [
     icon: Zap,
     tag: 'Старт',
     num: '01',
-    accent: '#2b3b6b',
-    accentBg: '#eff3ff',
+    accent: '#3730A3',
+    accentBg: '#ECEFFE',
     title: 'Идея и референсы',
     desc: 'Команда формулирует тему КОП, исследует аналоги и изучает предметную область. Главный Agile-принцип: начать с вопроса «Какую образовательную проблему мы решаем?»',
     tasks: [
@@ -38,8 +38,8 @@ const agileCycle = [
     icon: Layers,
     tag: 'Планирование',
     num: '02',
-    accent: '#7c3aed',
-    accentBg: '#f5f0ff',
+    accent: '#5B21B6',
+    accentBg: '#F0EBFF',
     title: 'Бэклог и планирование',
     desc: 'Создаётся бэклог — список всех задач, упорядоченных по приоритету. Команда распределяет роли, планирует спринты и договаривается о критериях готовности продукта.',
     tasks: [
@@ -54,8 +54,8 @@ const agileCycle = [
     icon: Hammer,
     tag: 'Создание',
     num: '03',
-    accent: '#0ea5e9',
-    accentBg: '#f0f9ff',
+    accent: '#1E40AF',
+    accentBg: '#EBF2FF',
     title: 'Прототипирование',
     desc: 'Команда работает с оборудованием технопарка и создаёт первый рабочий прототип. Ключевой принцип Agile: сделать работающее решение как можно быстрее и проверить гипотезы.',
     tasks: [
@@ -70,8 +70,8 @@ const agileCycle = [
     icon: Eye,
     tag: 'Ревью',
     num: '04',
-    accent: '#f59e0b',
-    accentBg: '#fffbeb',
+    accent: '#075985',
+    accentBg: '#E0F5FA',
     title: 'Тестирование и обратная связь',
     desc: 'Команда демонстрирует прототип куратору через КвантЛаб и получает детальные комментарии. Непрерывная обратная связь — топливо Agile-итераций.',
     tasks: [
@@ -86,8 +86,8 @@ const agileCycle = [
     icon: Pencil,
     tag: 'Апробация',
     num: '05',
-    accent: '#10b981',
-    accentBg: '#f0fdf4',
+    accent: '#0F6B62',
+    accentBg: '#E4F7F6',
     title: 'Апробация и доработка',
     desc: 'Доработанный КОП тестируется в реальных образовательных условиях. Команда посещает образовательное учреждение, фиксирует реакцию участников и вносит финальные правки.',
     tasks: [
@@ -102,8 +102,8 @@ const agileCycle = [
     icon: BarChart3,
     tag: 'Итог',
     num: '06',
-    accent: '#ef4444',
-    accentBg: '#fff1f2',
+    accent: '#166534',
+    accentBg: '#E8F5EC',
     title: 'Ретроспектива и публикация',
     desc: 'Финальный Agile-этап — ретроспектива: что сработало, что улучшить в следующий раз. КОП публикуется в открытом каталоге и становится доступен для всех образовательных учреждений.',
     tasks: [
@@ -117,10 +117,10 @@ const agileCycle = [
 ]
 
 const statItems = [
-  { value: '3',    label: 'Трека практики',              color: '#2b3b6b', bg: '#eff3ff' },
-  { value: '12+',  label: 'Команд ежегодно',             color: '#7c3aed', bg: '#f5f0ff' },
-  { value: '6',    label: 'Этапов по Agile',             color: '#0ea5e9', bg: '#f0f9ff' },
-  { value: '100%', label: 'Апробация в учреждениях СПб', color: '#10b981', bg: '#f0fdf4' },
+  { value: '3',    label: 'Трека практики',              color: '#3730A3', bg: '#ECEFFE' },
+  { value: '12+',  label: 'Команд ежегодно',             color: '#5B21B6', bg: '#F0EBFF' },
+  { value: '6',    label: 'Этапов по Agile',             color: '#075985', bg: '#E0F5FA' },
+  { value: '100%', label: 'Апробация в учреждениях СПб', color: '#166534', bg: '#E8F5EC' },
 ]
 
 export default function HomePage() {
