@@ -7,7 +7,7 @@ import {
   Cpu, ArrowLeft, CheckCircle, XCircle, X, LogOut,
   LayoutDashboard, ClipboardList, FolderOpen, MessageSquare, BookOpen,
   Send, Calendar, Lightbulb, Hammer, School, BarChart3, Bell, AlertTriangle,
-  KeyRound, RefreshCw,
+  KeyRound, RefreshCw, Bot, Eye, AlertOctagon,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -17,17 +17,20 @@ import { TEAM_ACCOUNTS, CURATOR_ACCOUNTS } from '@/data/accounts'
 
 type Task = {
   id: string; title: string; desc: string
-  status: 'planned' | 'inprogress' | 'done'
+  status: 'planned' | 'inprogress' | 'testing' | 'done'
   priority: 'low' | 'medium' | 'high'
   dueDate: string
+  createdAt: string
+  blocked: boolean
+  blockedReason?: string
 }
 type FileItem = { name: string; icon: string; size?: string }
 type ApprobationRecord = {
   id: number; school: string; date: string; engagement: string
   whatWorked: string; whatNeedsWork: string; recommendations: string
 }
-type ChatMessage = { id: string; author: string; text: string; time: string; isSystem?: boolean }
-type Tab = 'overview' | 'passport' | 'tasks' | 'files' | 'chat' | 'notes' | 'approbation'
+type AiMessage = { id: string; role: 'user' | 'assistant'; text: string; time: string }
+type Tab = 'overview' | 'passport' | 'tasks' | 'files' | 'ai' | 'notes' | 'approbation'
 
 const AI_QUESTIONS: Record<string, string[]> = {
   математика:  ['Удалось ли организовать обсуждение решений?', 'Насколько задания связаны с реальной жизнью?', 'Какие трудности возникли у учеников?', 'Хотели бы вы использовать комплект снова?'],
@@ -56,16 +59,45 @@ const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: str
   { id: 'passport',    label: 'Паспорт проекта', Icon: ClipboardList },
   { id: 'tasks',       label: 'Трекер задач',    Icon: CheckCircle2 },
   { id: 'files',       label: 'Рабочие файлы',   Icon: FolderOpen },
-  { id: 'chat',        label: 'Командный чат',   Icon: MessageSquare },
+  { id: 'ai',          label: 'ИИ-ассистент',    Icon: Bot },
   { id: 'notes',       label: 'Заметки',         Icon: BookOpen },
   { id: 'approbation', label: 'Апробация',       Icon: School, onlyApproved: true },
 ]
 
-const KANBAN_COLS: { status: Task['status']; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
-  { status: 'planned',    label: 'Запланировано', Icon: Circle },
-  { status: 'inprogress', label: 'В работе',      Icon: Clock },
-  { status: 'done',       label: 'Готово',         Icon: CheckCircle2 },
+type KanbanCol = {
+  status: Task['status']
+  label: string
+  Icon: React.ComponentType<{ className?: string }>
+  wipLimit: number | null
+  color: string
+}
+
+const KANBAN_COLS: KanbanCol[] = [
+  { status: 'planned',    label: 'Запланировано', Icon: Circle,       wipLimit: null, color: 'text-[#64748b]' },
+  { status: 'inprogress', label: 'В работе',      Icon: Clock,        wipLimit: 3,    color: 'text-[#d97706]' },
+  { status: 'testing',    label: 'На проверке',   Icon: Eye,          wipLimit: 2,    color: 'text-[#7c3aed]' },
+  { status: 'done',       label: 'Готово',         Icon: CheckCircle2, wipLimit: null, color: 'text-[#16a34a]' },
 ]
+
+function taskAgeDays(createdAt: string): number {
+  if (!createdAt) return 0
+  return Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000)
+}
+
+function getAiResponse(message: string): string {
+  const m = message.toLowerCase()
+  if (m.includes('паспорт') || m.includes('описан'))  return 'Паспорт КОП должен содержать: название, предметную область, целевую аудиторию, цели и задачи, ожидаемые результаты. Также укажите методику применения и необходимые ресурсы — это помогает учителям быстрее освоить комплект.'
+  if (m.includes('задач') || m.includes('план'))       return 'Хороший план КОП-проекта включает: анализ требований → прототип → тестирование → апробация. Распределите задачи по канбан-доске и следите за WIP-лимитами: не более 3 задач «В работе» одновременно.'
+  if (m.includes('апробац'))                           return 'Для апробации выберите класс, соответствующий целевой аудитории КОП. Подготовьте анкету для учеников и учителя. Зафиксируйте время выполнения заданий, уровень вовлечённости (1–5) и что можно улучшить.'
+  if (m.includes('публик') || m.includes('отправ') || m.includes('куратор')) return 'Сначала нажмите «Сообщить куратору», чтобы получить предварительную обратную связь. После её учёта используйте «Опубликовать КОП» для финальной отправки на рассмотрение.'
+  if (m.includes('коп') || m.includes('комплект'))    return 'Коробочный образовательный продукт (КОП) — готовый комплект для проведения уроков: рабочие материалы, методичка, производственные файлы. Он должен быть воспроизводим в любой школе без дополнительной подготовки.'
+  if (m.includes('файл') || m.includes('dxf') || m.includes('stl') || m.includes('производств')) return 'Производственный файл — ключевая часть КОП. DXF/SVG — для лазерной резки, STL — для 3D-печати, PDF — для раздаточных материалов. Загрузите его во вкладке «Рабочие файлы».'
+  if (m.includes('трек') || m.includes('направлен'))  return 'Трек А1 (конструирование) — создание физических объектов с помощью лазерной резки и 3D-печати. Трек А2 (исследование) — анализ данных и научный метод. Оба трека заканчиваются апробацией КОП в реальной школе.'
+  if (m.includes('блок') || m.includes('заблок'))     return 'Если задача заблокирована, отметьте её флагом «Заблокировано» и укажите причину — это поможет команде понять, что нужно сделать в первую очередь для разблокировки.'
+  if (m.includes('срок') || m.includes('дедлайн') || m.includes('дата')) return 'Следите за сроками: задачи с истёкшим дедлайном выделены красным. Планируйте с запасом 10–15% от общего времени на непредвиденные задержки.'
+  if (m.includes('привет') || m.includes('здравствуй') || m.includes('здарова')) return 'Привет! Я ИИ-ассистент КвантЛаб. Помогу с разработкой вашего КОП: паспорт, планирование задач, подготовка к апробации. Что вас интересует?'
+  return 'Я ИИ-ассистент КвантЛаб. Задайте вопрос о паспорте проекта, планировании задач, канбан-доске, апробации или публикации КОП — и я помогу.'
+}
 
 function teamKey(key: string, team: string) {
   return `${key}_${team.replace(/\s+/g, '_')}`
@@ -79,21 +111,27 @@ export default function CabinetPage() {
   const [userType,        setUserType]        = useState<'student' | 'curator'>('student')
   const [teamCode,        setTeamCode]        = useState('')
   const [teamPassword,    setTeamPassword]    = useState('')
-  const [curatorLogin,    setCuratorLogin]    = useState('')   // curator input OR team's curator ref
+  const [curatorLogin,    setCuratorLogin]    = useState('')
   const [curatorPassword, setCuratorPassword] = useState('')
   const [loginError,      setLoginError]      = useState('')
 
-  // ── team identity (set after login + setup) ───────────────────────────────
-  const [captainName, setCaptainName] = useState('')  // set during setup
+  // ── team identity ─────────────────────────────────────────────────────────
+  const [captainName, setCaptainName] = useState('')
   const [teamName,    setTeamName]    = useState('')
   const [track,       setTrack]       = useState<'А1' | 'А2'>('А1')
   const [authors,     setAuthors]     = useState<string[]>([])
 
-  // ── team setup (shown after first login before workspace) ─────────────────
-  const [setupTeamName,    setSetupTeamName]    = useState('')
-  const [setupInput,       setSetupInput]       = useState('')
-  const [setupMembers,     setSetupMembers]     = useState<string[]>([])
-  const [setupMemberInput, setSetupMemberInput] = useState('')
+  // ── practice dates ────────────────────────────────────────────────────────
+  const [practiceStart, setPracticeStart] = useState('')
+  const [practiceEnd,   setPracticeEnd]   = useState('')
+
+  // ── team setup ────────────────────────────────────────────────────────────
+  const [setupTeamName,      setSetupTeamName]      = useState('')
+  const [setupInput,         setSetupInput]         = useState('')
+  const [setupMembers,       setSetupMembers]       = useState<string[]>([])
+  const [setupMemberInput,   setSetupMemberInput]   = useState('')
+  const [setupPracticeStart, setSetupPracticeStart] = useState('')
+  const [setupPracticeEnd,   setSetupPracticeEnd]   = useState('')
 
   // ── navigation ────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -114,17 +152,20 @@ export default function CabinetPage() {
   const [taskDesc,      setTaskDesc]      = useState('')
   const [taskPriority,  setTaskPriority]  = useState<Task['priority']>('medium')
   const [taskDueDate,   setTaskDueDate]   = useState('')
+  const [taskBlocked,   setTaskBlocked]   = useState(false)
+  const [taskBlockedReason, setTaskBlockedReason] = useState('')
 
   // ── files ────────────────────────────────────────────────────────────────
   const [files, setFiles] = useState<FileItem[]>([])
 
-  // ── chat ─────────────────────────────────────────────────────────────────
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { id: 'sys0', author: 'Система', isSystem: true, time: '',
-      text: 'Добро пожаловать! Здесь вы можете общаться с участниками команды.' },
+  // ── AI assistant ──────────────────────────────────────────────────────────
+  const [aiMessages, setAiMessages] = useState<AiMessage[]>([
+    { id: 'init', role: 'assistant', time: '',
+      text: 'Привет! Я ИИ-ассистент КвантЛаб. Задавайте вопросы о разработке КОП, планировании задач, паспорте проекта и апробации.' },
   ])
-  const [chatInput, setChatInput] = useState('')
-  const chatEndRef = useRef<HTMLDivElement>(null)
+  const [aiInput,   setAiInput]   = useState('')
+  const [aiTyping,  setAiTyping]  = useState(false)
+  const aiEndRef = useRef<HTMLDivElement>(null)
 
   // ── notes ────────────────────────────────────────────────────────────────
   const [notes,      setNotes]      = useState('')
@@ -144,9 +185,9 @@ export default function CabinetPage() {
   const [approbationForm,    setApprobationForm]    = useState({
     school: '', date: '', engagement: '', whatWorked: '', whatNeedsWork: '', recommendations: '',
   })
-  const [aiQuestions,     setAiQuestions]     = useState<string[]>([])
-  const [showAiQuestions, setShowAiQuestions] = useState(false)
-  const [approbationSaved,setApprobationSaved]= useState(false)
+  const [aiQuestions,      setAiQuestions]      = useState<string[]>([])
+  const [showAiQuestions,  setShowAiQuestions]  = useState(false)
+  const [approbationSaved, setApprobationSaved] = useState(false)
 
   // ── author modal ──────────────────────────────────────────────────────────
   const [showAuthorModal, setShowAuthorModal] = useState(false)
@@ -155,25 +196,18 @@ export default function CabinetPage() {
   const projectId = useRef<string>('')
 
   // ── helpers ───────────────────────────────────────────────────────────────
-  // All localStorage data is keyed by the team code (stable, never changes)
   const loadTeamData = (code: string) => {
     const savedTasks = localStorage.getItem(teamKey('cabinet_tasks', code))
     setTasks(savedTasks ? JSON.parse(savedTasks) : [])
     const savedFiles = localStorage.getItem(teamKey('cabinet_files', code))
     setFiles(savedFiles ? JSON.parse(savedFiles) : [])
-    const savedChat = localStorage.getItem(teamKey('cabinet_chat', code))
-    if (savedChat) {
-      setChatMessages([
-        { id: 'sys0', author: 'Система', isSystem: true, time: '',
-          text: 'Добро пожаловать! Здесь вы можете общаться с участниками команды.' },
-        ...JSON.parse(savedChat),
-      ])
-    }
     setNotes(         localStorage.getItem(teamKey('cabinet_notes',         code)) || '')
     setProjectName(   localStorage.getItem(teamKey('cabinet_projectName',   code)) || '')
     setProjectBlock(  localStorage.getItem(teamKey('cabinet_projectBlock',  code)) || '')
     setProjectDesc(   localStorage.getItem(teamKey('cabinet_projectDesc',   code)) || '')
     setProductionFile(localStorage.getItem(teamKey('cabinet_productionFile',code)) || '')
+    setPracticeStart( localStorage.getItem(teamKey('cabinet_practiceStart', code)) || '')
+    setPracticeEnd(   localStorage.getItem(teamKey('cabinet_practiceEnd',   code)) || '')
   }
 
   const refreshStatus = async () => {
@@ -200,7 +234,7 @@ export default function CabinetPage() {
         if (savedCode) {
           const account = TEAM_ACCOUNTS.find((a) => a.code === savedCode)
           if (!account) return
-          setTeamCode(savedCode)         // restore so persist-useEffects use correct key
+          setTeamCode(savedCode)
           if (savedTeam) setTeamName(savedTeam)
           if (savedTrack) setTrack(savedTrack)
           setCuratorLogin(account.curatorLogin)
@@ -230,7 +264,6 @@ export default function CabinetPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // auto-refresh on window focus when project is submitted
   useEffect(() => {
     const onFocus = () => { if (published && projectId.current) refreshStatus() }
     window.addEventListener('focus', onFocus)
@@ -238,7 +271,6 @@ export default function CabinetPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [published])
 
-  // persist tasks / files / authors (keyed by team code)
   useEffect(() => {
     if (teamCode) try { localStorage.setItem(teamKey('cabinet_tasks', teamCode), JSON.stringify(tasks)) } catch {}
   }, [tasks, teamCode])
@@ -249,7 +281,7 @@ export default function CabinetPage() {
     if (loggedIn && teamCode) try { localStorage.setItem(teamKey('cabinet_authors', teamCode), JSON.stringify(authors)) } catch {}
   }, [authors, loggedIn, teamCode])
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
+  useEffect(() => { aiEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [aiMessages])
 
   // ── handlers ──────────────────────────────────────────────────────────────
   const handleLogin = () => {
@@ -308,14 +340,20 @@ export default function CabinetPage() {
     setTeamName(tName)
     setCaptainName(name)
     setAuthors(all)
+    setPracticeStart(setupPracticeStart)
+    setPracticeEnd(setupPracticeEnd)
     try {
-      localStorage.setItem('cabinet_teamName',                          tName)
-      localStorage.setItem(teamKey('cabinet_captainName', teamCode),    name)
-      localStorage.setItem(teamKey('cabinet_authors',     teamCode),    JSON.stringify(all))
+      localStorage.setItem('cabinet_teamName',                           tName)
+      localStorage.setItem(teamKey('cabinet_captainName', teamCode),     name)
+      localStorage.setItem(teamKey('cabinet_authors',     teamCode),     JSON.stringify(all))
+      if (setupPracticeStart) localStorage.setItem(teamKey('cabinet_practiceStart', teamCode), setupPracticeStart)
+      if (setupPracticeEnd)   localStorage.setItem(teamKey('cabinet_practiceEnd',   teamCode), setupPracticeEnd)
     } catch {}
     setSetupTeamName('')
     setSetupInput('')
     setSetupMembers([])
+    setSetupPracticeStart('')
+    setSetupPracticeEnd('')
     setLoginError('')
   }
 
@@ -410,8 +448,10 @@ export default function CabinetPage() {
     if (task) {
       setEditingTask(task); setTaskTitle(task.title)
       setTaskDesc(task.desc); setTaskPriority(task.priority); setTaskDueDate(task.dueDate)
+      setTaskBlocked(task.blocked || false); setTaskBlockedReason(task.blockedReason || '')
     } else {
       setEditingTask(null); setTaskTitle(''); setTaskDesc(''); setTaskPriority('medium'); setTaskDueDate('')
+      setTaskBlocked(false); setTaskBlockedReason('')
     }
     setShowTaskModal(true)
   }
@@ -420,37 +460,51 @@ export default function CabinetPage() {
     if (!taskTitle.trim()) return
     if (editingTask) {
       setTasks((p) => p.map((t) => t.id === editingTask.id
-        ? { ...t, title: taskTitle, desc: taskDesc, priority: taskPriority, dueDate: taskDueDate } : t))
+        ? { ...t, title: taskTitle, desc: taskDesc, priority: taskPriority, dueDate: taskDueDate,
+            blocked: taskBlocked, blockedReason: taskBlockedReason }
+        : t))
     } else {
-      setTasks((p) => [...p, { id: Date.now().toString(), title: taskTitle, desc: taskDesc, status: 'planned', priority: taskPriority, dueDate: taskDueDate }])
+      setTasks((p) => [...p, {
+        id: Date.now().toString(), title: taskTitle, desc: taskDesc,
+        status: 'planned', priority: taskPriority, dueDate: taskDueDate,
+        createdAt: new Date().toISOString(), blocked: taskBlocked,
+        blockedReason: taskBlockedReason || undefined,
+      }])
     }
     setShowTaskModal(false)
   }
 
-  const sendMessage = () => {
-    if (!chatInput.trim()) return
-    const msg: ChatMessage = {
-      id: Date.now().toString(), author: captainName || teamName,
-      text: chatInput.trim(),
+  const sendAiMessage = () => {
+    if (!aiInput.trim() || aiTyping) return
+    const userMsg: AiMessage = {
+      id: Date.now().toString(), role: 'user', text: aiInput.trim(),
       time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
     }
-    const next = [...chatMessages, msg]
-    setChatMessages(next)
-    setChatInput('')
-    try { localStorage.setItem(teamKey('cabinet_chat', teamCode), JSON.stringify(next.filter((m) => !m.isSystem))) } catch {}
+    setAiMessages((p) => [...p, userMsg])
+    const question = aiInput.trim()
+    setAiInput('')
+    setAiTyping(true)
+    setTimeout(() => {
+      const reply: AiMessage = {
+        id: (Date.now() + 1).toString(), role: 'assistant', text: getAiResponse(question),
+        time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+      }
+      setAiMessages((p) => [...p, reply])
+      setAiTyping(false)
+    }, 700 + Math.random() * 600)
   }
 
   // ── derived ───────────────────────────────────────────────────────────────
-  const doneTasks      = tasks.filter((t) => t.status === 'done').length
-  const passportFilled = !!(projectName.trim() && projectDesc.trim())
-  const canFeedback    = passportFilled && (!published || projectStatus === 'feedback_requested')
-  const canPublish     = passportFilled && projectStatus !== 'review' && projectStatus !== 'approved'
+  const doneTasks   = tasks.filter((t) => t.status === 'done').length
+  const canFeedback = !published || projectStatus === 'rejected'
+  const canPublish  = projectStatus !== 'review' && projectStatus !== 'approved'
   const sc = STATUS_CFG[projectStatus]
 
   let currentStage = 0
-  if (passportFilled)                     currentStage = 1
-  if (published)                          currentStage = 2
-  if (approbationHistory.length > 0)      currentStage = 3
+  const passportFilled = !!(projectName.trim() && projectDesc.trim())
+  if (passportFilled)                  currentStage = 1
+  if (published)                       currentStage = 2
+  if (approbationHistory.length > 0)   currentStage = 3
 
   const STAGES = [
     { Icon: Lightbulb, label: 'Идея',      hint: 'Проект начат' },
@@ -490,9 +544,7 @@ export default function CabinetPage() {
             {userType === 'student' ? (
               <>
                 <div className="mb-3 bg-kv-light rounded-2xl px-5 py-3">
-                  <p className="text-kv-muted text-xs leading-relaxed">
-                    Код и пароль выдаёт куратор перед началом практики
-                  </p>
+                  <p className="text-kv-muted text-xs leading-relaxed">Код и пароль выдаёт куратор перед началом практики</p>
                 </div>
                 <div className="mb-4">
                   <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Код команды</label>
@@ -542,42 +594,35 @@ export default function CabinetPage() {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // TEAM SETUP SCREEN (first login — no captain set yet)
+  // TEAM SETUP SCREEN
   // ══════════════════════════════════════════════════════════════════════════
   if (!captainName) {
     return (
       <>
         <Header active="cabinet" />
         <main>
-          <div className="bg-white rounded-[3rem] px-[50px] py-[60px] max-w-[560px] mx-auto my-16 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)]">
+          <div className="bg-white rounded-[3rem] px-[50px] py-[60px] max-w-[580px] mx-auto my-16 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)]">
             <div className="w-12 h-12 rounded-2xl bg-kv-light flex items-center justify-center mb-6">
-              <Users className="w-6 h-6 text-kv-blue" />
+              <UsersIcon className="w-6 h-6 text-kv-blue" />
             </div>
             <h2 className="text-[2rem] font-semibold mb-1">Добро пожаловать!</h2>
             <p className="text-kv-muted text-sm mb-2">Трек {track} · код {teamCode}</p>
-            <p className="text-kv-text text-sm mb-8">
-              Заполните состав команды — эти данные отобразятся в паспорте проекта.
-            </p>
+            <p className="text-kv-text text-sm mb-8">Заполните состав команды — данные отобразятся в паспорте проекта.</p>
 
             <div className="mb-5">
-              <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">
-                Название команды <span className="text-[#dc2626]">*</span>
-              </label>
+              <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Название команды <span className="text-[#dc2626]">*</span></label>
               <input className="input-kv" placeholder="Команда «Конструктор»" value={setupTeamName}
                 onChange={(e) => setSetupTeamName(e.target.value)} autoFocus />
             </div>
 
-            <div className="mb-6">
-              <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">
-                ФИО капитана <span className="text-[#dc2626]">*</span>
-              </label>
+            <div className="mb-5">
+              <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">ФИО капитана <span className="text-[#dc2626]">*</span></label>
               <input className="input-kv" placeholder="Иванова Мария Ивановна" value={setupInput}
-                onChange={(e) => setSetupInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSetupComplete()} />
+                onChange={(e) => setSetupInput(e.target.value)} />
               <p className="text-kv-muted text-xs mt-1.5">Капитан выступает от имени команды при публикации КОП</p>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-5">
               <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Другие участники (необязательно)</label>
               <div className="flex gap-2 flex-wrap mb-3">
                 {setupMembers.map((m, i) => (
@@ -600,14 +645,28 @@ export default function CabinetPage() {
                     }
                   }} />
                 <button className="btn-blue px-4 flex-shrink-0"
-                  onClick={() => {
-                    if (setupMemberInput.trim()) {
-                      setSetupMembers((p) => [...p, setupMemberInput.trim()])
-                      setSetupMemberInput('')
-                    }
-                  }}>
+                  onClick={() => { if (setupMemberInput.trim()) { setSetupMembers((p) => [...p, setupMemberInput.trim()]); setSetupMemberInput('') } }}>
                   <Plus className="w-4 h-4" />
                 </button>
+              </div>
+            </div>
+
+            {/* Practice dates */}
+            <div className="mb-7 bg-[#f9fbfe] rounded-2xl p-5 border border-kv-border">
+              <label className="block mb-3 font-medium text-[#3f4a6b] text-sm flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-kv-blue" /> Сроки практики (необязательно)
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block mb-1.5 text-xs text-kv-muted">Начало</label>
+                  <input className="input-kv" type="date" value={setupPracticeStart}
+                    onChange={(e) => setSetupPracticeStart(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block mb-1.5 text-xs text-kv-muted">Окончание</label>
+                  <input className="input-kv" type="date" value={setupPracticeEnd}
+                    onChange={(e) => setSetupPracticeEnd(e.target.value)} />
+                </div>
               </div>
             </div>
 
@@ -650,18 +709,13 @@ export default function CabinetPage() {
                 {published ? <><sc.Icon className="w-3.5 h-3.5" /> {sc.label}</> : 'Черновик'}
               </span>
               {published && (
-                <button
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs text-kv-muted border border-kv-border bg-white cursor-pointer hover:text-kv-dark transition-colors"
-                  onClick={refreshStatus} disabled={refreshing}
-                  title="Обновить статус"
-                >
+                <button className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs text-kv-muted border border-kv-border bg-white cursor-pointer hover:text-kv-dark transition-colors"
+                  onClick={refreshStatus} disabled={refreshing} title="Обновить статус">
                   <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
                 </button>
               )}
-              <button
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-kv-muted border border-kv-border bg-white cursor-pointer hover:text-kv-dark hover:border-kv-dark transition-colors"
-                onClick={handleLogout}
-              >
+              <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-kv-muted border border-kv-border bg-white cursor-pointer hover:text-kv-dark hover:border-kv-dark transition-colors"
+                onClick={handleLogout}>
                 <LogOut className="w-3.5 h-3.5" /> Выйти
               </button>
             </div>
@@ -719,6 +773,21 @@ export default function CabinetPage() {
                     </div>
                   </div>
 
+                  {/* Practice dates */}
+                  {(practiceStart || practiceEnd) && (
+                    <div className="bg-white rounded-[2rem] px-7 py-5 flex items-center gap-4 border border-kv-border">
+                      <Calendar className="w-5 h-5 text-kv-blue flex-shrink-0" />
+                      <div>
+                        <span className="text-xs uppercase tracking-wide text-kv-muted block mb-0.5">Сроки практики</span>
+                        <span className="text-sm font-medium">
+                          {practiceStart ? new Date(practiceStart).toLocaleDateString('ru-RU') : '?'}
+                          {' — '}
+                          {practiceEnd ? new Date(practiceEnd).toLocaleDateString('ru-RU') : '?'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Stats */}
                   <div className="grid grid-cols-2 min-[560px]:grid-cols-4 gap-4">
                     {[
@@ -748,13 +817,13 @@ export default function CabinetPage() {
                     </div>
                   )}
 
-                  {/* Actions */}
+                  {/* Quick actions */}
                   <div className="bg-white rounded-[2.5rem] p-8">
                     <h4 className="font-semibold mb-5 text-[1rem]">Быстрые действия</h4>
                     <div className="flex flex-wrap gap-3">
                       <button className="btn-blue text-sm" onClick={() => setActiveTab('passport')}><ClipboardList className="w-4 h-4" /> Паспорт</button>
                       <button className="btn-blue text-sm" onClick={() => { openTask(); setActiveTab('tasks') }}><Plus className="w-4 h-4" /> Новая задача</button>
-                      <button className="btn-blue text-sm" onClick={() => setActiveTab('chat')}><MessageSquare className="w-4 h-4" /> Чат</button>
+                      <button className="btn-blue text-sm" onClick={() => setActiveTab('ai')}><Bot className="w-4 h-4" /> ИИ-ассистент</button>
                       {canFeedback && (
                         <button className="flex items-center gap-2 px-5 py-3 text-sm font-medium rounded-full bg-[#e3f2fd] text-[#1565c0] border-none cursor-pointer hover:bg-[#bbdefb] transition-colors" onClick={handleFeedbackRequest}>
                           <Bell className="w-4 h-4" /> Сообщить куратору
@@ -826,13 +895,21 @@ export default function CabinetPage() {
               {/* ════ TASKS ════ */}
               {activeTab === 'tasks' && (
                 <div className="bg-white rounded-[2.5rem] p-8">
-                  <div className="flex justify-between items-center mb-7">
+                  <div className="flex justify-between items-center mb-3">
                     <div>
                       <h3 className="text-[1.3rem] font-semibold">Трекер задач</h3>
                       <p className="text-kv-muted text-sm mt-0.5">{doneTasks} из {tasks.length} выполнено</p>
                     </div>
                     <button className="btn-blue" onClick={() => openTask()}><Plus className="w-4 h-4" /> Новая задача</button>
                   </div>
+
+                  {/* WIP legend */}
+                  <div className="flex gap-3 flex-wrap mb-6 text-xs text-kv-muted">
+                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#d97706] inline-block" /> В работе — лимит 3</span>
+                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#7c3aed] inline-block" /> На проверке — лимит 2</span>
+                    <span className="flex items-center gap-1.5"><AlertOctagon className="w-3 h-3 text-[#dc2626]" /> Заблокировано</span>
+                  </div>
+
                   {tasks.length === 0 ? (
                     <div className="text-center py-16 text-kv-muted">
                       <CheckCircle2 className="w-10 h-10 mx-auto mb-3 opacity-20" />
@@ -840,42 +917,71 @@ export default function CabinetPage() {
                       <p className="text-xs mt-1">Создайте первую задачу, чтобы отслеживать работу над КОП</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 gap-4 max-[700px]:grid-cols-1">
-                      {KANBAN_COLS.map(({ status, label, Icon }) => (
-                        <div key={status} className="bg-[#f9fbfe] rounded-[1.75rem] p-5 min-h-[200px]"
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => { if (draggedId) { setTasks((p) => p.map((t) => t.id === draggedId ? { ...t, status } : t)); setDraggedId(null) } }}>
-                          <h4 className="flex items-center gap-2 mb-4 text-kv-blue font-medium text-xs uppercase tracking-wide">
-                            <Icon className="w-4 h-4" /> {label}
-                            <span className="ml-auto bg-kv-light text-kv-muted rounded-full px-2 py-0.5 font-semibold">
-                              {tasks.filter((t) => t.status === status).length}
-                            </span>
-                          </h4>
-                          {tasks.filter((t) => t.status === status).map((task) => {
-                            const p = PRIORITY_CFG[task.priority]
-                            const overdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done'
-                            return (
-                              <div key={task.id}
-                                className={`bg-white rounded-2xl p-4 mb-2.5 border cursor-grab select-none hover:shadow-card transition-all ${overdue ? 'border-[#fca5a5]' : 'border-kv-border'}`}
-                                draggable onDragStart={() => setDraggedId(task.id)} onDragEnd={() => setDraggedId(null)}>
-                                <div className="flex items-start justify-between gap-2 mb-1.5">
-                                  <p className="font-medium text-sm leading-snug">{task.title}</p>
-                                  <span className={`text-[0.65rem] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${p.bg} ${p.color}`}>{p.label}</span>
-                                </div>
-                                {task.desc && <p className="text-kv-text text-xs mb-2 leading-relaxed">{task.desc}</p>}
-                                {task.dueDate && <p className={`text-xs flex items-center gap-1 mb-2 ${overdue ? 'text-[#ef4444]' : 'text-kv-muted'}`}><Calendar className="w-3 h-3" />{overdue ? '! ' : ''}{task.dueDate}</p>}
-                                <div className="flex justify-end gap-1 mt-1">
-                                  <button className="bg-transparent border-none cursor-pointer text-[#8b9bb5] hover:text-kv-blue p-1" onClick={() => openTask(task)}><Edit2 className="w-3.5 h-3.5" /></button>
-                                  <button className="bg-transparent border-none cursor-pointer text-[#8b9bb5] hover:text-red-400 p-1" onClick={() => confirm('Удалить задачу?') && setTasks((p) => p.filter((t) => t.id !== task.id))}><Trash2 className="w-3.5 h-3.5" /></button>
-                                </div>
+                    <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1">
+                      {KANBAN_COLS.map(({ status, label, Icon, wipLimit, color }) => {
+                        const colTasks = tasks.filter((t) => t.status === status)
+                        const wipExceeded = wipLimit !== null && colTasks.length > wipLimit
+                        return (
+                          <div key={status} className={`rounded-[1.75rem] p-4 min-h-[200px] transition-colors ${wipExceeded ? 'bg-[#fff7ed]' : 'bg-[#f9fbfe]'}`}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={() => { if (draggedId) { setTasks((p) => p.map((t) => t.id === draggedId ? { ...t, status } : t)); setDraggedId(null) } }}>
+                            <h4 className={`flex items-center gap-2 mb-3 font-medium text-xs uppercase tracking-wide ${color}`}>
+                              <Icon className="w-3.5 h-3.5" /> {label}
+                              <span className={`ml-auto rounded-full px-2 py-0.5 font-bold text-[10px] ${wipExceeded ? 'bg-[#fed7aa] text-[#c2410c]' : 'bg-kv-light text-kv-muted'}`}>
+                                {colTasks.length}{wipLimit ? `/${wipLimit}` : ''}
+                              </span>
+                            </h4>
+                            {wipExceeded && (
+                              <div className="bg-[#fed7aa] text-[#c2410c] text-[10px] px-2.5 py-1.5 rounded-xl mb-2 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 flex-shrink-0" /> Превышен WIP-лимит
                               </div>
-                            )
-                          })}
-                          {tasks.filter((t) => t.status === status).length === 0 && (
-                            <div className="flex items-center justify-center h-16 text-kv-muted text-xs">Перетащите сюда</div>
-                          )}
-                        </div>
-                      ))}
+                            )}
+                            {colTasks.map((task) => {
+                              const p = PRIORITY_CFG[task.priority]
+                              const overdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done'
+                              const age = taskAgeDays(task.createdAt)
+                              return (
+                                <div key={task.id}
+                                  className={`bg-white rounded-2xl p-3.5 mb-2 border cursor-grab select-none hover:shadow-card transition-all ${task.blocked ? 'border-[#fca5a5] bg-[#fff8f8]' : overdue ? 'border-[#fcd34d]' : 'border-kv-border'}`}
+                                  draggable onDragStart={() => setDraggedId(task.id)} onDragEnd={() => setDraggedId(null)}>
+                                  {task.blocked && (
+                                    <div className="flex items-center gap-1 text-[#dc2626] text-[10px] font-semibold mb-1.5 bg-[#fef2f2] px-2 py-1 rounded-lg">
+                                      <AlertOctagon className="w-3 h-3 flex-shrink-0" />
+                                      {task.blockedReason ? task.blockedReason.slice(0, 40) : 'Заблокировано'}
+                                    </div>
+                                  )}
+                                  <div className="flex items-start justify-between gap-1.5 mb-1">
+                                    <p className="font-medium text-[0.8rem] leading-snug">{task.title}</p>
+                                    <span className={`text-[0.6rem] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${p.bg} ${p.color}`}>{p.label}</span>
+                                  </div>
+                                  {task.desc && <p className="text-kv-text text-[0.72rem] mb-1.5 leading-relaxed">{task.desc}</p>}
+                                  <div className="flex items-center justify-between gap-1 mt-1.5">
+                                    <div className="flex gap-1.5 items-center">
+                                      {task.dueDate && (
+                                        <span className={`text-[0.65rem] flex items-center gap-0.5 ${overdue ? 'text-[#ef4444]' : 'text-kv-muted'}`}>
+                                          <Calendar className="w-2.5 h-2.5" />{task.dueDate}
+                                        </span>
+                                      )}
+                                      {age > 0 && (
+                                        <span className={`text-[0.6rem] px-1.5 py-0.5 rounded-full ${age > 7 ? 'bg-[#fef2f2] text-[#dc2626]' : 'bg-kv-light text-kv-muted'}`}>
+                                          {age}д
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex gap-0.5">
+                                      <button className="bg-transparent border-none cursor-pointer text-[#8b9bb5] hover:text-kv-blue p-1" onClick={() => openTask(task)}><Edit2 className="w-3 h-3" /></button>
+                                      <button className="bg-transparent border-none cursor-pointer text-[#8b9bb5] hover:text-red-400 p-1" onClick={() => confirm('Удалить задачу?') && setTasks((p) => p.filter((t) => t.id !== task.id))}><Trash2 className="w-3 h-3" /></button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            {colTasks.length === 0 && (
+                              <div className="flex items-center justify-center h-16 text-kv-muted text-xs border-2 border-dashed border-[#dde4ef] rounded-2xl">Перетащите сюда</div>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -919,36 +1025,64 @@ export default function CabinetPage() {
                 </div>
               )}
 
-              {/* ════ CHAT ════ */}
-              {activeTab === 'chat' && (
+              {/* ════ AI ASSISTANT ════ */}
+              {activeTab === 'ai' && (
                 <div className="bg-white rounded-[2.5rem] p-8 flex flex-col" style={{ height: '580px' }}>
-                  <h3 className="text-[1.3rem] font-semibold mb-0.5">Командный чат</h3>
-                  <p className="text-kv-muted text-sm mb-5">{teamName}</p>
-                  <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1">
-                    {chatMessages.map((msg) => (
-                      <div key={msg.id}>
-                        {msg.isSystem ? (
-                          <div className="text-center"><span className="text-xs text-kv-muted bg-kv-light px-4 py-1.5 rounded-full inline-block">{msg.text}</span></div>
-                        ) : (
-                          <div className={`flex gap-2.5 ${msg.author === (captainName || teamName) ? 'flex-row-reverse' : ''}`}>
-                            <div className="w-8 h-8 rounded-full bg-kv-light flex items-center justify-center flex-shrink-0 text-kv-blue font-semibold text-sm">
-                              {msg.author.charAt(0).toUpperCase()}
-                            </div>
-                            <div className={`max-w-[70%] flex flex-col gap-1 ${msg.author === (captainName || teamName) ? 'items-end' : 'items-start'}`}>
-                              <span className="text-[0.7rem] text-kv-muted">{msg.author} · {msg.time}</span>
-                              <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.author === (captainName || teamName) ? 'bg-kv-blue text-white rounded-tr-sm' : 'bg-[#f2f5fb] rounded-tl-sm'}`}>{msg.text}</div>
-                            </div>
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-9 h-9 rounded-2xl bg-kv-blue flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-[1.1rem] font-semibold leading-tight">ИИ-ассистент КвантЛаб</h3>
+                      <p className="text-kv-muted text-xs">Помогает с разработкой КОП</p>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">
+                    {aiMessages.map((msg) => (
+                      <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold ${msg.role === 'assistant' ? 'bg-kv-blue text-white' : 'bg-kv-light text-kv-dark'}`}>
+                          {msg.role === 'assistant' ? <Bot className="w-4 h-4" /> : captainName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className={`max-w-[75%] flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                          {msg.time && <span className="text-[0.65rem] text-kv-muted">{msg.time}</span>}
+                          <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-kv-blue text-white rounded-tr-sm' : 'bg-[#f2f5fb] text-kv-text rounded-tl-sm'}`}>
+                            {msg.text}
                           </div>
-                        )}
+                        </div>
                       </div>
                     ))}
-                    <div ref={chatEndRef} />
+                    {aiTyping && (
+                      <div className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-kv-blue flex items-center justify-center flex-shrink-0">
+                          <Bot className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="bg-[#f2f5fb] rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-kv-muted animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-kv-muted animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-kv-muted animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={aiEndRef} />
                   </div>
+
+                  {/* Quick prompts */}
+                  {aiMessages.length <= 2 && (
+                    <div className="flex gap-2 flex-wrap mb-3">
+                      {['Как заполнить паспорт?', 'Советы по задачам', 'Как пройти апробацию?'].map((q) => (
+                        <button key={q} className="text-xs bg-kv-light text-kv-dark px-3 py-1.5 rounded-full border-none cursor-pointer hover:bg-[#e2e8f0] transition-colors"
+                          onClick={() => { setAiInput(q); setTimeout(sendAiMessage, 50) }}>
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="flex gap-3">
-                    <input className="input-kv flex-1" placeholder="Написать сообщение…" value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()} />
-                    <button className="btn-blue px-5" onClick={sendMessage}><Send className="w-4 h-4" /></button>
+                    <input className="input-kv flex-1" placeholder="Задайте вопрос об КОП…" value={aiInput}
+                      onChange={(e) => setAiInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendAiMessage()} />
+                    <button className="btn-blue px-5" onClick={sendAiMessage} disabled={aiTyping}><Send className="w-4 h-4" /></button>
                   </div>
                 </div>
               )}
@@ -1040,20 +1174,24 @@ export default function CabinetPage() {
                 </div>
               )}
 
-              {/* Publish CTA bar */}
-              {!published && activeTab !== 'overview' && activeTab !== 'approbation' && passportFilled && (
+              {/* Publish CTA bar — always visible (except overview and approbation) */}
+              {activeTab !== 'overview' && activeTab !== 'approbation' && (
                 <div className="bg-kv-light rounded-[2rem] px-7 py-5 flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <h4 className="font-semibold mb-0.5 text-sm">Готово к отправке куратору?</h4>
-                    <p className="text-kv-muted text-xs">Выберите тип отправки</p>
+                    <h4 className="font-semibold mb-0.5 text-sm">Отправить куратору</h4>
+                    <p className="text-kv-muted text-xs">Выберите тип отправки проекта</p>
                   </div>
                   <div className="flex gap-3 flex-wrap">
-                    <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full bg-[#e3f2fd] text-[#1565c0] border-none cursor-pointer hover:bg-[#bbdefb] transition-colors" onClick={handleFeedbackRequest}>
-                      <Bell className="w-4 h-4" /> Сообщить куратору
-                    </button>
-                    <button className="bg-kv-blue text-white border-none rounded-full px-5 py-2.5 text-sm cursor-pointer hover:bg-kv-dark transition-colors flex items-center gap-2" onClick={() => setShowPublishConfirm(true)}>
-                      <CheckCircle2 className="w-4 h-4" /> Опубликовать КОП
-                    </button>
+                    {canFeedback && (
+                      <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full bg-[#e3f2fd] text-[#1565c0] border-none cursor-pointer hover:bg-[#bbdefb] transition-colors" onClick={handleFeedbackRequest}>
+                        <Bell className="w-4 h-4" /> Сообщить куратору
+                      </button>
+                    )}
+                    {canPublish && (
+                      <button className="bg-kv-blue text-white border-none rounded-full px-5 py-2.5 text-sm cursor-pointer hover:bg-kv-dark transition-colors flex items-center gap-2" onClick={() => setShowPublishConfirm(true)}>
+                        <CheckCircle2 className="w-4 h-4" /> Опубликовать КОП
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -1093,7 +1231,7 @@ export default function CabinetPage() {
             <button className="modal-close-btn" onClick={() => setShowTaskModal(false)}><X size={20} /></button>
             <h3 className="text-[1.8rem] font-semibold mb-6">{editingTask ? 'Редактировать' : 'Новая задача'}</h3>
             <input className="input-kv mb-4" placeholder="Название задачи" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} autoFocus />
-            <textarea className="textarea-kv mb-4" placeholder="Описание (необязательно)" rows={3} value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)} />
+            <textarea className="textarea-kv mb-4" placeholder="Описание (необязательно)" rows={2} value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)} />
             <div className="mb-4">
               <label className="block mb-2.5 text-sm font-medium">Приоритет</label>
               <div className="flex gap-2">
@@ -1106,9 +1244,25 @@ export default function CabinetPage() {
                 })}
               </div>
             </div>
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="block mb-2.5 text-sm font-medium">Срок выполнения</label>
               <input className="input-kv" type="date" value={taskDueDate} onChange={(e) => setTaskDueDate(e.target.value)} />
+            </div>
+            <div className="mb-6">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <div className={`w-10 h-6 rounded-full transition-colors relative ${taskBlocked ? 'bg-[#dc2626]' : 'bg-[#d1d5db]'}`}
+                  onClick={() => setTaskBlocked((b) => !b)}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${taskBlocked ? 'left-5' : 'left-1'}`} />
+                </div>
+                <span className="text-sm font-medium flex items-center gap-1.5">
+                  <AlertOctagon className={`w-4 h-4 ${taskBlocked ? 'text-[#dc2626]' : 'text-kv-muted'}`} />
+                  Заблокировано
+                </span>
+              </label>
+              {taskBlocked && (
+                <input className="input-kv mt-3" placeholder="Причина блокировки…" value={taskBlockedReason}
+                  onChange={(e) => setTaskBlockedReason(e.target.value)} />
+              )}
             </div>
             <button className="w-full py-3.5 bg-kv-blue text-white rounded-full border-none cursor-pointer font-medium hover:bg-kv-dark transition-colors" onClick={saveTask}>
               Сохранить
@@ -1173,8 +1327,7 @@ export default function CabinetPage() {
   )
 }
 
-// Inline Users icon used in team setup screen
-function Users({ className }: { className?: string }) {
+function UsersIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />

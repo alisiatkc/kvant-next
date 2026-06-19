@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%       { transform: translateY(-22px) scale(1.03); }
+}
+@keyframes floatX {
+  0%, 100% { transform: translateX(0px); }
+  50%       { transform: translateX(18px); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.anim-fade-up   { animation: fadeInUp   0.75s cubic-bezier(0.22,1,0.36,1) both; }
+.anim-fade-down { animation: fadeInDown 0.6s  cubic-bezier(0.22,1,0.36,1) both; }
+.anim-scale-in  { animation: scaleIn    0.7s  cubic-bezier(0.22,1,0.36,1) both; }
+.anim-d1 { animation-delay: 0.1s; }
+.anim-d2 { animation-delay: 0.22s; }
+.anim-d3 { animation-delay: 0.38s; }
+.anim-d4 { animation-delay: 0.52s; }
+
+.float-slow { animation: floatY 7s ease-in-out infinite; }
+.float-med  { animation: floatY 5s ease-in-out infinite 1.5s; }
+.float-x    { animation: floatX 9s ease-in-out infinite; }
+
 @layer base {
   html {
     scroll-behavior: smooth;

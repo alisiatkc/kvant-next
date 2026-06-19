@@ -77,9 +77,10 @@ export async function updateProjectStatus(
   status: SubmittedProject['status'],
   catalogEntry?: CatalogEntry,
   curatorFeedback?: string,
+  newCuratorLogin?: string,
 ): Promise<void> {
   if (API_URL) {
-    await apiCall('updateStatus', 'POST', { id, status, catalogEntry, curatorFeedback })
+    await apiCall('updateStatus', 'POST', { id, status, catalogEntry, curatorFeedback, curatorLogin: newCuratorLogin })
     return
   }
   const subs: SubmittedProject[] = JSON.parse(
@@ -90,7 +91,10 @@ export async function updateProjectStatus(
     JSON.stringify(
       subs.map((p) =>
         p.id === id
-          ? { ...p, status, ...(curatorFeedback !== undefined ? { curatorFeedback } : {}) }
+          ? { ...p, status,
+              ...(curatorFeedback   !== undefined ? { curatorFeedback }              : {}),
+              ...(newCuratorLogin   !== undefined ? { curatorLogin: newCuratorLogin } : {}),
+            }
           : p,
       ),
     ),

@@ -94,11 +94,15 @@ module.exports.handler = async function (event) {
         TableName: 'submitted_projects',
         Key: { id },
       }))
+      const { curatorLogin: newCuratorLogin } = body
       if (found.Item) {
         const project = JSON.parse(found.Item.data)
         project.status = status
         if (curatorFeedback !== undefined && curatorFeedback !== null) {
           project.curatorFeedback = curatorFeedback
+        }
+        if (newCuratorLogin !== undefined) {
+          project.curatorLogin = newCuratorLogin
         }
         await ddb.send(new PutCommand({
           TableName: 'submitted_projects',
