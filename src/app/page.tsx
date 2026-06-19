@@ -35,43 +35,78 @@ export default function HomePage() {
 
           {/* Animated background */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
-            {/* Large soft orbs */}
-            <div className="float-slow absolute w-[600px] h-[600px] -top-[180px] -right-[120px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(43,59,107,0.08) 0%, transparent 70%)' }} />
-            <div className="float-med absolute w-[400px] h-[400px] top-[30%] -left-[100px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(76,29,149,0.06) 0%, transparent 70%)' }} />
-            <div className="float-x absolute w-[350px] h-[350px] bottom-[5%] right-[10%] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(43,59,107,0.05) 0%, transparent 70%)' }} />
 
-            {/* Floating bubbles — larger and more dynamic */}
-            <div className="bubble-a absolute w-40 h-40 rounded-full"
-              style={{ top: '10%', right: '18%',
-                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.6), rgba(43,59,107,0.08))',
-                border: '2px solid rgba(43,59,107,0.14)' }} />
-            <div className="bubble-b absolute w-24 h-24 rounded-full"
-              style={{ top: '38%', left: '5%',
-                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.55), rgba(76,29,149,0.09))',
-                border: '2px solid rgba(76,29,149,0.16)' }} />
-            <div className="bubble-c absolute w-16 h-16 rounded-full"
-              style={{ top: '65%', left: '40%',
-                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.65), rgba(43,59,107,0.07))',
-                border: '1.5px solid rgba(43,59,107,0.13)' }} />
-            <div className="bubble-d absolute w-28 h-28 rounded-full"
-              style={{ top: '16%', left: '34%',
-                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.5), rgba(76,29,149,0.07))',
-                border: '2px solid rgba(76,29,149,0.12)' }} />
-            <div className="bubble-e absolute w-32 h-32 rounded-full"
-              style={{ bottom: '15%', right: '14%',
-                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.55), rgba(43,59,107,0.08))',
-                border: '2px solid rgba(43,59,107,0.15)' }} />
-            <div className="bubble-f absolute w-12 h-12 rounded-full"
-              style={{ top: '52%', right: '28%',
-                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.7), rgba(76,29,149,0.1))',
-                border: '1.5px solid rgba(76,29,149,0.18)' }} />
-            <div className="bubble-g absolute w-20 h-20 rounded-full"
-              style={{ bottom: '28%', left: '18%',
-                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.55), rgba(43,59,107,0.07))',
-                border: '2px solid rgba(43,59,107,0.13)' }} />
+            {/* Morphing blobs — large coloured shapes that shift */}
+            <div className="blob-navy absolute w-[420px] h-[420px]"
+              style={{ top: '-100px', right: '-80px',
+                background: 'radial-gradient(circle at 38% 38%, rgba(43,59,107,0.26), rgba(79,106,208,0.06) 72%)',
+                filter: 'blur(55px)' }} />
+            <div className="blob-violet absolute w-[320px] h-[320px]"
+              style={{ top: '38%', left: '-80px',
+                background: 'radial-gradient(circle at 55% 38%, rgba(76,29,149,0.22), rgba(139,92,246,0.05) 72%)',
+                filter: 'blur(45px)' }} />
+            <div className="blob-accent absolute w-[240px] h-[240px]"
+              style={{ bottom: '6%', right: '10%',
+                background: 'radial-gradient(circle at 42% 42%, rgba(76,29,149,0.18), rgba(43,59,107,0.05) 72%)',
+                filter: 'blur(38px)' }} />
+
+            {/* Concentric orbit system — anchored to right side */}
+            <div style={{ position: 'absolute', top: 'calc(50% - 170px)', right: '3%',
+              width: '340px', height: '340px' }}>
+
+              {/* Outer ring — navy, slow */}
+              <div className="orbit-slow" style={{ position: 'absolute', inset: 0,
+                borderRadius: '50%', border: '1.5px solid rgba(43,59,107,0.22)' }}>
+                <div style={{ position: 'absolute', top: '-5px', left: 'calc(50% - 5px)',
+                  width: '10px', height: '10px', borderRadius: '50%', background: '#2B3B6B',
+                  boxShadow: '0 0 12px rgba(43,59,107,0.9), 0 0 28px rgba(43,59,107,0.4)' }} />
+              </div>
+
+              {/* Middle ring — violet, medium reverse */}
+              <div className="orbit-med" style={{ position: 'absolute', inset: '65px',
+                borderRadius: '50%', border: '1.5px solid rgba(76,29,149,0.28)' }}>
+                <div style={{ position: 'absolute', top: '-4px', left: 'calc(50% - 4px)',
+                  width: '8px', height: '8px', borderRadius: '50%', background: '#4C1D95',
+                  boxShadow: '0 0 10px rgba(76,29,149,1), 0 0 22px rgba(76,29,149,0.45)' }} />
+              </div>
+
+              {/* Inner ring — navy, fast */}
+              <div className="orbit-fast" style={{ position: 'absolute', inset: '118px',
+                borderRadius: '50%', border: '1.5px solid rgba(43,59,107,0.35)' }}>
+                <div style={{ position: 'absolute', top: '-3px', left: 'calc(50% - 3px)',
+                  width: '6px', height: '6px', borderRadius: '50%', background: '#2B3B6B',
+                  boxShadow: '0 0 8px rgba(43,59,107,1), 0 0 18px rgba(43,59,107,0.6)' }} />
+              </div>
+
+              {/* Nucleus */}
+              <div style={{ position: 'absolute', top: 'calc(50% - 7px)', left: 'calc(50% - 7px)',
+                width: '14px', height: '14px', borderRadius: '50%',
+                background: 'radial-gradient(circle at 35% 35%, #7c6fd0, #2B3B6B)',
+                boxShadow: '0 0 18px rgba(76,29,149,0.7), 0 0 36px rgba(43,59,107,0.35)' }} />
+            </div>
+
+            {/* Scattered pulsing glow nodes */}
+            <div className="pulse-dot absolute w-3 h-3 rounded-full"
+              style={{ top: '18%', right: '34%', background: '#2B3B6B',
+                boxShadow: '0 0 0 5px rgba(43,59,107,0.12)' }} />
+            <div className="pulse-dot absolute w-2.5 h-2.5 rounded-full"
+              style={{ top: '62%', left: '10%', background: '#4C1D95',
+                boxShadow: '0 0 0 4px rgba(76,29,149,0.14)', animationDelay: '0.7s' }} />
+            <div className="pulse-dot absolute w-2 h-2 rounded-full"
+              style={{ top: '42%', left: '30%', background: '#2B3B6B',
+                boxShadow: '0 0 0 4px rgba(43,59,107,0.12)', animationDelay: '1.4s' }} />
+            <div className="pulse-dot absolute w-2.5 h-2.5 rounded-full"
+              style={{ bottom: '24%', right: '24%', background: '#4C1D95',
+                boxShadow: '0 0 0 5px rgba(76,29,149,0.12)', animationDelay: '2.1s' }} />
+            <div className="pulse-dot absolute w-2 h-2 rounded-full"
+              style={{ top: '74%', right: '42%', background: '#2B3B6B',
+                boxShadow: '0 0 0 3px rgba(43,59,107,0.15)', animationDelay: '0.4s' }} />
+            <div className="pulse-dot absolute w-2 h-2 rounded-full"
+              style={{ top: '26%', left: '18%', background: '#4C1D95',
+                boxShadow: '0 0 0 3px rgba(76,29,149,0.15)', animationDelay: '1.9s' }} />
+            <div className="pulse-dot absolute w-1.5 h-1.5 rounded-full"
+              style={{ top: '50%', right: '20%', background: '#4C1D95',
+                boxShadow: '0 0 0 3px rgba(76,29,149,0.12)', animationDelay: '0.9s' }} />
 
             {/* Grid texture */}
             <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">

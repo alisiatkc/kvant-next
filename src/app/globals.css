@@ -31,26 +31,32 @@
 .anim-d3 { animation-delay: 0.38s; }
 .anim-d4 { animation-delay: 0.52s; }
 
-/* Large orbs */
-.float-slow { animation: floatY 7s ease-in-out infinite; }
-.float-med  { animation: floatY 5s ease-in-out infinite 1.5s; }
-.float-x    { animation: floatX 9s ease-in-out infinite; }
-
-/* Bubble keyframes — large energetic 2-D drift */
-@keyframes floatFree {
-  0%,  100% { transform: translate(0px,  0px)   scale(1); }
-  20%        { transform: translate(18px, -48px)  scale(1.07); }
-  45%        { transform: translate(-14px,-65px)  scale(0.93); }
-  70%        { transform: translate(22px, -35px)  scale(1.05); }
+/* Morphing blob shapes */
+@keyframes morphBlob {
+  0%, 100% { border-radius: 65% 35% 70% 30% / 45% 60% 40% 55%; }
+  33%       { border-radius: 35% 65% 30% 70% / 60% 40% 55% 45%; }
+  66%       { border-radius: 55% 45% 42% 58% / 38% 65% 52% 48%; }
 }
 
-.bubble-a { animation: floatFree 5s  ease-in-out infinite; }
-.bubble-b { animation: floatFree 7s  ease-in-out infinite 1.5s; }
-.bubble-c { animation: floatFree 4.5s ease-in-out infinite 0.8s; }
-.bubble-d { animation: floatFree 8s  ease-in-out infinite 3s; }
-.bubble-e { animation: floatFree 6s  ease-in-out infinite 0.3s; }
-.bubble-f { animation: floatFree 4s  ease-in-out infinite 2s; }
-.bubble-g { animation: floatFree 9s  ease-in-out infinite 1.2s; }
+/* Orbit rings spin */
+@keyframes orbitSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Glow node pulse */
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%       { opacity: 1;    transform: scale(2); }
+}
+
+.blob-navy   { animation: morphBlob 9s  ease-in-out infinite; }
+.blob-violet { animation: morphBlob 13s ease-in-out infinite 2s; }
+.blob-accent { animation: morphBlob 7s  ease-in-out infinite 4s; }
+.orbit-slow  { animation: orbitSpin 22s linear infinite; }
+.orbit-med   { animation: orbitSpin 14s linear infinite reverse; }
+.orbit-fast  { animation: orbitSpin 7s  linear infinite; }
+.pulse-dot   { animation: pulseDot  2.8s ease-in-out infinite; }
 
 @layer base {
   html {
