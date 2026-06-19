@@ -32,7 +32,18 @@ type ApprobationRecord = {
   whatWorked: string; whatNeedsWork: string; recommendations: string
 }
 type AiMessage = { id: string; role: 'user' | 'assistant'; text: string; time: string }
-type Tab = 'overview' | 'passport' | 'tasks' | 'files' | 'ai' | 'notes' | 'approbation' | 'workshops'
+type Tab = 'overview' | 'passport' | 'tasks' | 'sprints' | 'files' | 'ai' | 'notes' | 'approbation' | 'workshops'
+
+type Sprint = {
+  id: string
+  name: string
+  goal: string
+  startDate: string
+  endDate: string
+  status: 'planned' | 'active' | 'completed'
+  retroNotes: string
+  createdAt: string
+}
 
 const AI_QUESTIONS: Record<string, string[]> = {
   математика:  ['Удалось ли организовать обсуждение решений?', 'Насколько задания связаны с реальной жизнью?', 'Какие трудности возникли у учеников?', 'Хотели бы вы использовать комплект снова?'],
@@ -60,6 +71,7 @@ const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: str
   { id: 'overview',    label: 'Обзор',           Icon: LayoutDashboard },
   { id: 'passport',    label: 'Паспорт проекта', Icon: ClipboardList },
   { id: 'tasks',       label: 'Трекер задач',    Icon: CheckCircle2 },
+  { id: 'sprints',     label: 'Спринты',         Icon: RefreshCw },
   { id: 'files',       label: 'Рабочие файлы',   Icon: FolderOpen },
   { id: 'ai',          label: 'ИИ-ассистент',    Icon: Bot },
   { id: 'notes',       label: 'Заметки',         Icon: BookOpen },
@@ -199,6 +211,16 @@ export default function CabinetPage() {
   // ── workshops modal ───────────────────────────────────────────────────────
   const [selectedWorkshop, setSelectedWorkshop] = useState<(typeof workshops)[0] | null>(null)
 
+  // ── sprints ───────────────────────────────────────────────────────────────
+  const [sprints,         setSprints]         = useState<Sprint[]>([])
+  const [showSprintModal, setShowSprintModal] = useState(false)
+  const [editingSprint,   setEditingSprint]   = useState<Sprint | null>(null)
+  const [expandedSprint,  setExpandedSprint]  = useState<string | null>(null)
+  const [sprintName,      setSprintName]      = useState('')
+  const [sprintGoal,      setSprintGoal]      = useState('')
+  const [sprintStart,     setSprintStart]     = useState('')
+  const [sprintEnd,       setSprintEnd]       = useState('')
+
   // ── author modal ──────────────────────────────────────────────────────────
   const [showAuthorModal, setShowAuthorModal] = useState(false)
   const [newAuthorInput,  setNewAuthorInput]  = useState('')
@@ -211,6 +233,8 @@ export default function CabinetPage() {
     setTasks(savedTasks ? JSON.parse(savedTasks) : [])
     const savedFiles = localStorage.getItem(teamKey('cabinet_files', code))
     setFiles(savedFiles ? JSON.parse(savedFiles) : [])
+    const savedSprints = localStorage.getItem(teamKey('cabinet_sprints', code))
+    setSprints(savedSprints ? JSON.parse(savedSprints) : [])
     setNotes(         localStorage.getItem(teamKey('cabinet_notes',         code)) || '')
     setProjectName(   localStorage.getItem(teamKey('cabinet_projectName',   code)) || '')
     setProjectBlock(  localStorage.getItem(teamKey('cabinet_projectBlock',  code)) || '')
@@ -287,6 +311,9 @@ export default function CabinetPage() {
   useEffect(() => {
     if (teamCode) try { localStorage.setItem(teamKey('cabinet_files', teamCode), JSON.stringify(files)) } catch {}
   }, [files, teamCode])
+  useEffect(() => {
+    if (teamCode) try { localStorage.setItem(teamKey('cabinet_sprints', teamCode), JSON.stringify(sprints)) } catch {}
+  }, [sprints, teamCode])
   useEffect(() => {
     if (loggedIn && teamCode) try { localStorage.setItem(teamKey('cabinet_authors', teamCode), JSON.stringify(authors)) } catch {}
   }, [authors, loggedIn, teamCode])
@@ -482,6 +509,51 @@ export default function CabinetPage() {
       }])
     }
     setShowTaskModal(false)
+  }
+
+  const resetSprintForm = () => {
+    setSprintName(''); setSprintGoal(''); setSprintStart(''); setSprintEnd('')
+    setEditingSprint(null)
+  }
+
+  const openSprint = (sprint?: Sprint) => {
+    if (sprint) {
+      setEditingSprint(sprint); setSprintName(sprint.name); setSprintGoal(sprint.goal)
+      setSprintStart(sprint.startDate); setSprintEnd(sprint.endDate)
+    } else {
+      resetSprintForm()
+    }
+    setShowSprintModal(true)
+  }
+
+  const saveSprint = () => {
+    if (!sprintName.trim()) return
+    if (editingSprint) {
+      setSprints((p) => p.map((s) => s.id === editingSprint.id
+        ? { ...s, name: sprintName, goal: sprintGoal, startDate: sprintStart, endDate: sprintEnd }
+        : s))
+    } else {
+      setSprints((p) => [...p, {
+        id: Date.now().toString(), name: sprintName, goal: sprintGoal,
+        startDate: sprintStart, endDate: sprintEnd,
+        status: 'planned', retroNotes: '', createdAt: new Date().toISOString(),
+      }])
+    }
+    setShowSprintModal(false)
+    resetSprintForm()
+  }
+
+  const deleteSprint = (id: string) => {
+    setSprints((p) => p.filter((s) => s.id !== id))
+    if (expandedSprint === id) setExpandedSprint(null)
+  }
+
+  const updateSprintStatus = (id: string, status: Sprint['status']) => {
+    setSprints((p) => p.map((s) => s.id === id ? { ...s, status } : s))
+  }
+
+  const updateSprintRetro = (id: string, notes: string) => {
+    setSprints((p) => p.map((s) => s.id === id ? { ...s, retroNotes: notes } : s))
   }
 
   const sendAiMessage = () => {
@@ -1186,6 +1258,154 @@ export default function CabinetPage() {
                 </div>
               )}
 
+              {/* ── SPRINTS ───────────────────────────────────────────────── */}
+              {activeTab === 'sprints' && (
+                <div className="space-y-5">
+                  <div className="bg-white rounded-[2.5rem] p-8">
+                    <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+                      <div>
+                        <h3 className="text-[1.3rem] font-semibold mb-1">Спринты команды</h3>
+                        <p className="text-kv-muted text-sm">Планируйте итерации и фиксируйте ретроспективу</p>
+                      </div>
+                      <button className="btn-blue flex-shrink-0" onClick={() => openSprint()}>
+                        <Plus className="w-4 h-4" /> Новый спринт
+                      </button>
+                    </div>
+
+                    {sprints.length === 0 ? (
+                      <div className="text-center py-14 text-kv-muted">
+                        <RefreshCw className="w-10 h-10 mx-auto mb-4 opacity-20" />
+                        <p className="font-medium mb-1">Спринтов пока нет</p>
+                        <p className="text-sm">Создайте первый спринт для планирования итерации</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {sprints.map((s) => {
+                          const isOpen = expandedSprint === s.id
+                          const statusCfg = {
+                            planned:   { label: 'Запланирован', bg: 'bg-[#f1f5f9]',   color: 'text-[#475569]' },
+                            active:    { label: 'Активен',      bg: 'bg-[#eff6ff]',   color: 'text-[#2563eb]' },
+                            completed: { label: 'Завершён',     bg: 'bg-[#f0fdf4]',   color: 'text-[#16a34a]' },
+                          }[s.status]
+                          return (
+                            <div key={s.id} className="border border-kv-border rounded-[1.75rem] overflow-hidden">
+                              <button
+                                className="w-full flex items-center justify-between px-6 py-4 text-left cursor-pointer bg-transparent border-none hover:bg-kv-light/50 transition-colors"
+                                onClick={() => setExpandedSprint(isOpen ? null : s.id)}
+                              >
+                                <div className="flex items-center gap-4 min-w-0">
+                                  <div className="w-9 h-9 rounded-xl bg-kv-light flex items-center justify-center flex-shrink-0">
+                                    <RefreshCw className="w-4 h-4 text-kv-blue" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-[0.95rem] leading-tight truncate">{s.name}</p>
+                                    {(s.startDate || s.endDate) && (
+                                      <p className="text-xs text-kv-muted mt-0.5">
+                                        {s.startDate ? new Date(s.startDate).toLocaleDateString('ru-RU') : '?'}
+                                        {' — '}
+                                        {s.endDate ? new Date(s.endDate).toLocaleDateString('ru-RU') : '?'}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                                  <span className={`text-xs font-medium px-3 py-1 rounded-full ${statusCfg.bg} ${statusCfg.color}`}>
+                                    {statusCfg.label}
+                                  </span>
+                                  <span className={`text-kv-muted transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+                                </div>
+                              </button>
+
+                              {isOpen && (
+                                <div className="px-6 pb-6 border-t border-kv-border/50 pt-5 space-y-4">
+                                  {s.goal && (
+                                    <div>
+                                      <p className="text-xs font-semibold uppercase tracking-widest text-kv-muted mb-1">Цель спринта</p>
+                                      <p className="text-sm text-kv-dark leading-relaxed">{s.goal}</p>
+                                    </div>
+                                  )}
+
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-kv-muted mb-2">Статус</p>
+                                    <div className="flex gap-2 flex-wrap">
+                                      {(['planned', 'active', 'completed'] as const).map((st) => {
+                                        const cfg = { planned: 'Запланирован', active: 'Активен', completed: 'Завершён' }
+                                        return (
+                                          <button key={st}
+                                            className={`px-4 py-1.5 rounded-full text-xs font-medium border cursor-pointer transition-all ${s.status === st ? 'bg-kv-blue text-white border-kv-blue' : 'bg-white text-kv-muted border-kv-border hover:bg-kv-light'}`}
+                                            onClick={() => updateSprintStatus(s.id, st)}>
+                                            {cfg[st]}
+                                          </button>
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  {s.status === 'completed' && (
+                                    <div>
+                                      <p className="text-xs font-semibold uppercase tracking-widest text-kv-muted mb-2">Ретроспектива</p>
+                                      <textarea
+                                        className="textarea-kv text-sm"
+                                        rows={3}
+                                        placeholder="Что прошло хорошо? Что улучшить в следующем спринте?"
+                                        value={s.retroNotes}
+                                        onChange={(e) => updateSprintRetro(s.id, e.target.value)}
+                                      />
+                                    </div>
+                                  )}
+
+                                  <div className="flex gap-2 pt-1">
+                                    <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium bg-kv-light border-none cursor-pointer hover:bg-[#e2e8f0] transition-colors text-kv-dark"
+                                      onClick={() => openSprint(s)}>
+                                      <Edit2 className="w-3 h-3" /> Редактировать
+                                    </button>
+                                    <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium bg-[#fef2f2] text-[#dc2626] border-none cursor-pointer hover:bg-[#fee2e2] transition-colors"
+                                      onClick={() => deleteSprint(s.id)}>
+                                      <Trash2 className="w-3 h-3" /> Удалить
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {showSprintModal && (
+                    <div className="modal-overlay" onClick={() => { setShowSprintModal(false); resetSprintForm() }}>
+                      <div className="bg-white max-w-[480px] w-full min-[640px]:w-[90%] rounded-t-[2rem] min-[640px]:rounded-[2.5rem] p-7 min-[640px]:p-10 relative" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close-btn" onClick={() => { setShowSprintModal(false); resetSprintForm() }}>
+                          <X size={20} />
+                        </button>
+                        <h3 className="text-[1.8rem] font-semibold mb-6">{editingSprint ? 'Редактировать' : 'Новый спринт'}</h3>
+                        <input className="input-kv mb-4" placeholder="Название спринта" value={sprintName}
+                          onChange={(e) => setSprintName(e.target.value)} autoFocus />
+                        <textarea className="textarea-kv mb-4" placeholder="Цель спринта" rows={2}
+                          value={sprintGoal} onChange={(e) => setSprintGoal(e.target.value)} />
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                          <div>
+                            <label className="block text-xs text-kv-muted mb-1.5 font-medium">Начало</label>
+                            <input type="date" className="input-kv" value={sprintStart}
+                              onChange={(e) => setSprintStart(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-kv-muted mb-1.5 font-medium">Конец</label>
+                            <input type="date" className="input-kv" value={sprintEnd}
+                              onChange={(e) => setSprintEnd(e.target.value)} />
+                          </div>
+                        </div>
+                        <button className="w-full py-3.5 bg-kv-blue text-white rounded-full border-none cursor-pointer font-medium hover:bg-kv-dark transition-colors"
+                          onClick={saveSprint}>
+                          {editingSprint ? 'Сохранить' : 'Создать спринт'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* ── WORKSHOPS ─────────────────────────────────────────────── */}
               {activeTab === 'workshops' && (
                 <div className="space-y-5">
@@ -1228,8 +1448,8 @@ export default function CabinetPage() {
                 </div>
               )}
 
-              {/* Publish CTA bar — always visible (except overview, approbation, workshops) */}
-              {activeTab !== 'overview' && activeTab !== 'approbation' && activeTab !== 'workshops' && (
+              {/* Publish CTA bar — always visible (except overview, approbation, workshops, sprints) */}
+              {activeTab !== 'overview' && activeTab !== 'approbation' && activeTab !== 'workshops' && activeTab !== 'sprints' && (
                 <div className="bg-kv-light rounded-[2rem] px-7 py-5 flex items-center justify-between flex-wrap gap-4">
                   <div>
                     <h4 className="font-semibold mb-0.5 text-sm">Отправить куратору</h4>

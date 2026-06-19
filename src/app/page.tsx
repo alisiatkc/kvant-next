@@ -43,35 +43,35 @@ export default function HomePage() {
             <div className="float-x absolute w-[350px] h-[350px] bottom-[5%] right-[10%] rounded-full"
               style={{ background: 'radial-gradient(circle, rgba(43,59,107,0.05) 0%, transparent 70%)' }} />
 
-            {/* Floating bubbles */}
-            <div className="bubble-a absolute w-24 h-24 rounded-full"
-              style={{ top: '12%', right: '22%',
-                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.55), rgba(43,59,107,0.06))',
-                border: '1.5px solid rgba(43,59,107,0.12)' }} />
-            <div className="bubble-b absolute w-14 h-14 rounded-full"
-              style={{ top: '40%', left: '7%',
-                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5), rgba(76,29,149,0.07))',
-                border: '1.5px solid rgba(76,29,149,0.13)' }} />
-            <div className="bubble-c absolute w-9 h-9 rounded-full"
-              style={{ top: '68%', left: '42%',
-                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.6), rgba(43,59,107,0.05))',
-                border: '1px solid rgba(43,59,107,0.11)' }} />
-            <div className="bubble-d absolute w-16 h-16 rounded-full"
-              style={{ top: '18%', left: '38%',
-                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.45), rgba(76,29,149,0.05))',
-                border: '1.5px solid rgba(76,29,149,0.1)' }} />
-            <div className="bubble-e absolute w-20 h-20 rounded-full"
-              style={{ bottom: '20%', right: '18%',
-                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5), rgba(43,59,107,0.06))',
+            {/* Floating bubbles — larger and more dynamic */}
+            <div className="bubble-a absolute w-40 h-40 rounded-full"
+              style={{ top: '10%', right: '18%',
+                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.6), rgba(43,59,107,0.08))',
+                border: '2px solid rgba(43,59,107,0.14)' }} />
+            <div className="bubble-b absolute w-24 h-24 rounded-full"
+              style={{ top: '38%', left: '5%',
+                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.55), rgba(76,29,149,0.09))',
+                border: '2px solid rgba(76,29,149,0.16)' }} />
+            <div className="bubble-c absolute w-16 h-16 rounded-full"
+              style={{ top: '65%', left: '40%',
+                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.65), rgba(43,59,107,0.07))',
                 border: '1.5px solid rgba(43,59,107,0.13)' }} />
-            <div className="bubble-f absolute w-6 h-6 rounded-full"
-              style={{ top: '55%', right: '32%',
-                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.7), rgba(76,29,149,0.08))',
-                border: '1px solid rgba(76,29,149,0.14)' }} />
-            <div className="bubble-g absolute w-11 h-11 rounded-full"
-              style={{ bottom: '32%', left: '22%',
-                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5), rgba(43,59,107,0.05))',
-                border: '1.5px solid rgba(43,59,107,0.1)' }} />
+            <div className="bubble-d absolute w-28 h-28 rounded-full"
+              style={{ top: '16%', left: '34%',
+                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.5), rgba(76,29,149,0.07))',
+                border: '2px solid rgba(76,29,149,0.12)' }} />
+            <div className="bubble-e absolute w-32 h-32 rounded-full"
+              style={{ bottom: '15%', right: '14%',
+                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.55), rgba(43,59,107,0.08))',
+                border: '2px solid rgba(43,59,107,0.15)' }} />
+            <div className="bubble-f absolute w-12 h-12 rounded-full"
+              style={{ top: '52%', right: '28%',
+                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.7), rgba(76,29,149,0.1))',
+                border: '1.5px solid rgba(76,29,149,0.18)' }} />
+            <div className="bubble-g absolute w-20 h-20 rounded-full"
+              style={{ bottom: '28%', left: '18%',
+                background: 'radial-gradient(circle at 32% 32%, rgba(255,255,255,0.55), rgba(43,59,107,0.07))',
+                border: '2px solid rgba(43,59,107,0.13)' }} />
 
             {/* Grid texture */}
             <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
