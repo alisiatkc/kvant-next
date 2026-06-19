@@ -15,10 +15,10 @@ export default function DocsSection() {
   return (
     <section className="section-kv">
       <div className="container-kv">
-        <h2 className="text-[2.8rem] font-medium tracking-tight mb-8">Правила и документы</h2>
-        <p className="text-xl font-light text-kv-text max-w-[700px] mb-12">Нажмите на карточку, чтобы открыть файл</p>
+        <h2 className="text-[clamp(1.6rem,5vw,2.8rem)] font-medium tracking-tight mb-4">Правила и документы</h2>
+        <p className="text-base min-[640px]:text-xl font-light text-kv-text max-w-[700px] mb-8 min-[640px]:mb-12">Нажмите на карточку, чтобы открыть файл</p>
 
-        <div className="grid grid-cols-5 gap-5 max-[900px]:grid-cols-3 max-[600px]:grid-cols-2">
+        <div className="grid grid-cols-2 min-[640px]:grid-cols-3 min-[900px]:grid-cols-5 gap-3 min-[640px]:gap-5">
           {docs.map((doc) => {
             const Icon = iconMap[doc.icon] ?? FileText
             return (

@@ -46,45 +46,45 @@
 
 @layer components {
   .container-kv {
-    @apply max-w-[1280px] mx-auto px-8;
+    @apply max-w-[1280px] mx-auto px-4 min-[640px]:px-8;
   }
   .section-kv {
-    @apply py-24 border-b border-black/[0.03];
+    @apply py-14 min-[640px]:py-24 border-b border-black/[0.03];
   }
   .btn-primary {
-    @apply inline-block bg-kv-dark text-white px-10 py-3.5 rounded-full font-medium transition-colors duration-200 hover:bg-kv-blue no-underline;
+    @apply inline-block bg-kv-dark text-white px-8 py-3.5 rounded-full font-medium transition-colors duration-200 hover:bg-kv-blue no-underline;
   }
   .btn-outline {
-    @apply inline-block bg-transparent text-kv-dark px-10 py-3.5 rounded-full font-medium border border-[#cdd6e4] transition-colors duration-200 hover:bg-kv-light no-underline;
+    @apply inline-block bg-transparent text-kv-dark px-8 py-3.5 rounded-full font-medium border border-[#cdd6e4] transition-colors duration-200 hover:bg-kv-light no-underline;
   }
   .card-kv {
-    @apply bg-white rounded-4xl p-10 shadow-card border border-kv-border;
+    @apply bg-white rounded-4xl p-7 min-[640px]:p-10 shadow-card border border-kv-border;
   }
   .modal-overlay {
-    @apply fixed inset-0 bg-[rgba(15,18,28,0.7)] backdrop-blur-sm flex items-center justify-center z-[1000];
+    @apply fixed inset-0 bg-[rgba(15,18,28,0.7)] backdrop-blur-sm flex items-end min-[640px]:items-center justify-center z-[1000];
   }
   .modal-box {
-    @apply bg-white max-w-[600px] w-[90%] rounded-[3rem] p-[50px] relative shadow-modal;
+    @apply bg-white max-w-[600px] w-full min-[640px]:w-[90%] rounded-t-[2rem] min-[640px]:rounded-[3rem] p-7 min-[640px]:p-[50px] relative shadow-modal max-h-[92vh] overflow-y-auto;
   }
   .modal-close-btn {
-    @apply absolute top-6 right-7 bg-transparent border-none text-[#7c7f93] text-[2rem] leading-none cursor-pointer hover:text-kv-dark transition-colors;
+    @apply absolute top-5 right-5 min-[640px]:top-6 min-[640px]:right-7 bg-kv-light border-none w-9 h-9 rounded-full flex items-center justify-center text-[#7c7f93] cursor-pointer hover:text-kv-dark hover:bg-[#e2e8f0] transition-colors;
   }
   .tag-kv {
     @apply bg-kv-light text-kv-dark px-4 py-1.5 rounded-full text-sm font-medium inline-block;
   }
   .input-kv {
-    @apply w-full px-6 py-4 border border-[#e2e8f0] rounded-full font-sans text-base bg-[#f9fcff] outline-none transition-shadow focus:border-kv-blue focus:ring-2 focus:ring-kv-blue/20;
+    @apply w-full px-5 min-[640px]:px-6 py-3.5 min-[640px]:py-4 border border-[#e2e8f0] rounded-full font-sans text-base bg-[#f9fcff] outline-none transition-shadow focus:border-kv-blue focus:ring-2 focus:ring-kv-blue/20;
   }
   .textarea-kv {
     @apply w-full px-5 py-3.5 border border-[#e2e8f0] rounded-[1.5rem] font-sans text-base bg-[#f9fcff] outline-none resize-y transition-shadow focus:border-kv-blue focus:ring-2 focus:ring-kv-blue/20 min-h-[100px];
   }
   .btn-blue {
-    @apply bg-kv-blue text-white border-none rounded-full px-8 py-3.5 font-medium cursor-pointer transition-colors hover:bg-kv-dark flex items-center gap-2.5;
+    @apply bg-kv-blue text-white border-none rounded-full px-6 min-[640px]:px-8 py-3 min-[640px]:py-3.5 font-medium cursor-pointer transition-colors hover:bg-kv-dark flex items-center gap-2.5 text-sm min-[640px]:text-base;
   }
   .btn-ai {
-    @apply bg-ai-primary text-white border-none rounded-full px-8 py-3.5 font-medium cursor-pointer transition-colors hover:bg-ai-dark flex items-center gap-2.5;
+    @apply bg-ai-primary text-white border-none rounded-full px-6 min-[640px]:px-8 py-3 min-[640px]:py-3.5 font-medium cursor-pointer transition-colors hover:bg-ai-dark flex items-center gap-2.5;
   }
   .status-badge {
-    @apply inline-flex items-center gap-2 px-5 py-2 rounded-full font-medium text-sm;
+    @apply inline-flex items-center gap-1.5 px-3 min-[640px]:px-5 py-1.5 min-[640px]:py-2 rounded-full font-medium text-xs min-[640px]:text-sm;
   }
 }

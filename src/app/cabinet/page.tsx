@@ -523,7 +523,7 @@ export default function CabinetPage() {
       <>
         <Header active="cabinet" />
         <main>
-          <div className="bg-white rounded-[3rem] px-[50px] py-[60px] max-w-[520px] mx-auto my-16 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)]">
+          <div className="bg-white rounded-[2rem] min-[640px]:rounded-[3rem] px-6 py-8 min-[640px]:px-[50px] min-[640px]:py-[60px] max-w-[520px] mx-auto my-8 min-[640px]:my-16 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)]">
             <Link href="/" className="flex items-center gap-2 text-kv-blue font-medium no-underline mb-8 text-sm">
               <ArrowLeft className="w-4 h-4" /> На главную
             </Link>
@@ -601,7 +601,7 @@ export default function CabinetPage() {
       <>
         <Header active="cabinet" />
         <main>
-          <div className="bg-white rounded-[3rem] px-[50px] py-[60px] max-w-[580px] mx-auto my-16 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)]">
+          <div className="bg-white rounded-[2rem] min-[640px]:rounded-[3rem] px-6 py-8 min-[640px]:px-[50px] min-[640px]:py-[60px] max-w-[580px] mx-auto my-8 min-[640px]:my-16 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)]">
             <div className="w-12 h-12 rounded-2xl bg-kv-light flex items-center justify-center mb-6">
               <UsersIcon className="w-6 h-6 text-kv-blue" />
             </div>
@@ -917,7 +917,8 @@ export default function CabinetPage() {
                       <p className="text-xs mt-1">Создайте первую задачу, чтобы отслеживать работу над КОП</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1">
+                    <div className="overflow-x-auto -mx-2 px-2 pb-2">
+                    <div className="grid grid-cols-4 gap-3 min-w-[640px]">
                       {KANBAN_COLS.map(({ status, label, Icon, wipLimit, color }) => {
                         const colTasks = tasks.filter((t) => t.status === status)
                         const wipExceeded = wipLimit !== null && colTasks.length > wipLimit
@@ -982,6 +983,7 @@ export default function CabinetPage() {
                           </div>
                         )
                       })}
+                    </div>
                     </div>
                   )}
                 </div>
@@ -1210,7 +1212,7 @@ export default function CabinetPage() {
       {/* Author modal */}
       {showAuthorModal && (
         <div className="modal-overlay" onClick={() => setShowAuthorModal(false)}>
-          <div className="bg-white max-w-[420px] w-[90%] rounded-[2.5rem] p-10 relative" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white max-w-[420px] w-full min-[640px]:w-[90%] rounded-t-[2rem] min-[640px]:rounded-[2.5rem] p-7 min-[640px]:p-10 relative" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setShowAuthorModal(false)}><X size={20} /></button>
             <h3 className="text-[1.8rem] font-semibold mb-6">Добавить участника</h3>
             <input className="input-kv mb-5" placeholder="Имя и фамилия" value={newAuthorInput}
@@ -1227,7 +1229,7 @@ export default function CabinetPage() {
       {/* Task modal */}
       {showTaskModal && (
         <div className="modal-overlay" onClick={() => setShowTaskModal(false)}>
-          <div className="bg-white max-w-[480px] w-[90%] rounded-[2.5rem] p-10 relative" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white max-w-[480px] w-full min-[640px]:w-[90%] rounded-t-[2rem] min-[640px]:rounded-[2.5rem] p-7 min-[640px]:p-10 relative max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setShowTaskModal(false)}><X size={20} /></button>
             <h3 className="text-[1.8rem] font-semibold mb-6">{editingTask ? 'Редактировать' : 'Новая задача'}</h3>
             <input className="input-kv mb-4" placeholder="Название задачи" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} autoFocus />

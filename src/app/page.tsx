@@ -151,43 +151,43 @@ export default function HomePage() {
             </svg>
           </div>
 
-          <div className="container-kv relative z-10 py-32">
+          <div className="container-kv relative z-10 py-20 min-[640px]:py-32">
             {/* Badge */}
-            <div className="anim-fade-down mb-7">
-              <span className="inline-flex items-center gap-2 bg-white border border-kv-border rounded-full px-5 py-2 text-xs font-medium text-kv-blue shadow-card">
-                <span className="w-1.5 h-1.5 rounded-full bg-kv-blue inline-block" />
+            <div className="anim-fade-down mb-5 min-[640px]:mb-7">
+              <span className="inline-flex items-center gap-2 bg-white border border-kv-border rounded-full px-4 min-[640px]:px-5 py-2 text-[0.7rem] min-[640px]:text-xs font-medium text-kv-blue shadow-card">
+                <span className="w-1.5 h-1.5 rounded-full bg-kv-blue inline-block flex-shrink-0" />
                 Педагогический технопарк «Кванториум им. К.Д. Ушинского» · РГПУ им. А.И. Герцена
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="anim-fade-up anim-d1 text-[clamp(3.2rem,9vw,6rem)] font-semibold tracking-tight leading-[1.05] mb-6 max-w-[900px]">
+            <h1 className="anim-fade-up anim-d1 text-[clamp(2.4rem,8vw,6rem)] font-semibold tracking-tight leading-[1.05] mb-5 min-[640px]:mb-6">
               Создавайте КОП.<br />
               <span className="text-kv-blue">От идеи — до каталога.</span>
             </h1>
 
-            <p className="anim-fade-up anim-d2 text-[1.2rem] font-light text-kv-text mb-10 max-w-[600px] leading-relaxed">
+            <p className="anim-fade-up anim-d2 text-base min-[640px]:text-[1.2rem] font-light text-kv-text mb-8 min-[640px]:mb-10 max-w-[600px] leading-relaxed">
               Цифровая среда для практики студентов. Управляйте проектом по Agile, работайте с оборудованием технопарка и апробируйте результаты в реальных школах.
             </p>
 
-            <div className="anim-fade-up anim-d3 flex flex-wrap gap-3">
-              <Link href="/cabinet" className="btn-primary inline-flex items-center gap-2 text-[1rem]">
+            <div className="anim-fade-up anim-d3 flex flex-col min-[480px]:flex-row gap-3">
+              <Link href="/cabinet" className="btn-primary inline-flex items-center justify-center gap-2">
                 Войти в кабинет <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="#cycle" className="btn-outline inline-flex items-center gap-2 text-[1rem]">
+              <a href="#cycle" className="btn-outline inline-flex items-center justify-center gap-2">
                 Как это работает
               </a>
             </div>
 
             {/* Stats strip */}
-            <div className="anim-fade-up anim-d4 grid grid-cols-2 min-[600px]:grid-cols-4 gap-4 mt-16 max-w-[700px]">
+            <div className="anim-fade-up anim-d4 grid grid-cols-2 min-[600px]:grid-cols-4 gap-3 mt-10 min-[640px]:mt-16">
               {statItems.map(({ value, label, Icon }) => (
-                <div key={label} className="bg-white/80 backdrop-blur-sm rounded-[1.5rem] px-5 py-4 border border-kv-border">
+                <div key={label} className="bg-white/80 backdrop-blur-sm rounded-[1.25rem] min-[640px]:rounded-[1.5rem] px-4 min-[640px]:px-5 py-3 min-[640px]:py-4 border border-kv-border">
                   <div className="flex items-center gap-2 mb-1">
-                    <Icon className="w-3.5 h-3.5 text-kv-blue" />
-                    <span className="text-[1.5rem] font-bold text-kv-dark">{value}</span>
+                    <Icon className="w-3 h-3 min-[640px]:w-3.5 min-[640px]:h-3.5 text-kv-blue" />
+                    <span className="text-[1.2rem] min-[640px]:text-[1.5rem] font-bold text-kv-dark">{value}</span>
                   </div>
-                  <p className="text-kv-muted text-xs leading-tight">{label}</p>
+                  <p className="text-kv-muted text-[0.65rem] min-[640px]:text-xs leading-tight">{label}</p>
                 </div>
               ))}
             </div>
@@ -343,7 +343,7 @@ export default function HomePage() {
         {/* ── КОП ──────────────────────────────────────────────────────────── */}
         <section className="section-kv">
           <div className="container-kv">
-            <div className="bg-white rounded-[3rem] px-[60px] py-[70px] flex flex-wrap gap-[60px] items-center border border-kv-border shadow-card">
+            <div className="bg-white rounded-[2rem] min-[640px]:rounded-[3rem] px-6 py-8 min-[640px]:px-[60px] min-[640px]:py-[70px] flex flex-wrap gap-8 min-[640px]:gap-[60px] items-center border border-kv-border shadow-card">
               <div className="flex-[2] min-w-[300px]">
                 <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest block mb-4">Результат практики</span>
                 <h3 className="text-[clamp(1.7rem,4vw,2.5rem)] font-semibold mb-5 leading-tight">
@@ -420,7 +420,7 @@ export default function HomePage() {
         {/* ── КАТАЛОГ CTA ──────────────────────────────────────────────────── */}
         <section className="section-kv">
           <div className="container-kv">
-            <div className="relative bg-kv-dark rounded-[3rem] px-[60px] py-[70px] overflow-hidden">
+            <div className="relative bg-kv-dark rounded-[2rem] min-[640px]:rounded-[3rem] px-6 py-8 min-[640px]:px-[60px] min-[640px]:py-[70px] overflow-hidden">
               {/* Decorative blob */}
               <div className="absolute -right-24 -top-24 w-64 h-64 rounded-full opacity-10"
                 style={{ background: 'radial-gradient(circle, #4f6ad0, transparent 70%)' }} />
@@ -447,7 +447,7 @@ export default function HomePage() {
         {/* ── ПАРТНЁРСТВО ──────────────────────────────────────────────────── */}
         <section className="py-24 pt-0">
           <div className="container-kv">
-            <div className="bg-white rounded-[3rem] p-[60px] text-center border border-kv-border">
+            <div className="bg-white rounded-[2rem] min-[640px]:rounded-[3rem] p-7 min-[640px]:p-[60px] text-center border border-kv-border">
               <div className="w-14 h-14 rounded-2xl bg-kv-light flex items-center justify-center mx-auto mb-6">
                 <Users className="w-7 h-7 text-kv-blue" />
               </div>

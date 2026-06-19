@@ -418,15 +418,15 @@ export default function CuratorPage() {
       {/* Workspace modal */}
       {workspaceModal && (
         <div className="modal-overlay" onClick={() => setWorkspaceModal(null)}>
-          <div className="bg-white rounded-[2.5rem] w-[95%] max-w-[860px] max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-10 pt-10 pb-6 border-b border-kv-border sticky top-0 bg-white rounded-t-[2.5rem] z-10">
+          <div className="bg-white w-full min-[640px]:w-[95%] max-w-[860px] max-h-[92vh] overflow-y-auto rounded-t-[2rem] min-[640px]:rounded-[2.5rem]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 min-[640px]:px-10 pt-6 min-[640px]:pt-10 pb-5 min-[640px]:pb-6 border-b border-kv-border sticky top-0 bg-white rounded-t-[2rem] min-[640px]:rounded-t-[2.5rem] z-10">
               <div>
                 <h3 className="text-[1.5rem] font-semibold">{workspaceModal.project.teamName || '—'}</h3>
                 <p className="text-kv-muted text-sm mt-0.5">{workspaceModal.project.projectName || 'Без названия'} · Трек {workspaceModal.project.track}</p>
               </div>
               <button className="modal-close-btn static" onClick={() => setWorkspaceModal(null)}><X size={20} /></button>
             </div>
-            <div className="px-10 py-8 space-y-8">
+            <div className="px-6 min-[640px]:px-10 py-6 min-[640px]:py-8 space-y-6 min-[640px]:space-y-8">
 
               {/* Status */}
               <div className="flex items-center gap-3 flex-wrap">
