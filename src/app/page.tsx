@@ -2,8 +2,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import {
   Box, Calendar, Zap, MapPin, Globe, Mail, MessageCircle,
-  Hash, MessageSquare, Layers, Pencil, Hammer, Eye,
-  BarChart3, ArrowRight, Cpu, CheckCircle2, Users,
+  Hash, MessageSquare, ArrowRight, CheckCircle2, Users,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -12,109 +11,11 @@ import { contacts } from '@/data'
 const WorkshopsSection = dynamic(() => import('@/components/WorkshopsSection'), { ssr: false })
 const DocsSection      = dynamic(() => import('@/components/DocsSection'),      { ssr: false })
 const AIAssistant      = dynamic(() => import('@/components/AIAssistant'),      { ssr: false })
+const AgileSection     = dynamic(() => import('@/components/AgileSection'),     { ssr: false })
 
 const contactIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   MapPin, Globe, Mail, MessageCircle, Hash, MessageSquare,
 }
-
-const agileCycle = [
-  {
-    icon: Zap,
-    tag: 'Старт',
-    num: '01',
-    accent: '#3730A3',
-    accentBg: '#ECEFFE',
-    title: 'Идея и референсы',
-    desc: 'Команда формулирует тему КОП, исследует аналоги и изучает предметную область. Главный Agile-принцип: начать с вопроса «Какую образовательную проблему мы решаем?»',
-    tasks: [
-      'Формулировка темы и образовательной цели',
-      'Поиск и анализ аналогов и референсов',
-      'Определение целевой аудитории',
-      'Выбор подходящих технологий технопарка',
-    ],
-    result: 'Концепция КОП',
-  },
-  {
-    icon: Layers,
-    tag: 'Планирование',
-    num: '02',
-    accent: '#5B21B6',
-    accentBg: '#F0EBFF',
-    title: 'Бэклог и планирование',
-    desc: 'Создаётся бэклог — список всех задач, упорядоченных по приоритету. Команда распределяет роли, планирует спринты и договаривается о критериях готовности продукта.',
-    tasks: [
-      'Создание и приоритизация бэклога в КвантЛаб',
-      'Распределение ролей в команде',
-      'Заполнение паспорта проекта',
-      'Планирование итераций и дедлайнов',
-    ],
-    result: 'Бэклог + паспорт проекта',
-  },
-  {
-    icon: Hammer,
-    tag: 'Создание',
-    num: '03',
-    accent: '#1E40AF',
-    accentBg: '#EBF2FF',
-    title: 'Прототипирование',
-    desc: 'Команда работает с оборудованием технопарка и создаёт первый рабочий прототип. Ключевой принцип Agile: сделать работающее решение как можно быстрее и проверить гипотезы.',
-    tasks: [
-      'Работа на оборудовании технопарка',
-      'Изготовление элементов КОП',
-      'Сборка первого рабочего прототипа',
-      'Первичная самооценка и отладка',
-    ],
-    result: 'Рабочий прототип КОП',
-  },
-  {
-    icon: Eye,
-    tag: 'Ревью',
-    num: '04',
-    accent: '#075985',
-    accentBg: '#E0F5FA',
-    title: 'Тестирование и обратная связь',
-    desc: 'Команда демонстрирует прототип куратору через КвантЛаб и получает детальные комментарии. Непрерывная обратная связь — топливо Agile-итераций.',
-    tasks: [
-      'Публикация прототипа в КвантЛаб',
-      'Ревью куратора и сбор замечаний',
-      'Анализ и приоритизация правок',
-      'Постановка задач на следующую итерацию',
-    ],
-    result: 'Список правок от куратора',
-  },
-  {
-    icon: Pencil,
-    tag: 'Апробация',
-    num: '05',
-    accent: '#0F6B62',
-    accentBg: '#E4F7F6',
-    title: 'Апробация и доработка',
-    desc: 'Доработанный КОП тестируется в реальных образовательных условиях. Команда посещает образовательное учреждение, фиксирует реакцию участников и вносит финальные правки.',
-    tasks: [
-      'Проведение занятия в образовательном учреждении',
-      'Сбор обратной связи от педагога и учеников',
-      'Анализ вовлечённости и выводы',
-      'Финальная доработка КОП по итогам апробации',
-    ],
-    result: 'Протокол апробации + доработки',
-  },
-  {
-    icon: BarChart3,
-    tag: 'Итог',
-    num: '06',
-    accent: '#166534',
-    accentBg: '#E8F5EC',
-    title: 'Ретроспектива и публикация',
-    desc: 'Финальный Agile-этап — ретроспектива: что сработало, что улучшить в следующий раз. КОП публикуется в открытом каталоге и становится доступен для всех образовательных учреждений.',
-    tasks: [
-      'Ретроспектива команды: плюсы и точки роста',
-      'Финальное оформление каталожной карточки',
-      'Публикация КОП в открытом каталоге',
-      'Демонстрация результата руководителю практики',
-    ],
-    result: 'КОП в каталоге технопарка',
-  },
-]
 
 const statItems = [
   { value: '3',    label: 'Трека практики',              color: '#3730A3', bg: '#ECEFFE' },
@@ -248,92 +149,7 @@ export default function HomePage() {
         </section>
 
         {/* ── AGILE ЦИКЛ ───────────────────────────────────────────────────── */}
-        <section className="section-kv" id="cycle">
-          <div className="container-kv">
-            <div className="flex flex-wrap items-end justify-between gap-6 mb-14">
-              <div>
-                <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Методология Agile</span>
-                <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Проектный цикл</h2>
-                <p className="text-kv-text font-light text-lg max-w-[540px] leading-relaxed">
-                  Шесть итераций от идеи до публикации. После каждого спринта — обратная связь куратора и улучшение продукта.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 bg-kv-dark text-white px-5 py-3 rounded-full text-sm font-medium flex-shrink-0">
-                <Cpu className="w-4 h-4 opacity-70" />
-                Agile · Kanban · Scrum
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 min-[760px]:grid-cols-2 gap-6">
-              {agileCycle.map(({ icon: Icon, tag, num, accent, accentBg, title, desc, tasks, result }) => (
-                <div key={num}
-                  className="relative rounded-[2rem] p-8 border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300 flex flex-col"
-                  style={{ background: accentBg, borderColor: `${accent}20` }}>
-
-                  {/* Header row */}
-                  <div className="flex items-start justify-between gap-4 mb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 bg-white shadow-sm">
-                        <Icon className="w-6 h-6" style={{ color: accent }} />
-                      </div>
-                      <div>
-                        <div className="text-[0.68rem] font-bold uppercase tracking-widest mb-0.5"
-                          style={{ color: accent }}>{num}</div>
-                        <h3 className="text-[1.1rem] font-semibold leading-tight text-kv-dark">{title}</h3>
-                      </div>
-                    </div>
-                    <span className="flex-shrink-0 text-[0.7rem] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full text-white"
-                      style={{ background: accent }}>
-                      {tag}
-                    </span>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-kv-text text-[0.92rem] leading-relaxed mb-5">{desc}</p>
-
-                  {/* Task checklist */}
-                  <ul className="space-y-2 mb-6 flex-1">
-                    {tasks.map((t) => (
-                      <li key={t} className="flex items-start gap-2.5 text-[0.87rem] text-kv-dark">
-                        <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: accent }} />
-                        <span>{t}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Result badge */}
-                  <div className="flex items-center gap-2 pt-4 border-t border-white/60">
-                    <span className="text-[0.72rem] font-semibold uppercase tracking-widest"
-                      style={{ color: accent }}>Результат:</span>
-                    <span className="text-[0.82rem] font-semibold px-3 py-1 rounded-full bg-white"
-                      style={{ color: accent }}>
-                      {result}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Agile callout */}
-            <div className="mt-8 bg-kv-dark rounded-[2rem] p-8 flex flex-wrap items-center justify-between gap-6">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Cpu className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-white font-semibold mb-1">Инструменты Agile — прямо в КвантЛаб</h4>
-                  <p className="text-white/60 text-sm leading-relaxed max-w-[500px]">
-                    Канбан-доска с WIP-лимитами, трекер задач с возрастом и флагом блокировки, заметки команды и ИИ-ассистент — всё встроено в рабочее пространство.
-                  </p>
-                </div>
-              </div>
-              <Link href="/cabinet"
-                className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-kv-dark px-6 py-3 rounded-full font-medium text-sm hover:bg-kv-light transition-colors no-underline">
-                Открыть трекер <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </section>
+        <AgileSection />
 
         {/* ── КОП ──────────────────────────────────────────────────────────── */}
         <section className="section-kv">
