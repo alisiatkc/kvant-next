@@ -18,10 +18,10 @@ const contactIconMap: Record<string, React.ComponentType<{ className?: string }>
 }
 
 const statItems = [
-  { value: '3',    label: 'Трека практики',              color: '#3730A3', bg: '#ECEFFE' },
-  { value: '12+',  label: 'Команд ежегодно',             color: '#5B21B6', bg: '#F0EBFF' },
-  { value: '6',    label: 'Этапов по Agile',             color: '#075985', bg: '#E0F5FA' },
-  { value: '100%', label: 'Апробация в учреждениях СПб', color: '#166534', bg: '#E8F5EC' },
+  { value: '3',    label: 'Трека практики',              color: '#2B3B6B', bg: '#EEF3FF' },
+  { value: '12+',  label: 'Команд ежегодно',             color: '#4C1D95', bg: '#F3EEFF' },
+  { value: '6',    label: 'Этапов по Agile',             color: '#2B3B6B', bg: '#EEF3FF' },
+  { value: '100%', label: 'Апробация в учреждениях СПб', color: '#4C1D95', bg: '#F3EEFF' },
 ]
 
 export default function HomePage() {
