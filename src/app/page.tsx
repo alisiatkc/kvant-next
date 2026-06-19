@@ -21,44 +21,98 @@ const agileCycle = [
   {
     icon: Layers,
     sprint: 'Старт',
+    num: '01',
     accent: '#2b3b6b',
+    accentBg: '#eff3ff',
     title: 'Бэклог и планирование',
-    desc: 'Формулируем цель КОП, определяем целевую аудиторию и предмет. Создаём бэклог задач и расставляем приоритеты в команде.',
+    desc: 'Первый шаг любого Agile-проекта — сформировать бэклог: список всех задач, упорядоченных по важности. Команда договаривается о теме, аудитории и ожидаемом результате КОП.',
+    tasks: [
+      'Выбор темы и предмета КОП',
+      'Определение целевой аудитории',
+      'Создание бэклога задач в КвантЛаб',
+      'Распределение ролей в команде',
+    ],
+    result: 'Бэклог + паспорт проекта',
   },
   {
     icon: Pencil,
     sprint: 'Спринт 1',
+    num: '02',
     accent: '#7c3aed',
+    accentBg: '#f5f0ff',
     title: 'Концепция и проектирование',
-    desc: 'Прорабатываем структуру комплекта, выбираем технологию производства — лазерную резку, 3D-печать или полиграфию.',
+    desc: 'В первом спринте команда создаёт концепцию комплекта: прорабатывает методику, определяет, какое оборудование технопарка использовать, и набрасывает эскиз.',
+    tasks: [
+      'Разработка структуры КОП',
+      'Выбор технологии: лазерная резка / 3D-печать / полиграфия',
+      'Создание методических задач',
+      'Эскиз и первичный дизайн',
+    ],
+    result: 'Концепция + технологическая карта',
   },
   {
     icon: Hammer,
     sprint: 'Спринт 2',
+    num: '03',
     accent: '#0ea5e9',
-    title: 'Прототип',
-    desc: 'Изготавливаем первый рабочий прототип на оборудовании технопарка. Проверяем гипотезы на практике, не боясь ошибиться.',
+    accentBg: '#f0f9ff',
+    title: 'Создание прототипа',
+    desc: 'Команда работает с оборудованием технопарка и создаёт первый рабочий прототип. Главное правило Agile — сделать что-то работающее как можно быстрее и проверить гипотезы.',
+    tasks: [
+      'Работа на оборудовании технопарка',
+      'Изготовление составляющих КОП',
+      'Сборка первого рабочего прототипа',
+      'Самостоятельная проверка и доработка',
+    ],
+    result: 'Рабочий прототип КОП',
   },
   {
     icon: Eye,
     sprint: 'Ревью',
+    num: '04',
     accent: '#f59e0b',
-    title: 'Обратная связь и итерация',
-    desc: 'Демонстрируем прототип куратору через КвантЛаб, получаем комментарии и вносим правки до следующего спринта.',
+    accentBg: '#fffbeb',
+    title: 'Демо и обратная связь',
+    desc: 'Спринт-ревью — сердце Agile. Команда демонстрирует прототип куратору через КвантЛаб и получает детальные комментарии. Правки вносятся до следующей итерации.',
+    tasks: [
+      'Публикация прототипа в КвантЛаб',
+      'Получение обратной связи от куратора',
+      'Анализ замечаний и приоритизация правок',
+      'Итерация — улучшение продукта',
+    ],
+    result: 'Список правок + улучшенный прототип',
   },
   {
     icon: School,
     sprint: 'Спринт 3',
+    num: '05',
     accent: '#10b981',
+    accentBg: '#f0fdf4',
     title: 'Апробация в школе',
-    desc: 'Тестируем готовый КОП в реальных классах. Собираем анкеты от учителей и учеников, фиксируем вовлечённость.',
+    desc: 'Готовый КОП тестируется в реальных образовательных условиях. Команда посещает школу, проводит занятие и фиксирует реакцию учеников и педагогов по специальной анкете.',
+    tasks: [
+      'Организация занятия в образовательном учреждении',
+      'Проведение урока / мастер-класса с КОП',
+      'Сбор анкет учеников (вовлечённость 1–5)',
+      'Запись наблюдений и замечаний педагога',
+    ],
+    result: 'Протокол апробации + анкеты',
   },
   {
     icon: BarChart3,
-    sprint: 'Ретро',
+    sprint: 'Ретроспектива',
+    num: '06',
     accent: '#ef4444',
-    title: 'Ретроспектива и публикация',
-    desc: 'Анализируем результаты апробации, оформляем каталожную карточку и публикуем КОП в открытом каталоге технопарка.',
+    accentBg: '#fff1f2',
+    title: 'Анализ и публикация',
+    desc: 'Финальный этап — ретроспектива: что сработало, что нет и что изменить в следующий раз. По итогам анализа КОП дорабатывается и публикуется в открытом каталоге технопарка.',
+    tasks: [
+      'Анализ результатов апробации',
+      'Финальная доработка КОП по итогам обратной связи',
+      'Оформление каталожной карточки',
+      'Публикация в открытом каталоге КвантЛаб',
+    ],
+    result: 'КОП в каталоге технопарка',
   },
 ]
 
@@ -199,55 +253,87 @@ export default function HomePage() {
         {/* ── AGILE ЦИКЛ ───────────────────────────────────────────────────── */}
         <section className="section-kv" id="cycle">
           <div className="container-kv">
-            <div className="mb-12">
-              <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Методология</span>
-              <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Проектный цикл по Agile</h2>
-              <p className="text-kv-text font-light text-lg max-w-[620px] leading-relaxed">
-                Работаем короткими итерациями — спринтами. После каждого спринта получаем обратную связь от куратора и улучшаем продукт.
-              </p>
+            <div className="flex flex-wrap items-end justify-between gap-6 mb-14">
+              <div>
+                <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Методология Agile</span>
+                <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Проектный цикл</h2>
+                <p className="text-kv-text font-light text-lg max-w-[540px] leading-relaxed">
+                  Шесть итераций от идеи до публикации. После каждого спринта — обратная связь куратора и улучшение продукта.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 bg-kv-dark text-white px-5 py-3 rounded-full text-sm font-medium flex-shrink-0">
+                <Cpu className="w-4 h-4 opacity-70" />
+                Agile · Kanban · Scrum
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 min-[640px]:grid-cols-2 min-[960px]:grid-cols-3 gap-5">
-              {agileCycle.map(({ icon: Icon, sprint, accent, title, desc }, i) => (
-                <div key={sprint} className="relative bg-white rounded-[2rem] p-7 border border-kv-border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300 overflow-hidden">
-                  {/* Left accent bar */}
-                  <div className="absolute left-0 top-6 bottom-6 w-1 rounded-r-full transition-all duration-300 group-hover:top-4 group-hover:bottom-4"
-                    style={{ background: accent }} />
-                  <div className="pl-2">
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: `${accent}18` }}>
-                        <Icon className="w-5 h-5" style={{ color: accent }} />
+            <div className="grid grid-cols-1 min-[760px]:grid-cols-2 gap-6">
+              {agileCycle.map(({ icon: Icon, sprint, num, accent, accentBg, title, desc, tasks, result }) => (
+                <div key={sprint}
+                  className="relative bg-white rounded-[2rem] p-8 border border-kv-border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300 overflow-hidden flex flex-col">
+
+                  {/* Top accent strip */}
+                  <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[2rem]"
+                    style={{ background: `linear-gradient(90deg, ${accent}, ${accent}88)` }} />
+
+                  {/* Header row */}
+                  <div className="flex items-start justify-between gap-4 mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: accentBg }}>
+                        <Icon className="w-6 h-6" style={{ color: accent }} />
                       </div>
-                      <span className="text-[0.72rem] font-bold uppercase tracking-widest px-3 py-1 rounded-full"
-                        style={{ background: `${accent}14`, color: accent }}>
-                        {sprint}
-                      </span>
+                      <div>
+                        <div className="text-[0.68rem] text-kv-muted font-bold uppercase tracking-widest mb-0.5">{num}</div>
+                        <h3 className="text-[1.1rem] font-semibold leading-tight">{title}</h3>
+                      </div>
                     </div>
-                    <div className="text-[0.72rem] text-kv-muted font-semibold uppercase tracking-widest mb-1.5">
-                      0{i + 1}
-                    </div>
-                    <h3 className="text-[1.1rem] font-semibold mb-3 leading-snug">{title}</h3>
-                    <p className="text-kv-text text-[0.9rem] leading-relaxed">{desc}</p>
+                    <span className="flex-shrink-0 text-[0.7rem] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full"
+                      style={{ background: accentBg, color: accent }}>
+                      {sprint}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-kv-text text-[0.92rem] leading-relaxed mb-5">{desc}</p>
+
+                  {/* Task checklist */}
+                  <ul className="space-y-2 mb-6 flex-1">
+                    {tasks.map((t) => (
+                      <li key={t} className="flex items-start gap-2.5 text-[0.87rem] text-kv-dark">
+                        <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: accent }} />
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Result badge */}
+                  <div className="flex items-center gap-2 pt-4 border-t border-kv-border">
+                    <span className="text-[0.72rem] text-kv-muted font-semibold uppercase tracking-widest">Результат:</span>
+                    <span className="text-[0.82rem] font-semibold px-3 py-1 rounded-full"
+                      style={{ background: accentBg, color: accent }}>
+                      {result}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Agile principles callout */}
+            {/* Agile callout */}
             <div className="mt-8 bg-kv-dark rounded-[2rem] p-8 flex flex-wrap items-center justify-between gap-6">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Cpu className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="text-white font-semibold mb-1">Agile в КвантЛаб</h4>
+                  <h4 className="text-white font-semibold mb-1">Инструменты Agile — прямо в КвантЛаб</h4>
                   <p className="text-white/60 text-sm leading-relaxed max-w-[500px]">
-                    Канбан-доска, WIP-лимиты, спринты и ретроспективы — инструменты Agile встроены прямо в рабочее пространство команды.
+                    Канбан-доска с WIP-лимитами, трекер задач с возрастом и флагом блокировки, заметки команды и ИИ-ассистент — всё встроено в рабочее пространство.
                   </p>
                 </div>
               </div>
-              <Link href="/cabinet" className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-kv-dark px-6 py-3 rounded-full font-medium text-sm hover:bg-kv-light transition-colors no-underline">
+              <Link href="/cabinet"
+                className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-kv-dark px-6 py-3 rounded-full font-medium text-sm hover:bg-kv-light transition-colors no-underline">
                 Открыть трекер <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
