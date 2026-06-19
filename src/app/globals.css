@@ -31,9 +31,26 @@
 .anim-d3 { animation-delay: 0.38s; }
 .anim-d4 { animation-delay: 0.52s; }
 
+/* Large orbs */
 .float-slow { animation: floatY 7s ease-in-out infinite; }
 .float-med  { animation: floatY 5s ease-in-out infinite 1.5s; }
 .float-x    { animation: floatX 9s ease-in-out infinite; }
+
+/* Bubble keyframes — organic 2-D drift */
+@keyframes floatFree {
+  0%,  100% { transform: translate(0px, 0px)   scale(1); }
+  25%        { transform: translate(10px, -22px) scale(1.04); }
+  50%        { transform: translate(-8px, -36px) scale(0.97); }
+  75%        { transform: translate(14px, -18px) scale(1.02); }
+}
+
+.bubble-a { animation: floatFree  8s ease-in-out infinite; }
+.bubble-b { animation: floatFree 11s ease-in-out infinite 2.5s; }
+.bubble-c { animation: floatFree  7s ease-in-out infinite 1s; }
+.bubble-d { animation: floatFree 13s ease-in-out infinite 4s; }
+.bubble-e { animation: floatFree  9s ease-in-out infinite 0.5s; }
+.bubble-f { animation: floatFree  6s ease-in-out infinite 3s; }
+.bubble-g { animation: floatFree 14s ease-in-out infinite 1.8s; }
 
 @layer base {
   html {

@@ -33,14 +33,46 @@ export default function HomePage() {
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
         <section className="relative min-h-[92vh] flex items-center overflow-hidden bg-[#f5f7fb]">
 
-          {/* Animated background orbs */}
+          {/* Animated background */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+            {/* Large soft orbs */}
             <div className="float-slow absolute w-[600px] h-[600px] -top-[180px] -right-[120px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(43,59,107,0.07) 0%, transparent 70%)' }} />
+              style={{ background: 'radial-gradient(circle, rgba(43,59,107,0.08) 0%, transparent 70%)' }} />
             <div className="float-med absolute w-[400px] h-[400px] top-[30%] -left-[100px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.05) 0%, transparent 70%)' }} />
-            <div className="float-x absolute w-[300px] h-[300px] bottom-[5%] right-[10%] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.06) 0%, transparent 70%)' }} />
+              style={{ background: 'radial-gradient(circle, rgba(76,29,149,0.06) 0%, transparent 70%)' }} />
+            <div className="float-x absolute w-[350px] h-[350px] bottom-[5%] right-[10%] rounded-full"
+              style={{ background: 'radial-gradient(circle, rgba(43,59,107,0.05) 0%, transparent 70%)' }} />
+
+            {/* Floating bubbles */}
+            <div className="bubble-a absolute w-24 h-24 rounded-full"
+              style={{ top: '12%', right: '22%',
+                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.55), rgba(43,59,107,0.06))',
+                border: '1.5px solid rgba(43,59,107,0.12)' }} />
+            <div className="bubble-b absolute w-14 h-14 rounded-full"
+              style={{ top: '40%', left: '7%',
+                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5), rgba(76,29,149,0.07))',
+                border: '1.5px solid rgba(76,29,149,0.13)' }} />
+            <div className="bubble-c absolute w-9 h-9 rounded-full"
+              style={{ top: '68%', left: '42%',
+                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.6), rgba(43,59,107,0.05))',
+                border: '1px solid rgba(43,59,107,0.11)' }} />
+            <div className="bubble-d absolute w-16 h-16 rounded-full"
+              style={{ top: '18%', left: '38%',
+                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.45), rgba(76,29,149,0.05))',
+                border: '1.5px solid rgba(76,29,149,0.1)' }} />
+            <div className="bubble-e absolute w-20 h-20 rounded-full"
+              style={{ bottom: '20%', right: '18%',
+                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5), rgba(43,59,107,0.06))',
+                border: '1.5px solid rgba(43,59,107,0.13)' }} />
+            <div className="bubble-f absolute w-6 h-6 rounded-full"
+              style={{ top: '55%', right: '32%',
+                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.7), rgba(76,29,149,0.08))',
+                border: '1px solid rgba(76,29,149,0.14)' }} />
+            <div className="bubble-g absolute w-11 h-11 rounded-full"
+              style={{ bottom: '32%', left: '22%',
+                background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5), rgba(43,59,107,0.05))',
+                border: '1.5px solid rgba(43,59,107,0.1)' }} />
+
             {/* Grid texture */}
             <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
               <defs>
@@ -63,8 +95,8 @@ export default function HomePage() {
 
             {/* Headline */}
             <h1 className="anim-fade-up anim-d1 text-[clamp(2.4rem,8vw,6rem)] font-semibold tracking-tight leading-[1.05] mb-5 min-[640px]:mb-6">
-              Создавайте КОП.<br />
-              <span className="text-kv-blue">От идеи — до каталога.</span>
+              Создавайте КОП<br />
+              <span className="text-kv-blue">От идеи — до каталога</span>
             </h1>
 
             <p className="anim-fade-up anim-d2 text-base min-[640px]:text-[1.2rem] font-light text-kv-text mb-8 min-[640px]:mb-10 max-w-[600px] leading-relaxed">
@@ -99,7 +131,7 @@ export default function HomePage() {
           <div className="container-kv">
             <div className="mb-12">
               <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Форматы практики</span>
-              <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Два пути — один результат</h2>
+              <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Практика в вашем темпе</h2>
               <p className="text-kv-text font-light text-lg max-w-[560px] leading-relaxed">
                 Мы работаем с двумя форматами практики — оба завершаются разработанным и апробированным КОП в образовательных учреждениях.
               </p>
