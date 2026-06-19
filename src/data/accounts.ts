@@ -19,6 +19,6 @@ export const TEAM_ACCOUNTS: TeamAccount[] = [
 ]
 
 export const CURATOR_ACCOUNTS: CuratorAccount[] = [
-  { login: 'curator',  password: 'curator123', name: 'Кузнецова Ирина Сергеевна', id: 'c1' },
+  { login: 'curator',  password: 'curator123', name: 'Ткаченко Алиса Олеговна',   id: 'c1' },
   { login: 'curator2', password: 'curator456', name: 'Смирнов Андрей Николаевич', id: 'c2' },
 ]
