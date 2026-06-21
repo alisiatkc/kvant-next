@@ -195,6 +195,7 @@ export default function CuratorPage() {
       fullDesc: catalogForm.fullDesc.trim(),
       subject:  catalogForm.subject,
       authors:  catalogForm.authors.split(',').map((s) => s.trim()).filter(Boolean),
+      files:    editingCatalogEntry?.files ?? [],
       tech:     catalogForm.tech.split(',').map((s) => s.trim()).filter(Boolean),
       image:    catalogForm.subject,
       contact:  'https://vk.com/technoparkrgpu',
