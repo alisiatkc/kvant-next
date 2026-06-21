@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, Paperclip, File, FileText,
   LayoutDashboard, ClipboardList, Bell, MessageSquare,
   BookOpen, CheckCircle2, FolderOpen, Send, X, AlertTriangle,
-  UserCheck, UserPlus, Inbox,
+  UserCheck, UserPlus, Inbox, Package, Plus, Edit2, Trash2,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -15,6 +15,9 @@ import {
   type CatalogEntry,
   getSubmittedProjects,
   updateProjectStatus,
+  getApprovedCatalog,
+  updateCatalogEntry,
+  deleteCatalogEntry,
 } from '@/lib/storage'
 import { CURATOR_ACCOUNTS } from '@/data/accounts'
 
@@ -69,7 +72,12 @@ function buildCatalogEntry(sub: SubmittedProject): CatalogEntry {
 }
 
 type WorkspaceModal = { project: SubmittedProject; feedbackDraft: string }
-type ActiveTab = 'dashboard' | 'inbox' | 'all'
+type ActiveTab = 'dashboard' | 'inbox' | 'all' | 'catalog'
+
+type CatalogForm = {
+  title: string; excerpt: string; fullDesc: string
+  subject: string; authors: string; tech: string
+}
 
 export default function CuratorPage() {
   const router = useRouter()
@@ -82,6 +90,15 @@ export default function CuratorPage() {
   const [expanded,      setExpanded]      = useState<string | null>(null)
   const [activeTab,     setActiveTab]     = useState<ActiveTab>('dashboard')
   const [workspaceModal,setWorkspaceModal]= useState<WorkspaceModal | null>(null)
+
+  // ── catalog editor ────────────────────────────────────────────────────────
+  const [catalogEntries,     setCatalogEntries]     = useState<CatalogEntry[]>([])
+  const [showCatalogModal,   setShowCatalogModal]   = useState(false)
+  const [editingCatalogEntry,setEditingCatalogEntry]= useState<CatalogEntry | null>(null)
+  const [catalogForm,        setCatalogForm]        = useState<CatalogForm>({
+    title: '', excerpt: '', fullDesc: '', subject: 'it', authors: '', tech: '',
+  })
+  const [catalogDeleteId,    setCatalogDeleteId]    = useState<number | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -97,6 +114,8 @@ export default function CuratorPage() {
         // Fetch ALL projects (no filter — curators can see everything)
         const subs = await getSubmittedProjects()
         setProjects(subs)
+        const cat = await getApprovedCatalog()
+        setCatalogEntries(cat)
       } catch {
         router.push('/cabinet')
       } finally {
@@ -154,6 +173,45 @@ export default function CuratorPage() {
     setWorkspaceModal(null)
   }
 
+  const openCatalogEdit = (entry: CatalogEntry | null) => {
+    setEditingCatalogEntry(entry)
+    setCatalogForm(entry ? {
+      title:    entry.title,
+      excerpt:  entry.excerpt,
+      fullDesc: entry.fullDesc,
+      subject:  entry.subject,
+      authors:  entry.authors.join(', '),
+      tech:     entry.tech.join(', '),
+    } : { title: '', excerpt: '', fullDesc: '', subject: 'it', authors: '', tech: '' })
+    setShowCatalogModal(true)
+  }
+
+  const saveCatalogEntry = async () => {
+    if (!catalogForm.title.trim()) return
+    const entry: CatalogEntry = {
+      id:       editingCatalogEntry?.id ?? Date.now(),
+      title:    catalogForm.title.trim(),
+      excerpt:  catalogForm.excerpt.trim(),
+      fullDesc: catalogForm.fullDesc.trim(),
+      subject:  catalogForm.subject,
+      authors:  catalogForm.authors.split(',').map((s) => s.trim()).filter(Boolean),
+      tech:     catalogForm.tech.split(',').map((s) => s.trim()).filter(Boolean),
+      image:    catalogForm.subject,
+      contact:  'https://vk.com/technoparkrgpu',
+      likes:    editingCatalogEntry?.likes ?? 0,
+    }
+    await updateCatalogEntry(entry)
+    setCatalogEntries((prev) => [...prev.filter((e) => e.id !== entry.id), entry])
+    setShowCatalogModal(false)
+  }
+
+  const confirmDeleteCatalog = async () => {
+    if (catalogDeleteId === null) return
+    await deleteCatalogEntry(catalogDeleteId)
+    setCatalogEntries((prev) => prev.filter((e) => e.id !== catalogDeleteId))
+    setCatalogDeleteId(null)
+  }
+
   if (loading) return (
     <>
       <Header />
@@ -183,6 +241,7 @@ export default function CuratorPage() {
     { id: 'dashboard', label: 'Дашборд',        Icon: LayoutDashboard },
     { id: 'inbox',     label: 'Входящие',        Icon: Inbox,      badge: counts.inbox },
     { id: 'all',       label: 'Все проекты',     Icon: ClipboardList },
+    { id: 'catalog',   label: 'Каталог КОП',     Icon: Package },
   ]
 
   return (
@@ -324,6 +383,71 @@ export default function CuratorPage() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ════ CATALOG ════ */}
+          {activeTab === 'catalog' && (
+            <div className="space-y-5">
+              <div className="bg-white rounded-[3rem] p-10">
+                <div className="flex items-center justify-between mb-7 gap-4 flex-wrap">
+                  <div>
+                    <h2 className="text-[1.4rem] font-semibold flex items-center gap-2">
+                      <Package className="w-5 h-5 text-kv-blue" /> Каталог КОП
+                    </h2>
+                    <p className="text-kv-muted text-sm mt-1">
+                      {catalogEntries.length} {catalogEntries.length === 1 ? 'запись' : catalogEntries.length < 5 ? 'записи' : 'записей'} · добавлены через систему или вручную
+                    </p>
+                  </div>
+                  <button
+                    className="flex items-center gap-2 px-6 py-3 bg-kv-blue text-white rounded-full border-none cursor-pointer text-sm font-medium hover:bg-kv-dark transition-colors"
+                    onClick={() => openCatalogEdit(null)}
+                  >
+                    <Plus className="w-4 h-4" /> Добавить КОП
+                  </button>
+                </div>
+
+                {catalogEntries.length === 0 ? (
+                  <div className="text-center py-16 text-kv-muted">
+                    <Package className="w-10 h-10 mx-auto mb-4 opacity-20" />
+                    <p className="font-medium mb-1">Каталог пуст</p>
+                    <p className="text-sm">Одобренные проекты появятся здесь автоматически, или добавьте КОП вручную</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {catalogEntries.map((entry) => (
+                      <div key={entry.id} className="border border-kv-border rounded-[2rem] p-6 flex items-center gap-5 flex-wrap hover:bg-[#f9fbfe] transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold mb-1 truncate">{entry.title}</h3>
+                          <p className="text-sm text-kv-text mb-2 line-clamp-1">{entry.excerpt}</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {entry.tech.slice(0, 4).map((t) => (
+                              <span key={t} className="text-xs bg-kv-light px-2.5 py-0.5 rounded-full text-kv-text">{t}</span>
+                            ))}
+                            {entry.authors.length > 0 && (
+                              <span className="text-xs text-kv-muted">{entry.authors[0]}{entry.authors.length > 1 ? ` +${entry.authors.length - 1}` : ''}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-kv-light border-none cursor-pointer text-sm text-kv-dark hover:bg-[#e2e8f0] transition-colors"
+                            onClick={() => openCatalogEdit(entry)}
+                          >
+                            <Edit2 className="w-3.5 h-3.5" /> Редактировать
+                          </button>
+                          <button
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#fef2f2] text-[#dc2626] border-none cursor-pointer text-sm hover:bg-[#fee2e2] transition-colors"
+                            onClick={() => setCatalogDeleteId(entry.id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Удалить
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -536,6 +660,102 @@ export default function CuratorPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Catalog edit modal */}
+      {showCatalogModal && (
+        <div className="modal-overlay" onClick={() => setShowCatalogModal(false)}>
+          <div
+            className="bg-white max-w-[600px] w-full min-[640px]:w-[90%] max-h-[92vh] overflow-y-auto rounded-t-[2rem] min-[640px]:rounded-[2.5rem] p-7 min-[640px]:p-10 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="modal-close-btn" onClick={() => setShowCatalogModal(false)}><X size={20} /></button>
+            <h3 className="text-[1.8rem] font-semibold mb-6">
+              {editingCatalogEntry ? 'Редактировать КОП' : 'Добавить КОП'}
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-kv-muted mb-1.5">Название</label>
+                <input className="input-kv" placeholder="Название комплекта" value={catalogForm.title}
+                  onChange={(e) => setCatalogForm((f) => ({ ...f, title: e.target.value }))} autoFocus />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-kv-muted mb-1.5">Краткое описание (для карточки)</label>
+                <textarea className="textarea-kv" rows={2} placeholder="Одно-два предложения…"
+                  value={catalogForm.excerpt}
+                  onChange={(e) => setCatalogForm((f) => ({ ...f, excerpt: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-kv-muted mb-1.5">Полное описание</label>
+                <textarea className="textarea-kv" rows={4} placeholder="Подробное описание КОП…"
+                  value={catalogForm.fullDesc}
+                  onChange={(e) => setCatalogForm((f) => ({ ...f, fullDesc: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-kv-muted mb-2">Предметная область</label>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    ['math',      'Математика'],
+                    ['bio',       'Биология'],
+                    ['physics',   'Физика'],
+                    ['it',        'Информатика'],
+                    ['economics', 'Экономика'],
+                    ['pedagogy',  'Педагогика'],
+                  ] as [string, string][]).map(([key, label]) => (
+                    <button key={key}
+                      className={`px-4 py-2 rounded-full text-sm border cursor-pointer transition-all ${catalogForm.subject === key ? 'bg-kv-blue text-white border-kv-blue' : 'bg-white border-kv-border text-kv-dark hover:bg-kv-light'}`}
+                      onClick={() => setCatalogForm((f) => ({ ...f, subject: key }))}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-kv-muted mb-1.5">Авторы (через запятую)</label>
+                <input className="input-kv" placeholder="Иванов И.И., Петрова М.А."
+                  value={catalogForm.authors}
+                  onChange={(e) => setCatalogForm((f) => ({ ...f, authors: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-kv-muted mb-1.5">Технологии (через запятую)</label>
+                <input className="input-kv" placeholder="Лазерная резка, 3D-печать"
+                  value={catalogForm.tech}
+                  onChange={(e) => setCatalogForm((f) => ({ ...f, tech: e.target.value }))} />
+              </div>
+            </div>
+
+            <button
+              className="w-full mt-6 py-3.5 bg-kv-blue text-white rounded-full border-none cursor-pointer font-medium hover:bg-kv-dark transition-colors"
+              onClick={saveCatalogEntry}
+            >
+              {editingCatalogEntry ? 'Сохранить изменения' : 'Добавить в каталог'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation */}
+      {catalogDeleteId !== null && (
+        <div className="modal-overlay" onClick={() => setCatalogDeleteId(null)}>
+          <div className="bg-white max-w-[420px] w-full min-[640px]:w-[90%] rounded-t-[2rem] min-[640px]:rounded-[2.5rem] p-8 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 bg-[#fef2f2] rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <Trash2 className="w-6 h-6 text-[#dc2626]" />
+            </div>
+            <h3 className="text-[1.4rem] font-semibold mb-2">Удалить из каталога?</h3>
+            <p className="text-kv-muted text-sm mb-7">Этот КОП исчезнет из публичного каталога. Действие можно отменить, добавив запись заново.</p>
+            <div className="flex gap-3">
+              <button className="flex-1 py-3 rounded-full border border-kv-border bg-white text-kv-dark text-sm font-medium cursor-pointer hover:bg-kv-light transition-colors"
+                onClick={() => setCatalogDeleteId(null)}>
+                Отмена
+              </button>
+              <button className="flex-1 py-3 rounded-full bg-[#dc2626] text-white text-sm font-medium border-none cursor-pointer hover:bg-[#b91c1c] transition-colors"
+                onClick={confirmDeleteCatalog}>
+                Удалить
+              </button>
             </div>
           </div>
         </div>

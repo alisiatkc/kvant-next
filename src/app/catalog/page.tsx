@@ -40,14 +40,16 @@ export default function CatalogPage() {
       try {
         // Merge static projects with curator-approved dynamic projects
         const approved = await getApprovedCatalog()
-        const staticIds = new Set(initialProjects.map((p) => p.id))
-        const freshDynamic = (approved as unknown as Project[]).filter((p) => !staticIds.has(p.id))
+        // Dynamic entries override static ones with the same id (curator edits)
+        const dynamicProjects = approved as unknown as Project[]
+        const dynamicIds = new Set(dynamicProjects.map((p) => p.id))
+        const freshStatic = initialProjects.filter((p) => !dynamicIds.has(p.id))
 
         const savedLikes = localStorage.getItem('projectLikes')
         const savedLikedIds = localStorage.getItem('likedProjectIds')
         const likesData: Record<number, number> = savedLikes ? JSON.parse(savedLikes) : {}
 
-        const merged = [...initialProjects, ...freshDynamic].map((p) => ({
+        const merged = [...freshStatic, ...dynamicProjects].map((p) => ({
           ...p,
           likes: likesData[p.id] ?? p.likes,
         }))

@@ -123,3 +123,24 @@ export async function getApprovedCatalog(): Promise<CatalogEntry[]> {
   }
   return JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
 }
+
+export async function updateCatalogEntry(entry: CatalogEntry): Promise<void> {
+  if (API_URL) {
+    await apiCall('updateCatalog', 'POST', { entry })
+    return
+  }
+  const existing: CatalogEntry[] = JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
+  localStorage.setItem('approvedCatalogProjects', JSON.stringify([
+    ...existing.filter((e) => e.id !== entry.id),
+    entry,
+  ]))
+}
+
+export async function deleteCatalogEntry(id: number): Promise<void> {
+  if (API_URL) {
+    await apiCall('deleteCatalog', 'POST', { id })
+    return
+  }
+  const existing: CatalogEntry[] = JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
+  localStorage.setItem('approvedCatalogProjects', JSON.stringify(existing.filter((e) => e.id !== id)))
+}
