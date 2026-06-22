@@ -38,25 +38,25 @@
   66%       { border-radius: 55% 45% 42% 58% / 38% 65% 52% 48%; }
 }
 
-/* Orbit rings spin */
-@keyframes orbitSpin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+/* Project activity card floats */
+@keyframes projFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-10px) rotate(0.4deg); }
+  66%       { transform: translateY(-5px) rotate(-0.3deg); }
 }
-
-/* Glow node pulse */
-@keyframes pulseDot {
-  0%, 100% { opacity: 0.35; transform: scale(1); }
-  50%       { opacity: 1;    transform: scale(2); }
+@keyframes projFloatSide {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  40%       { transform: translateY(-8px) translateX(4px); }
+  70%       { transform: translateY(-4px) translateX(-3px); }
 }
 
 .blob-navy   { animation: morphBlob 9s  ease-in-out infinite; }
 .blob-violet { animation: morphBlob 13s ease-in-out infinite 2s; }
 .blob-accent { animation: morphBlob 7s  ease-in-out infinite 4s; }
-.orbit-slow  { animation: orbitSpin 22s linear infinite; }
-.orbit-med   { animation: orbitSpin 14s linear infinite reverse; }
-.orbit-fast  { animation: orbitSpin 7s  linear infinite; }
-.pulse-dot   { animation: pulseDot  2.8s ease-in-out infinite; }
+.proj-main   { animation: projFloat     7s  ease-in-out infinite; }
+.proj-c1     { animation: projFloatSide 5s  ease-in-out infinite 0.6s; }
+.proj-c2     { animation: projFloatSide 6s  ease-in-out infinite 1.8s; }
+.proj-c3     { animation: projFloatSide 4.5s ease-in-out infinite 3s; }
 
 @layer base {
   html {

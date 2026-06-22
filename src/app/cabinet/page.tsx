@@ -441,7 +441,7 @@ export default function CabinetPage() {
     submittedAt:     new Date().toISOString(),
     curatorLogin,
     curatorFeedback: curatorFeedback || undefined,
-    workspaceSnapshot: { tasks, notes },
+    workspaceSnapshot: { tasks, notes, sprints },
   })
 
   const handleFeedbackRequest = async () => {

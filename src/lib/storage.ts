@@ -17,6 +17,7 @@ export type SubmittedProject = {
   workspaceSnapshot?: {
     tasks: Array<{ id: string; title: string; desc: string; status: string; priority: string; dueDate: string }>
     notes: string
+    sprints?: Array<{ id: string; name: string; goal: string; startDate: string; endDate: string; status: string; retroNotes: string; createdAt: string }>
   }
 }
 

@@ -7,7 +7,7 @@ import {
   LayoutDashboard, ClipboardList, Bell, MessageSquare,
   BookOpen, CheckCircle2, FolderOpen, Send, X, AlertTriangle,
   UserCheck, UserPlus, Inbox, Package, Plus, Edit2, Trash2, BarChart3, TrendingUp,
-  Activity, Calendar, Filter,
+  Activity, Calendar, Filter, Layers, RefreshCw,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -101,6 +101,7 @@ export default function CuratorPage() {
   })
   const [catalogDeleteId,    setCatalogDeleteId]    = useState<number | null>(null)
   const [analyticsView,      setAnalyticsView]      = useState<'status' | 'timeline' | 'funnel'>('status')
+  const [workspaceTab,       setWorkspaceTab]       = useState<'overview' | 'kanban' | 'sprints'>('overview')
 
   useEffect(() => {
     ;(async () => {
@@ -470,7 +471,7 @@ export default function CuratorPage() {
                 ) : (
                   <div className="grid grid-cols-1 min-[700px]:grid-cols-2 min-[1100px]:grid-cols-3 gap-5">
                     {mine.map((p) => <ProjectCard key={p.id} project={p}
-                      onOpen={() => setWorkspaceModal({ project: p, feedbackDraft: p.curatorFeedback || '' })}
+                      onOpen={() => { setWorkspaceModal({ project: p, feedbackDraft: p.curatorFeedback || '' }); setWorkspaceTab('overview') }}
                       onApprove={() => handleStatus(p.id, 'approved')}
                       onReject={() => handleStatus(p.id, 'rejected')}
                       onUnassign={() => unassign(p.id)} />)}
@@ -528,7 +529,7 @@ export default function CuratorPage() {
                         </div>
                         <div className="flex gap-2 flex-wrap">
                           <button className="flex items-center gap-2 px-5 py-2.5 bg-white text-kv-dark rounded-full border-none cursor-pointer text-sm font-medium hover:bg-kv-light transition-colors"
-                            onClick={() => setWorkspaceModal({ project: p, feedbackDraft: p.curatorFeedback || '' })}>
+                            onClick={() => { setWorkspaceModal({ project: p, feedbackDraft: p.curatorFeedback || '' }); setWorkspaceTab('overview') }}>
                             <Eye className="w-4 h-4" /> Открыть
                           </button>
                           {p.status === 'review' && (
@@ -689,7 +690,7 @@ export default function CuratorPage() {
                               </div>
                             )}
                             <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-kv-light text-kv-dark border-none cursor-pointer text-sm hover:bg-[#e2e8f0] transition-colors"
-                              onClick={() => setWorkspaceModal({ project, feedbackDraft: project.curatorFeedback || '' })}>
+                              onClick={() => { setWorkspaceModal({ project, feedbackDraft: project.curatorFeedback || '' }); setWorkspaceTab('overview') }}>
                               <Eye className="w-4 h-4" /> Рабочее пространство
                             </button>
                           </div>
@@ -708,85 +709,212 @@ export default function CuratorPage() {
       {/* Workspace modal */}
       {workspaceModal && (
         <div className="modal-overlay" onClick={() => setWorkspaceModal(null)}>
-          <div className="bg-white w-full min-[640px]:w-[95%] max-w-[860px] max-h-[92vh] overflow-y-auto rounded-t-[2rem] min-[640px]:rounded-[2.5rem]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 min-[640px]:px-10 pt-6 min-[640px]:pt-10 pb-5 min-[640px]:pb-6 border-b border-kv-border sticky top-0 bg-white rounded-t-[2rem] min-[640px]:rounded-t-[2.5rem] z-10">
-              <div>
-                <h3 className="text-[1.5rem] font-semibold">{workspaceModal.project.teamName || '—'}</h3>
-                <p className="text-kv-muted text-sm mt-0.5">{workspaceModal.project.projectName || 'Без названия'} · Трек {workspaceModal.project.track}</p>
-              </div>
-              <button className="modal-close-btn static" onClick={() => setWorkspaceModal(null)}><X size={20} /></button>
-            </div>
-            <div className="px-6 min-[640px]:px-10 py-6 min-[640px]:py-8 space-y-6 min-[640px]:space-y-8">
+          <div className="bg-white w-full min-[640px]:w-[95%] max-w-[920px] max-h-[94vh] overflow-y-auto rounded-t-[2rem] min-[640px]:rounded-[2.5rem]" onClick={(e) => e.stopPropagation()}>
 
-              {/* Status */}
-              <div className="flex items-center gap-3 flex-wrap">
-                {(() => { const sc = STATUS_CFG[workspaceModal.project.status]; return (
-                  <span className={`status-badge flex items-center gap-1.5 ${sc.cls}`}><sc.Icon className="w-4 h-4" />{sc.label}</span>
-                )})()}
-                {workspaceModal.project.authors.map((a, i) => (
-                  <span key={i} className="bg-kv-light px-4 py-1.5 rounded-full text-sm">{a}{i === 0 ? ' (капитан)' : ''}</span>
+            {/* Header */}
+            <div className="sticky top-0 bg-white rounded-t-[2rem] min-[640px]:rounded-t-[2.5rem] z-10 border-b border-kv-border">
+              <div className="flex items-start justify-between px-6 min-[640px]:px-10 pt-7 pb-5">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <h3 className="text-[1.4rem] font-semibold">{workspaceModal.project.teamName || '—'}</h3>
+                    {(() => { const sc = STATUS_CFG[workspaceModal.project.status]; return (
+                      <span className={`status-badge text-xs flex items-center gap-1 ${sc.cls}`}><sc.Icon className="w-3.5 h-3.5"/>{sc.label}</span>
+                    )})()}
+                  </div>
+                  <p className="text-kv-muted text-sm">{workspaceModal.project.projectName || 'Без названия'} · Трек {workspaceModal.project.track}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    {workspaceModal.project.authors.map((a, i) => (
+                      <span key={i} className="bg-kv-light px-3 py-1 rounded-full text-xs text-kv-text">{a}{i === 0 ? ' (капитан)' : ''}</span>
+                    ))}
+                    {workspaceModal.project.projectBlock && (
+                      <span className="bg-[#EEF3FF] text-kv-blue px-3 py-1 rounded-full text-xs">{workspaceModal.project.projectBlock}</span>
+                    )}
+                  </div>
+                </div>
+                <button className="modal-close-btn static flex-shrink-0 mt-1" onClick={() => setWorkspaceModal(null)}><X size={20} /></button>
+              </div>
+              {/* Tab switcher */}
+              <div className="flex gap-1 px-6 min-[640px]:px-10 pb-0">
+                {([
+                  { id: 'overview', label: 'Обзор',   Icon: ClipboardList },
+                  { id: 'kanban',   label: 'Канбан',  Icon: Layers },
+                  { id: 'sprints',  label: 'Спринты', Icon: RefreshCw },
+                ] as { id: 'overview' | 'kanban' | 'sprints'; label: string; Icon: React.ComponentType<{ className?: string }> }[]).map(({ id, label, Icon }) => (
+                  <button key={id}
+                    className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-none cursor-pointer transition-all rounded-t-xl ${workspaceTab === id ? 'bg-kv-light text-kv-blue border-b-2 border-kv-blue' : 'bg-transparent text-kv-muted hover:text-kv-dark'}`}
+                    onClick={() => setWorkspaceTab(id)}>
+                    <Icon className="w-3.5 h-3.5" /> {label}
+                  </button>
                 ))}
               </div>
+            </div>
 
-              {/* Passport */}
-              <div>
-                <h4 className="flex items-center gap-2 font-semibold mb-4 text-xs uppercase tracking-wide text-kv-muted">
-                  <ClipboardList className="w-4 h-4" /> Паспорт проекта
-                </h4>
-                <div className="bg-[#f9fbfe] rounded-[1.75rem] p-6 space-y-2 text-sm border border-kv-border">
-                  {workspaceModal.project.projectBlock && <p><span className="text-kv-muted">Предмет:</span> {workspaceModal.project.projectBlock}</p>}
-                  {workspaceModal.project.projectDesc
-                    ? <p className="leading-relaxed">{workspaceModal.project.projectDesc}</p>
-                    : <p className="text-kv-muted italic">Описание не заполнено</p>}
-                  {workspaceModal.project.productionFile && (
-                    <p className="flex items-center gap-1.5 text-kv-blue"><Paperclip className="w-3.5 h-3.5" />{workspaceModal.project.productionFile}</p>
-                  )}
-                </div>
-              </div>
+            <div className="px-6 min-[640px]:px-10 py-7 space-y-6">
 
-              {/* Tasks snapshot */}
-              {workspaceModal.project.workspaceSnapshot?.tasks && workspaceModal.project.workspaceSnapshot.tasks.length > 0 && (
-                <div>
-                  <h4 className="flex items-center gap-2 font-semibold mb-4 text-xs uppercase tracking-wide text-kv-muted">
-                    <CheckCircle2 className="w-4 h-4" /> Задачи (снимок)
-                  </h4>
-                  <div className="space-y-2">
-                    {workspaceModal.project.workspaceSnapshot.tasks.map((task) => (
-                      <div key={task.id} className="bg-[#f9fbfe] rounded-2xl px-5 py-3 flex items-center justify-between gap-3 text-sm border border-kv-border">
-                        <span>{task.title}</span>
-                        <span className={`text-xs px-2.5 py-1 rounded-full flex-shrink-0 ${task.status === 'done' ? 'bg-[#e8f5e9] text-[#2e7d32]' : task.status === 'inprogress' ? 'bg-[#fff3e0] text-[#ef6c00]' : 'bg-kv-light text-kv-muted'}`}>
-                          {task.status === 'done' ? 'Готово' : task.status === 'inprogress' ? 'В работе' : 'Запланировано'}
-                        </span>
+              {/* ── TAB: OVERVIEW ── */}
+              {workspaceTab === 'overview' && (
+                <>
+                  {/* Passport */}
+                  <div className="bg-[#f9fbfe] rounded-[1.75rem] p-6 border border-kv-border space-y-3 text-sm">
+                    <h4 className="font-semibold text-xs uppercase tracking-widest text-kv-muted flex items-center gap-2">
+                      <ClipboardList className="w-3.5 h-3.5" /> Паспорт проекта
+                    </h4>
+                    {workspaceModal.project.projectBlock && (
+                      <div><span className="text-kv-muted text-xs">Предметная область: </span><span className="font-medium">{workspaceModal.project.projectBlock}</span></div>
+                    )}
+                    {workspaceModal.project.projectDesc
+                      ? <p className="leading-relaxed text-kv-text">{workspaceModal.project.projectDesc}</p>
+                      : <p className="text-kv-muted italic">Описание не заполнено</p>}
+                    {workspaceModal.project.productionFile && (
+                      <p className="flex items-center gap-1.5 text-kv-blue text-xs"><Paperclip className="w-3.5 h-3.5" />{workspaceModal.project.productionFile}</p>
+                    )}
+                  </div>
+
+                  {/* Stats row */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: 'Задач всего',  value: workspaceModal.project.workspaceSnapshot?.tasks?.length ?? 0,     color: '#2B3B6B', bg: '#EEF3FF' },
+                      { label: 'Выполнено',    value: workspaceModal.project.workspaceSnapshot?.tasks?.filter(t => t.status === 'done').length ?? 0, color: '#059669', bg: '#f0fdf4' },
+                      { label: 'Спринтов',     value: workspaceModal.project.workspaceSnapshot?.sprints?.length ?? 0,   color: '#4C1D95', bg: '#F3EEFF' },
+                    ].map(({ label, value, color, bg }) => (
+                      <div key={label} className="rounded-2xl p-4 text-center" style={{ background: bg }}>
+                        <div className="text-[1.6rem] font-bold" style={{ color }}>{value}</div>
+                        <div className="text-xs text-kv-muted mt-0.5">{label}</div>
                       </div>
                     ))}
                   </div>
-                </div>
+
+                  {/* Notes */}
+                  {workspaceModal.project.workspaceSnapshot?.notes && (
+                    <div>
+                      <h4 className="font-semibold text-xs uppercase tracking-widest text-kv-muted mb-3 flex items-center gap-2">
+                        <BookOpen className="w-3.5 h-3.5" /> Заметки команды
+                      </h4>
+                      <div className="bg-[#f9fbfe] rounded-[1.75rem] p-6 text-sm text-kv-text whitespace-pre-wrap leading-relaxed border border-kv-border">
+                        {workspaceModal.project.workspaceSnapshot.notes}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Files */}
+                  {workspaceModal.project.files.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-xs uppercase tracking-widest text-kv-muted mb-3 flex items-center gap-2">
+                        <FolderOpen className="w-3.5 h-3.5" /> Файлы
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {workspaceModal.project.files.map((f, i) => (
+                          <span key={i} className="bg-[#f9fbfe] px-4 py-2 rounded-full text-sm border border-kv-border flex items-center gap-1.5">
+                            {f.icon === 'FileText' ? <FileText className="w-3.5 h-3.5 text-kv-blue" /> : <File className="w-3.5 h-3.5 text-kv-blue" />}
+                            {f.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
-              {/* Notes */}
-              {workspaceModal.project.workspaceSnapshot?.notes && (
-                <div>
-                  <h4 className="flex items-center gap-2 font-semibold mb-4 text-xs uppercase tracking-wide text-kv-muted">
-                    <BookOpen className="w-4 h-4" /> Заметки команды
-                  </h4>
-                  <div className="bg-[#f9fbfe] rounded-[1.75rem] p-6 text-sm text-kv-text whitespace-pre-wrap leading-relaxed border border-kv-border">{workspaceModal.project.workspaceSnapshot.notes}</div>
-                </div>
-              )}
-
-              {/* Files */}
-              {workspaceModal.project.files.length > 0 && (
-                <div>
-                  <h4 className="flex items-center gap-2 font-semibold mb-4 text-xs uppercase tracking-wide text-kv-muted"><FolderOpen className="w-4 h-4" /> Файлы</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {workspaceModal.project.files.map((f, i) => (
-                      <span key={i} className="bg-[#f9fbfe] px-4 py-2 rounded-full text-sm border border-kv-border flex items-center gap-1.5">
-                        {f.icon === 'FileText' ? <FileText className="w-3.5 h-3.5 text-kv-blue" /> : <File className="w-3.5 h-3.5 text-kv-blue" />}
-                        {f.name}
-                      </span>
-                    ))}
+              {/* ── TAB: KANBAN ── */}
+              {workspaceTab === 'kanban' && (() => {
+                const tasks = workspaceModal.project.workspaceSnapshot?.tasks ?? []
+                const cols = [
+                  { key: 'todo',       label: 'Бэклог',       color: '#64748b', bg: '#f8fafc',   border: '#e2e8f0' },
+                  { key: 'inprogress', label: 'В работе',     color: '#2B3B6B', bg: '#EEF3FF',   border: '#bfdbfe' },
+                  { key: 'review',     label: 'Тестируется',  color: '#4C1D95', bg: '#F3EEFF',   border: '#ddd6fe' },
+                  { key: 'done',       label: 'Готово',       color: '#059669', bg: '#f0fdf4',   border: '#a7f3d0' },
+                ]
+                return (
+                  <div>
+                    {tasks.length === 0 ? (
+                      <div className="text-center py-12 text-kv-muted text-sm">
+                        <Layers className="w-8 h-8 mx-auto mb-3 opacity-20" />
+                        Задачи ещё не добавлены
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 min-[700px]:grid-cols-4 gap-3">
+                        {cols.map(({ key, label, color, bg, border }) => {
+                          const colTasks = tasks.filter(t => t.status === key || (!['todo','inprogress','review','done'].includes(t.status) && key === 'todo'))
+                          return (
+                            <div key={key} className="rounded-2xl p-3" style={{ background: bg, border: `1px solid ${border}` }}>
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-semibold" style={{ color }}>{label}</span>
+                                <span className="text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px]"
+                                  style={{ background: color }}>{colTasks.length}</span>
+                              </div>
+                              <div className="space-y-2">
+                                {colTasks.length === 0 ? (
+                                  <div className="text-[10px] text-kv-muted text-center py-3 opacity-60">пусто</div>
+                                ) : colTasks.map((t) => (
+                                  <div key={t.id} className="bg-white rounded-xl px-3 py-2.5 text-xs text-kv-text shadow-sm border border-white/80">
+                                    <div className="font-medium leading-snug mb-1">{t.title}</div>
+                                    {t.dueDate && <div className="text-kv-muted text-[10px]">до {t.dueDate}</div>}
+                                    {t.priority === 'high' && <span className="text-[10px] text-[#dc2626] font-semibold">! высокий</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                )
+              })()}
+
+              {/* ── TAB: SPRINTS ── */}
+              {workspaceTab === 'sprints' && (() => {
+                const sprints = workspaceModal.project.workspaceSnapshot?.sprints ?? []
+                const statusCfg = {
+                  planned:   { label: 'Запланирован', color: '#64748b', bg: '#f1f5f9' },
+                  active:    { label: 'Активен',      color: '#2B3B6B', bg: '#EEF3FF' },
+                  completed: { label: 'Завершён',     color: '#059669', bg: '#f0fdf4' },
+                }
+                return (
+                  <div>
+                    {sprints.length === 0 ? (
+                      <div className="text-center py-12 text-kv-muted text-sm">
+                        <RefreshCw className="w-8 h-8 mx-auto mb-3 opacity-20" />
+                        Спринты ещё не созданы командой
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {sprints.map((s, idx) => {
+                          const sc = statusCfg[s.status as keyof typeof statusCfg] ?? statusCfg.planned
+                          return (
+                            <div key={s.id} className="border border-kv-border rounded-[1.5rem] overflow-hidden">
+                              <div className="flex items-start justify-between p-5 gap-3 flex-wrap" style={{ background: sc.bg }}>
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className="text-xs font-bold text-kv-muted">#{idx + 1}</span>
+                                    <span className="font-semibold text-kv-dark">{s.name}</span>
+                                    <span className="text-xs px-2.5 py-0.5 rounded-full font-medium"
+                                      style={{ background: sc.color, color: 'white' }}>{sc.label}</span>
+                                  </div>
+                                  {s.goal && <p className="text-sm text-kv-text mt-1">{s.goal}</p>}
+                                </div>
+                                {(s.startDate || s.endDate) && (
+                                  <div className="text-xs text-kv-muted flex-shrink-0">
+                                    {s.startDate && <span>{s.startDate}</span>}
+                                    {s.startDate && s.endDate && ' — '}
+                                    {s.endDate && <span>{s.endDate}</span>}
+                                  </div>
+                                )}
+                              </div>
+                              {s.retroNotes && (
+                                <div className="px-5 py-4 bg-white border-t border-kv-border">
+                                  <p className="text-xs font-semibold uppercase tracking-widest text-kv-muted mb-2">Ретроспектива</p>
+                                  <p className="text-sm text-kv-text leading-relaxed">{s.retroNotes}</p>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
               {/* Feedback */}
               <div className="border-t border-kv-border pt-8">
