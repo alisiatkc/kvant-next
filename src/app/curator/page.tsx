@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, Paperclip, File, FileText,
   LayoutDashboard, ClipboardList, Bell, MessageSquare,
   BookOpen, CheckCircle2, FolderOpen, Send, X, AlertTriangle,
-  UserCheck, UserPlus, Inbox, Package, Plus, Edit2, Trash2,
+  UserCheck, UserPlus, Inbox, Package, Plus, Edit2, Trash2, BarChart3, TrendingUp,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -291,6 +291,80 @@ export default function CuratorPage() {
                     <div className="text-kv-muted text-xs leading-tight">{s.label}</div>
                   </div>
                 ))}
+              </div>
+
+              {/* Analytics */}
+              <div className="grid grid-cols-1 min-[900px]:grid-cols-2 gap-5 mb-6">
+                {/* Status breakdown */}
+                <div className="bg-white rounded-[3rem] p-8">
+                  <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-kv-blue" /> Статусы проектов
+                  </h3>
+                  <div className="space-y-3.5">
+                    {([
+                      { label: 'Запрос обратной связи', key: 'feedback_requested', color: '#1565c0' },
+                      { label: 'На рассмотрении',        key: 'review',             color: '#ef6c00' },
+                      { label: 'Одобрено',               key: 'approved',           color: '#2e7d32' },
+                      { label: 'Отклонено',              key: 'rejected',           color: '#c62828' },
+                    ] as { label: string; key: string; color: string }[]).map(({ label, key, color }) => {
+                      const count = projects.filter((p) => p.status === key).length
+                      const total = projects.length || 1
+                      const pct = Math.round((count / total) * 100)
+                      return (
+                        <div key={key}>
+                          <div className="flex items-center justify-between mb-1.5 text-sm">
+                            <span className="text-kv-text">{label}</span>
+                            <span className="font-bold tabular-nums" style={{ color }}>{count}</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-[#f1f5f9] overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${count > 0 ? Math.max(pct, 4) : 0}%`, background: color }} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p className="text-kv-muted text-xs mt-5 border-t border-kv-border pt-4">
+                    Итого: {projects.length} проект{projects.length === 1 ? '' : projects.length < 5 ? 'а' : 'ов'}
+                  </p>
+                </div>
+
+                {/* Track distribution */}
+                <div className="bg-white rounded-[3rem] p-8">
+                  <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-kv-blue" /> По трекам практики
+                  </h3>
+                  {(() => {
+                    const tracks = ['А1', 'А2', 'А3']
+                    const colors = ['#2B3B6B', '#4C1D95', '#4f6ad0']
+                    const tCounts = tracks.map((t) => projects.filter((p) => p.track === t).length)
+                    const maxVal = Math.max(...tCounts, 1)
+                    return (
+                      <>
+                        <div className="flex items-end gap-4 mb-3" style={{ height: '96px' }}>
+                          {tCounts.map((count, i) => {
+                            const pct = Math.max(Math.round((count / maxVal) * 100), count > 0 ? 8 : 3)
+                            return (
+                              <div key={tracks[i]} className="flex-1 rounded-t-xl transition-all duration-700"
+                                style={{ height: `${pct}%`, background: colors[i], opacity: count > 0 ? 1 : 0.18 }} />
+                            )
+                          })}
+                        </div>
+                        <div className="flex gap-4">
+                          {tCounts.map((count, i) => (
+                            <div key={tracks[i]} className="flex-1 text-center">
+                              <div className="font-bold text-sm" style={{ color: colors[i] }}>{count}</div>
+                              <div className="text-xs text-kv-muted mt-0.5">{tracks[i]}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-kv-muted text-xs mt-5 border-t border-kv-border pt-4">
+                          А1 — индивидуальная · А2/А3 — групповая практика
+                        </p>
+                      </>
+                    )
+                  })()}
+                </div>
               </div>
 
               {/* My assigned projects */}
