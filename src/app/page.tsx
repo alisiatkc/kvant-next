@@ -50,87 +50,63 @@ export default function HomePage() {
                 background: 'radial-gradient(circle at 42% 42%, rgba(76,29,149,0.18), rgba(43,59,107,0.05) 72%)',
                 filter: 'blur(38px)' }} />
 
-            {/* Project activity cards — anchored right side */}
-            <div className="hidden min-[1050px]:block absolute"
-              style={{ right: '5%', top: '50%', transform: 'translateY(-50%)', width: '268px' }}>
+            {/* Concentric orbit system — anchored to right side */}
+            <div style={{ position: 'absolute', top: 'calc(50% - 170px)', right: '3%',
+              width: '340px', height: '340px' }}>
 
-              {/* Main project card */}
-              <div className="proj-main bg-white rounded-[1.6rem] p-5 mb-3"
-                style={{ boxShadow: '0 24px 64px rgba(43,59,107,0.13)', border: '1px solid rgba(43,59,107,0.09)' }}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-9 h-9 rounded-xl bg-[#EEF3FF] flex items-center justify-center flex-shrink-0">
-                    <Box className="text-kv-blue w-[18px] h-[18px]" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-[11px] text-kv-dark leading-tight truncate">Геометрический конструктор</div>
-                    <div className="text-[9px] text-kv-muted mt-0.5">Трек А2 · Команда Альфа</div>
-                  </div>
-                </div>
-                <div className="mb-3.5">
-                  <div className="flex justify-between mb-1.5">
-                    <span className="text-[9px] text-kv-muted uppercase tracking-wide">Прогресс</span>
-                    <span className="text-[9px] font-semibold text-kv-blue">Этап 4 из 6</span>
-                  </div>
-                  <div className="h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden mb-1.5">
-                    <div className="h-full rounded-full" style={{ width: '67%', background: 'linear-gradient(90deg,#2B3B6B,#4C1D95)' }} />
-                  </div>
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5,6].map((s) => (
-                      <div key={s} className="flex-1 h-1 rounded-full"
-                        style={{ background: s < 4 ? '#2B3B6B' : s === 4 ? '#4C1D95' : '#e2e8f0' }} />
-                    ))}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 gap-1">
-                  {[
-                    { label: 'Бэклог', n: 2, color: '#64748b', bg: '#f8f9fb' },
-                    { label: 'Работа', n: 1, color: '#2B3B6B', bg: '#EEF3FF' },
-                    { label: 'Ревью',  n: 1, color: '#4C1D95', bg: '#F3EEFF' },
-                    { label: 'Готово', n: 4, color: '#059669', bg: '#f0fdf4' },
-                  ].map(({ label, n, color, bg }) => (
-                    <div key={label} className="rounded-xl p-2 text-center" style={{ background: bg }}>
-                      <div className="font-bold text-xs" style={{ color }}>{n}</div>
-                      <div className="text-[8px] text-kv-muted mt-0.5">{label}</div>
-                    </div>
-                  ))}
-                </div>
+              {/* Outer ring — navy, slow */}
+              <div className="orbit-slow" style={{ position: 'absolute', inset: 0,
+                borderRadius: '50%', border: '1.5px solid rgba(43,59,107,0.22)' }}>
+                <div style={{ position: 'absolute', top: '-5px', left: 'calc(50% - 5px)',
+                  width: '10px', height: '10px', borderRadius: '50%', background: '#2B3B6B',
+                  boxShadow: '0 0 12px rgba(43,59,107,0.9), 0 0 28px rgba(43,59,107,0.4)' }} />
               </div>
 
-              {/* Notification cards */}
-              <div className="proj-c1 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 mb-2"
-                style={{ background: '#f0fdf4', boxShadow: '0 8px 24px rgba(5,150,105,0.1)', border: '1px solid rgba(5,150,105,0.12)' }}>
-                <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: '#059669' }}>
-                  <CheckCircle2 className="text-white w-[14px] h-[14px]" />
-                </div>
-                <div>
-                  <div className="font-semibold text-[10px]" style={{ color: '#065f46' }}>Паспорт заполнен</div>
-                  <div className="text-[9px]" style={{ color: '#059669' }}>Готово к ревью куратора</div>
-                </div>
+              {/* Middle ring — violet, medium reverse */}
+              <div className="orbit-med" style={{ position: 'absolute', inset: '65px',
+                borderRadius: '50%', border: '1.5px solid rgba(76,29,149,0.28)' }}>
+                <div style={{ position: 'absolute', top: '-4px', left: 'calc(50% - 4px)',
+                  width: '8px', height: '8px', borderRadius: '50%', background: '#4C1D95',
+                  boxShadow: '0 0 10px rgba(76,29,149,1), 0 0 22px rgba(76,29,149,0.45)' }} />
               </div>
 
-              <div className="proj-c2 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 mb-2 ml-6"
-                style={{ background: '#EEF3FF', boxShadow: '0 8px 24px rgba(43,59,107,0.1)', border: '1px solid rgba(43,59,107,0.1)' }}>
-                <div className="w-7 h-7 rounded-xl bg-[#2B3B6B] flex items-center justify-center flex-shrink-0">
-                  <Zap className="text-white w-[13px] h-[13px]" />
-                </div>
-                <div>
-                  <div className="font-semibold text-[10px] text-[#2B3B6B]">Спринт 4 · активен</div>
-                  <div className="text-[9px] text-[#4C1D95]">Осталось 3 дня</div>
-                </div>
+              {/* Inner ring — navy, fast */}
+              <div className="orbit-fast" style={{ position: 'absolute', inset: '118px',
+                borderRadius: '50%', border: '1.5px solid rgba(43,59,107,0.35)' }}>
+                <div style={{ position: 'absolute', top: '-3px', left: 'calc(50% - 3px)',
+                  width: '6px', height: '6px', borderRadius: '50%', background: '#2B3B6B',
+                  boxShadow: '0 0 8px rgba(43,59,107,1), 0 0 18px rgba(43,59,107,0.6)' }} />
               </div>
 
-              <div className="proj-c3 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5"
-                style={{ background: '#F3EEFF', boxShadow: '0 8px 24px rgba(76,29,149,0.09)', border: '1px solid rgba(76,29,149,0.1)' }}>
-                <div className="w-7 h-7 rounded-xl bg-[#4C1D95] flex items-center justify-center flex-shrink-0">
-                  <Users className="text-white w-[13px] h-[13px]" />
-                </div>
-                <div>
-                  <div className="font-semibold text-[10px] text-[#4C1D95]">5 задач завершено</div>
-                  <div className="text-[9px] text-[#4C1D95] opacity-70">из 8 в спринте</div>
-                </div>
-              </div>
+              {/* Nucleus */}
+              <div style={{ position: 'absolute', top: 'calc(50% - 7px)', left: 'calc(50% - 7px)',
+                width: '14px', height: '14px', borderRadius: '50%',
+                background: 'radial-gradient(circle at 35% 35%, #7c6fd0, #2B3B6B)',
+                boxShadow: '0 0 18px rgba(76,29,149,0.7), 0 0 36px rgba(43,59,107,0.35)' }} />
             </div>
+
+            {/* Scattered pulsing glow nodes */}
+            <div className="pulse-dot absolute w-3 h-3 rounded-full"
+              style={{ top: '18%', right: '34%', background: '#2B3B6B',
+                boxShadow: '0 0 0 5px rgba(43,59,107,0.12)' }} />
+            <div className="pulse-dot absolute w-2.5 h-2.5 rounded-full"
+              style={{ top: '62%', left: '10%', background: '#4C1D95',
+                boxShadow: '0 0 0 4px rgba(76,29,149,0.14)', animationDelay: '0.7s' }} />
+            <div className="pulse-dot absolute w-2 h-2 rounded-full"
+              style={{ top: '42%', left: '30%', background: '#2B3B6B',
+                boxShadow: '0 0 0 4px rgba(43,59,107,0.12)', animationDelay: '1.4s' }} />
+            <div className="pulse-dot absolute w-2.5 h-2.5 rounded-full"
+              style={{ bottom: '24%', right: '24%', background: '#4C1D95',
+                boxShadow: '0 0 0 5px rgba(76,29,149,0.12)', animationDelay: '2.1s' }} />
+            <div className="pulse-dot absolute w-2 h-2 rounded-full"
+              style={{ top: '74%', right: '42%', background: '#2B3B6B',
+                boxShadow: '0 0 0 3px rgba(43,59,107,0.15)', animationDelay: '0.4s' }} />
+            <div className="pulse-dot absolute w-2 h-2 rounded-full"
+              style={{ top: '26%', left: '18%', background: '#4C1D95',
+                boxShadow: '0 0 0 3px rgba(76,29,149,0.15)', animationDelay: '1.9s' }} />
+            <div className="pulse-dot absolute w-1.5 h-1.5 rounded-full"
+              style={{ top: '50%', right: '20%', background: '#4C1D95',
+                boxShadow: '0 0 0 3px rgba(76,29,149,0.12)', animationDelay: '0.9s' }} />
 
             {/* Grid texture */}
             <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
