@@ -204,12 +204,12 @@ export default function CatalogPage() {
                     style={{ background: `linear-gradient(135deg, ${sc.light}, ${sc.bg})` }}>
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
                       style={{ background: sc.color }}>
-                      <Icon className="text-white stroke-[1.5]" style={{ width: '22px', height: '22px' }} />
+                      <Icon className="text-white stroke-[1.5] w-[22px] h-[22px]" />
                     </div>
                     {topFilter && isTop && (
                       <span className="flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full"
                         style={{ background: '#f59e0b', color: 'white' }}>
-                        <Award style={{ width: '11px', height: '11px' }} /> Топ-5
+                        <Award className="w-[11px] h-[11px]" /> Топ-5
                       </span>
                     )}
                     <button
@@ -275,7 +275,7 @@ export default function CatalogPage() {
                 <div className="flex items-end gap-5">
                   <div className="w-16 h-16 min-[640px]:w-20 min-[640px]:h-20 rounded-[1.25rem] flex items-center justify-center flex-shrink-0"
                     style={{ background: sc.color }}>
-                    <ModalIcon className="text-white stroke-[1.25]" style={{ width: '36px', height: '36px' }} />
+                    <ModalIcon className="text-white stroke-[1.25] w-9 h-9" />
                   </div>
                   <div>
                     <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-2 inline-block"

@@ -59,7 +59,7 @@ export default function HomePage() {
                 style={{ boxShadow: '0 24px 64px rgba(43,59,107,0.13)', border: '1px solid rgba(43,59,107,0.09)' }}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-9 h-9 rounded-xl bg-[#EEF3FF] flex items-center justify-center flex-shrink-0">
-                    <Box className="w-4.5 h-4.5 text-kv-blue" style={{ width: '18px', height: '18px' }} />
+                    <Box className="text-kv-blue w-[18px] h-[18px]" />
                   </div>
                   <div className="min-w-0">
                     <div className="font-semibold text-[11px] text-kv-dark leading-tight truncate">Геометрический конструктор</div>
@@ -101,7 +101,7 @@ export default function HomePage() {
                 style={{ background: '#f0fdf4', boxShadow: '0 8px 24px rgba(5,150,105,0.1)', border: '1px solid rgba(5,150,105,0.12)' }}>
                 <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: '#059669' }}>
-                  <CheckCircle2 className="text-white" style={{ width: '14px', height: '14px' }} />
+                  <CheckCircle2 className="text-white w-[14px] h-[14px]" />
                 </div>
                 <div>
                   <div className="font-semibold text-[10px]" style={{ color: '#065f46' }}>Паспорт заполнен</div>
@@ -112,7 +112,7 @@ export default function HomePage() {
               <div className="proj-c2 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 mb-2 ml-6"
                 style={{ background: '#EEF3FF', boxShadow: '0 8px 24px rgba(43,59,107,0.1)', border: '1px solid rgba(43,59,107,0.1)' }}>
                 <div className="w-7 h-7 rounded-xl bg-[#2B3B6B] flex items-center justify-center flex-shrink-0">
-                  <Zap className="text-white" style={{ width: '13px', height: '13px' }} />
+                  <Zap className="text-white w-[13px] h-[13px]" />
                 </div>
                 <div>
                   <div className="font-semibold text-[10px] text-[#2B3B6B]">Спринт 4 · активен</div>
@@ -123,7 +123,7 @@ export default function HomePage() {
               <div className="proj-c3 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5"
                 style={{ background: '#F3EEFF', boxShadow: '0 8px 24px rgba(76,29,149,0.09)', border: '1px solid rgba(76,29,149,0.1)' }}>
                 <div className="w-7 h-7 rounded-xl bg-[#4C1D95] flex items-center justify-center flex-shrink-0">
-                  <Users className="text-white" style={{ width: '13px', height: '13px' }} />
+                  <Users className="text-white w-[13px] h-[13px]" />
                 </div>
                 <div>
                   <div className="font-semibold text-[10px] text-[#4C1D95]">5 задач завершено</div>
