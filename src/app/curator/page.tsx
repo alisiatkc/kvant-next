@@ -43,10 +43,10 @@ const SUBJECT_TECH: Record<string, string[]> = {
 }
 
 const STATUS_CFG = {
-  feedback_requested: { label: 'Запрос обратной связи', Icon: Bell,         cls: 'bg-[#e3f2fd] text-[#1565c0]' },
-  review:             { label: 'На рассмотрении',        Icon: Clock,        cls: 'bg-[#fff3e0] text-[#ef6c00]' },
-  approved:           { label: 'Одобрено',                Icon: CheckCircle, cls: 'bg-[#e8f5e9] text-[#2e7d32]' },
-  rejected:           { label: 'Отклонено',               Icon: XCircle,     cls: 'bg-[#ffebee] text-[#c62828]' },
+  feedback_requested: { label: 'Запрос обратной связи', Icon: Bell,         cls: 'bg-[#EEF3FF] text-kv-blue' },
+  review:             { label: 'На рассмотрении',        Icon: Clock,        cls: 'bg-[#F3EEFF] text-[#4C1D95]' },
+  approved:           { label: 'Одобрено',                Icon: CheckCircle, cls: 'bg-[#EEF3FF] text-kv-blue' },
+  rejected:           { label: 'Отклонено',               Icon: XCircle,     cls: 'bg-[#F3EEFF] text-[#4C1D95]' },
 }
 
 function numericId(sid: string): number {
@@ -284,10 +284,10 @@ export default function CuratorPage() {
             <>
               <div className="grid grid-cols-2 min-[700px]:grid-cols-4 gap-4 mb-8">
                 {[
-                  { label: 'Мои проекты',    value: counts.mine,      color: 'text-kv-blue',   bg: 'bg-[#eff6ff]' },
-                  { label: 'Ждут ответа',    value: counts.inbox,     color: 'text-[#dc2626]', bg: 'bg-[#fef2f2]' },
-                  { label: 'Свободные',       value: counts.available, color: 'text-[#d97706]', bg: 'bg-[#fff3e0]' },
-                  { label: 'Одобрено всего', value: counts.approved,  color: 'text-[#2e7d32]', bg: 'bg-[#e8f5e9]' },
+                  { label: 'Мои проекты',    value: counts.mine,      color: 'text-kv-blue',     bg: 'bg-[#EEF3FF]' },
+                  { label: 'Ждут ответа',    value: counts.inbox,     color: 'text-[#4C1D95]',   bg: 'bg-[#F3EEFF]' },
+                  { label: 'Свободные',       value: counts.available, color: 'text-kv-blue',     bg: 'bg-[#EEF3FF]' },
+                  { label: 'Одобрено всего', value: counts.approved,  color: 'text-[#4C1D95]',   bg: 'bg-[#F3EEFF]' },
                 ].map((s) => (
                   <div key={s.label} className={`${s.bg} rounded-[2rem] p-7 text-center`}>
                     <div className={`text-[2.2rem] font-bold ${s.color} mb-1`}>{s.value}</div>
@@ -322,10 +322,10 @@ export default function CuratorPage() {
                 {analyticsView === 'status' && (() => {
                   const total = projects.length || 1
                   const rows = [
-                    { label: 'Запрос обратной связи', key: 'feedback_requested', color: '#1565c0', bg: '#e3f2fd' },
-                    { label: 'На рассмотрении',        key: 'review',             color: '#ef6c00', bg: '#fff3e0' },
-                    { label: 'Одобрено',               key: 'approved',           color: '#2e7d32', bg: '#e8f5e9' },
-                    { label: 'Отклонено',              key: 'rejected',           color: '#c62828', bg: '#ffebee' },
+                    { label: 'Запрос обратной связи', key: 'feedback_requested', color: '#2B3B6B', bg: '#EEF3FF' },
+                    { label: 'На рассмотрении',        key: 'review',             color: '#4C1D95', bg: '#F3EEFF' },
+                    { label: 'Одобрено',               key: 'approved',           color: '#2B3B6B', bg: '#EEF3FF' },
+                    { label: 'Отклонено',              key: 'rejected',           color: '#4C1D95', bg: '#F3EEFF' },
                   ] as { label: string; key: string; color: string; bg: string }[]
                   return (
                     <div className="space-y-4">
@@ -421,8 +421,8 @@ export default function CuratorPage() {
                   const stages = [
                     { label: 'Всего подано',       count: total,    color: '#2B3B6B', pct: 100 },
                     { label: 'Дошли до ревью',      count: reviewed, color: '#4C1D95', pct: total ? Math.round((reviewed / total) * 100) : 0 },
-                    { label: 'Одобрено',            count: approved, color: '#2e7d32', pct: total ? Math.round((approved / total) * 100) : 0 },
-                    { label: 'Отклонено',           count: rejected, color: '#c62828', pct: total ? Math.round((rejected / total) * 100) : 0 },
+                    { label: 'Одобрено',            count: approved, color: '#2B3B6B', pct: total ? Math.round((approved / total) * 100) : 0 },
+                    { label: 'Отклонено',           count: rejected, color: '#4C1D95', pct: total ? Math.round((rejected / total) * 100) : 0 },
                   ]
                   return (
                     <div className="space-y-3">
@@ -441,13 +441,13 @@ export default function CuratorPage() {
                         </div>
                       ))}
                       <div className="mt-5 pt-4 border-t border-kv-border grid grid-cols-2 gap-4">
-                        <div className="bg-[#e8f5e9] rounded-2xl p-4 text-center">
-                          <div className="text-[1.6rem] font-bold text-[#2e7d32]">
+                        <div className="bg-[#EEF3FF] rounded-2xl p-4 text-center">
+                          <div className="text-[1.6rem] font-bold text-kv-blue">
                             {total ? Math.round((approved / total) * 100) : 0}%
                           </div>
-                          <div className="text-xs text-[#2e7d32] mt-0.5">Конверсия в одобрение</div>
+                          <div className="text-xs text-kv-blue mt-0.5">Конверсия в одобрение</div>
                         </div>
-                        <div className="bg-[#f3eeff] rounded-2xl p-4 text-center">
+                        <div className="bg-[#F3EEFF] rounded-2xl p-4 text-center">
                           <div className="text-[1.6rem] font-bold text-[#4C1D95]">
                             {total ? Math.round((reviewed / total) * 100) : 0}%
                           </div>
@@ -483,7 +483,7 @@ export default function CuratorPage() {
               {available.length > 0 && (
                 <div className="bg-white rounded-[3rem] p-10">
                   <h2 className="text-[1.4rem] font-semibold mb-6 flex items-center gap-2">
-                    <Inbox className="w-5 h-5 text-[#d97706]" /> Свободные проекты
+                    <Inbox className="w-5 h-5 text-kv-blue" /> Свободные проекты
                   </h2>
                   <div className="grid grid-cols-1 min-[700px]:grid-cols-2 min-[1100px]:grid-cols-3 gap-5">
                     {available.map((p) => (
@@ -519,7 +519,7 @@ export default function CuratorPage() {
                     const sc = STATUS_CFG[p.status]
                     const date = p.submittedAt ? new Date(p.submittedAt).toLocaleDateString('ru-RU') : '—'
                     return (
-                      <div key={p.id} className="border border-[#90caf9] bg-[#e3f2fd] rounded-[2rem] p-7 flex items-center justify-between flex-wrap gap-4">
+                      <div key={p.id} className="border border-kv-border bg-[#EEF3FF] rounded-[2rem] p-7 flex items-center justify-between flex-wrap gap-4">
                         <div>
                           <h3 className="font-semibold mb-0.5">{p.projectName || 'Без названия'}</h3>
                           <p className="text-sm text-kv-muted">{p.teamName} · {date}</p>
@@ -534,11 +534,11 @@ export default function CuratorPage() {
                           </button>
                           {p.status === 'review' && (
                             <>
-                              <button className="flex items-center gap-2 px-5 py-2.5 bg-[#e8f5e9] text-[#2e7d32] rounded-full border-none cursor-pointer text-sm font-medium hover:bg-[#c8e6c9] transition-colors"
+                              <button className="flex items-center gap-2 px-5 py-2.5 bg-[#EEF3FF] text-kv-blue rounded-full border-none cursor-pointer text-sm font-medium hover:bg-[#dde3f5] transition-colors"
                                 onClick={() => handleStatus(p.id, 'approved')}>
                                 <CheckCircle className="w-4 h-4" /> Одобрить
                               </button>
-                              <button className="flex items-center gap-2 px-5 py-2.5 bg-[#ffebee] text-[#c62828] rounded-full border-none cursor-pointer text-sm font-medium hover:bg-[#ffcdd2] transition-colors"
+                              <button className="flex items-center gap-2 px-5 py-2.5 bg-[#F3EEFF] text-[#4C1D95] rounded-full border-none cursor-pointer text-sm font-medium hover:bg-[#e8e0ff] transition-colors"
                                 onClick={() => handleStatus(p.id, 'rejected')}>
                                 <XCircle className="w-4 h-4" /> Отклонить
                               </button>
@@ -658,11 +658,11 @@ export default function CuratorPage() {
                             )}
                             {project.status === 'review' && isMe && (
                               <>
-                                <button className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#e8f5e9] text-[#2e7d32] border-none cursor-pointer text-sm font-medium hover:bg-[#c8e6c9] transition-colors"
+                                <button className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#EEF3FF] text-kv-blue border-none cursor-pointer text-sm font-medium hover:bg-[#dde3f5] transition-colors"
                                   onClick={() => handleStatus(project.id, 'approved')}>
                                   <CheckCircle className="w-4 h-4" /> Одобрить
                                 </button>
-                                <button className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#ffebee] text-[#c62828] border-none cursor-pointer text-sm font-medium hover:bg-[#ffcdd2] transition-colors"
+                                <button className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F3EEFF] text-[#4C1D95] border-none cursor-pointer text-sm font-medium hover:bg-[#e8e0ff] transition-colors"
                                   onClick={() => handleStatus(project.id, 'rejected')}>
                                   <XCircle className="w-4 h-4" /> Отклонить
                                 </button>
@@ -684,7 +684,7 @@ export default function CuratorPage() {
                               ))}
                             </div>
                             {project.curatorFeedback && (
-                              <div className="bg-[#e3f2fd] rounded-2xl p-4 text-sm text-[#1565c0]">
+                              <div className="bg-[#EEF3FF] rounded-2xl p-4 text-sm text-kv-blue">
                                 <strong className="block mb-1 text-xs uppercase tracking-wide">Обратная связь:</strong>
                                 {project.curatorFeedback}
                               </div>
@@ -774,7 +774,7 @@ export default function CuratorPage() {
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { label: 'Задач всего',  value: workspaceModal.project.workspaceSnapshot?.tasks?.length ?? 0,     color: '#2B3B6B', bg: '#EEF3FF' },
-                      { label: 'Выполнено',    value: workspaceModal.project.workspaceSnapshot?.tasks?.filter(t => t.status === 'done').length ?? 0, color: '#059669', bg: '#f0fdf4' },
+                      { label: 'Выполнено',    value: workspaceModal.project.workspaceSnapshot?.tasks?.filter(t => t.status === 'done').length ?? 0, color: '#4C1D95', bg: '#F3EEFF' },
                       { label: 'Спринтов',     value: workspaceModal.project.workspaceSnapshot?.sprints?.length ?? 0,   color: '#4C1D95', bg: '#F3EEFF' },
                     ].map(({ label, value, color, bg }) => (
                       <div key={label} className="rounded-2xl p-4 text-center" style={{ background: bg }}>
@@ -819,10 +819,10 @@ export default function CuratorPage() {
               {workspaceTab === 'kanban' && (() => {
                 const tasks = workspaceModal.project.workspaceSnapshot?.tasks ?? []
                 const cols = [
-                  { key: 'todo',       label: 'Бэклог',       color: '#64748b', bg: '#f8fafc',   border: '#e2e8f0' },
+                  { key: 'todo',       label: 'Бэклог',       color: '#2B3B6B', bg: '#EEF3FF',   border: '#c8d3e8' },
                   { key: 'inprogress', label: 'В работе',     color: '#2B3B6B', bg: '#EEF3FF',   border: '#bfdbfe' },
                   { key: 'review',     label: 'Тестируется',  color: '#4C1D95', bg: '#F3EEFF',   border: '#ddd6fe' },
-                  { key: 'done',       label: 'Готово',       color: '#059669', bg: '#f0fdf4',   border: '#a7f3d0' },
+                  { key: 'done',       label: 'Готово',       color: '#4C1D95', bg: '#F3EEFF',   border: '#ddd6fe' },
                 ]
                 return (
                   <div>
@@ -866,9 +866,9 @@ export default function CuratorPage() {
               {workspaceTab === 'sprints' && (() => {
                 const sprints = workspaceModal.project.workspaceSnapshot?.sprints ?? []
                 const statusCfg = {
-                  planned:   { label: 'Запланирован', color: '#64748b', bg: '#f1f5f9' },
+                  planned:   { label: 'Запланирован', color: '#2B3B6B', bg: '#EEF3FF' },
                   active:    { label: 'Активен',      color: '#2B3B6B', bg: '#EEF3FF' },
-                  completed: { label: 'Завершён',     color: '#059669', bg: '#f0fdf4' },
+                  completed: { label: 'Завершён',     color: '#4C1D95', bg: '#F3EEFF' },
                 }
                 return (
                   <div>
@@ -922,7 +922,7 @@ export default function CuratorPage() {
                   <MessageSquare className="w-4 h-4" /> Обратная связь
                 </h4>
                 {workspaceModal.project.curatorFeedback && (
-                  <div className="bg-[#e3f2fd] rounded-2xl p-4 mb-4 text-sm text-[#1565c0]">
+                  <div className="bg-[#EEF3FF] rounded-2xl p-4 mb-4 text-sm text-kv-blue">
                     <strong className="block mb-1 text-xs uppercase tracking-wide">Ранее отправлено:</strong>
                     {workspaceModal.project.curatorFeedback}
                   </div>
@@ -937,11 +937,11 @@ export default function CuratorPage() {
                   </button>
                   {workspaceModal.project.status === 'review' && (
                     <>
-                      <button className="flex items-center gap-2 px-6 py-3 bg-[#e8f5e9] text-[#2e7d32] rounded-full border-none cursor-pointer text-sm font-medium hover:bg-[#c8e6c9] transition-colors"
+                      <button className="flex items-center gap-2 px-6 py-3 bg-[#EEF3FF] text-kv-blue rounded-full border-none cursor-pointer text-sm font-medium hover:bg-[#dde3f5] transition-colors"
                         onClick={async () => { await handleStatus(workspaceModal.project.id, 'approved', workspaceModal.feedbackDraft || undefined); setWorkspaceModal(null) }}>
                         <CheckCircle className="w-4 h-4" /> Одобрить и опубликовать
                       </button>
-                      <button className="flex items-center gap-2 px-6 py-3 bg-[#ffebee] text-[#c62828] rounded-full border-none cursor-pointer text-sm font-medium hover:bg-[#ffcdd2] transition-colors"
+                      <button className="flex items-center gap-2 px-6 py-3 bg-[#F3EEFF] text-[#4C1D95] rounded-full border-none cursor-pointer text-sm font-medium hover:bg-[#e8e0ff] transition-colors"
                         onClick={async () => { await handleStatus(workspaceModal.project.id, 'rejected', workspaceModal.feedbackDraft || undefined); setWorkspaceModal(null) }}>
                         <XCircle className="w-4 h-4" /> Отклонить
                       </button>
@@ -1089,10 +1089,10 @@ function ProjectCard({
         </button>
         {project.status === 'review' && (
           <div className="flex gap-2">
-            <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs rounded-full bg-[#e8f5e9] text-[#2e7d32] border-none cursor-pointer hover:bg-[#c8e6c9] transition-colors font-medium" onClick={onApprove}>
+            <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs rounded-full bg-[#EEF3FF] text-kv-blue border-none cursor-pointer hover:bg-[#dde3f5] transition-colors font-medium" onClick={onApprove}>
               <CheckCircle className="w-3.5 h-3.5" /> Одобрить
             </button>
-            <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs rounded-full bg-[#ffebee] text-[#c62828] border-none cursor-pointer hover:bg-[#ffcdd2] transition-colors font-medium" onClick={onReject}>
+            <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs rounded-full bg-[#F3EEFF] text-[#4C1D95] border-none cursor-pointer hover:bg-[#e8e0ff] transition-colors font-medium" onClick={onReject}>
               <XCircle className="w-3.5 h-3.5" /> Отклонить
             </button>
           </div>

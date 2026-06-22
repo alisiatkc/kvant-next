@@ -19,23 +19,14 @@ const fileIconMap: Record<string, React.ComponentType<{ className?: string }>> =
 }
 
 const subjects = [
-  { key: 'all',       label: 'Все',          color: '#2B3B6B', bg: '#EEF3FF' },
-  { key: 'math',      label: 'Математика',   color: '#1d4ed8', bg: '#dbeafe' },
-  { key: 'bio',       label: 'Биология',     color: '#059669', bg: '#d1fae5' },
-  { key: 'physics',   label: 'Физика',       color: '#d97706', bg: '#fef3c7' },
-  { key: 'it',        label: 'Информатика',  color: '#4C1D95', bg: '#ede9fe' },
-  { key: 'economics', label: 'Экономика',    color: '#0e7490', bg: '#cffafe' },
-  { key: 'pedagogy',  label: 'Педагогика',   color: '#be185d', bg: '#fce7f3' },
+  { key: 'all',       label: 'Все' },
+  { key: 'math',      label: 'Математика' },
+  { key: 'bio',       label: 'Биология' },
+  { key: 'physics',   label: 'Физика' },
+  { key: 'it',        label: 'Информатика' },
+  { key: 'economics', label: 'Экономика' },
+  { key: 'pedagogy',  label: 'Педагогика' },
 ]
-
-const SUBJECT_COLORS: Record<string, { color: string; bg: string; light: string }> = {
-  math:      { color: '#1d4ed8', bg: '#dbeafe', light: '#eff6ff' },
-  bio:       { color: '#059669', bg: '#d1fae5', light: '#f0fdf4' },
-  physics:   { color: '#d97706', bg: '#fef3c7', light: '#fffbeb' },
-  it:        { color: '#4C1D95', bg: '#ede9fe', light: '#f5f3ff' },
-  economics: { color: '#0e7490', bg: '#cffafe', light: '#ecfeff' },
-  pedagogy:  { color: '#be185d', bg: '#fce7f3', light: '#fdf4ff' },
-}
 
 export default function CatalogPage() {
   const [projects, setProjects] = useState<Project[]>(initialProjects)
@@ -150,10 +141,9 @@ export default function CatalogPage() {
                   <button key={s.key}
                     className={`px-4 py-2 rounded-full font-medium text-sm transition-all cursor-pointer border ${
                       filter === s.key && !topFilter
-                        ? 'text-white border-transparent'
+                        ? 'bg-kv-blue text-white border-transparent'
                         : 'bg-white border-[#e2e8f0] hover:border-[#c7d2e7]'
                     }`}
-                    style={filter === s.key && !topFilter ? { background: s.color, borderColor: s.color } : {}}
                     onClick={() => { setFilter(s.key); setTopFilter(false) }}>
                     {s.label}
                   </button>
@@ -190,7 +180,6 @@ export default function CatalogPage() {
               const Icon    = subjectIconMap[project.subject] ?? Box
               const isLiked = likedIds.has(project.id)
               const isTop   = topIds.has(project.id)
-              const sc      = SUBJECT_COLORS[project.subject] ?? { color: '#2B3B6B', bg: '#EEF3FF', light: '#f5f7ff' }
 
               return (
                 <div key={project.id}
@@ -199,11 +188,10 @@ export default function CatalogPage() {
                   }`}
                   onClick={() => setSelected(project)}>
 
-                  {/* Colored cover */}
+                  {/* Cover */}
                   <div className="h-[88px] flex items-center justify-between px-6 relative"
-                    style={{ background: `linear-gradient(135deg, ${sc.light}, ${sc.bg})` }}>
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                      style={{ background: sc.color }}>
+                    style={{ background: 'linear-gradient(135deg, #f5f7ff, #EEF3FF)' }}>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-kv-blue">
                       <Icon className="text-white stroke-[1.5] w-[22px] h-[22px]" />
                     </div>
                     {topFilter && isTop && (
@@ -233,8 +221,7 @@ export default function CatalogPage() {
                       </div>
                       <div className="flex gap-1.5">
                         {project.tech.slice(0, 1).map((t) => (
-                          <span key={t} className="text-[10px] px-2.5 py-1 rounded-full font-medium"
-                            style={{ background: sc.bg, color: sc.color }}>{t}</span>
+                          <span key={t} className="text-[10px] px-2.5 py-1 rounded-full font-medium bg-[#EEF3FF] text-kv-blue">{t}</span>
                         ))}
                       </div>
                     </div>
@@ -260,29 +247,26 @@ export default function CatalogPage() {
 
       {/* Project modal */}
       {selected && (() => {
-        const sc = SUBJECT_COLORS[selected.subject] ?? { color: '#2B3B6B', bg: '#EEF3FF', light: '#f5f7ff' }
         const ModalIcon = subjectIconMap[selected.image] ?? subjectIconMap[selected.subject] ?? Box
         return (
           <div className="modal-overlay" onClick={() => setSelected(null)}>
             <div className="bg-white max-w-[820px] w-full min-[640px]:w-[92%] max-h-[94vh] overflow-y-auto rounded-t-[2rem] min-[640px]:rounded-[2.5rem] relative shadow-modal"
               onClick={(e) => e.stopPropagation()}>
 
-              {/* Colored header */}
+              {/* Header */}
               <div className="h-[140px] min-[640px]:h-[180px] flex items-end px-8 min-[640px]:px-12 pb-6 relative overflow-hidden"
-                style={{ background: `linear-gradient(135deg, ${sc.light}, ${sc.bg})` }}>
+                style={{ background: 'linear-gradient(135deg, #f5f7ff, #EEF3FF)' }}>
                 <button className="absolute top-5 right-5 bg-white/80 backdrop-blur-sm border-none w-9 h-9 rounded-full flex items-center justify-center text-kv-muted cursor-pointer hover:bg-white transition-colors"
                   onClick={() => setSelected(null)}><X size={18} /></button>
                 <div className="flex items-end gap-5">
-                  <div className="w-16 h-16 min-[640px]:w-20 min-[640px]:h-20 rounded-[1.25rem] flex items-center justify-center flex-shrink-0"
-                    style={{ background: sc.color }}>
+                  <div className="w-16 h-16 min-[640px]:w-20 min-[640px]:h-20 rounded-[1.25rem] flex items-center justify-center flex-shrink-0 bg-kv-blue">
                     <ModalIcon className="text-white stroke-[1.25] w-9 h-9" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-2 inline-block"
-                      style={{ background: sc.color, color: 'white' }}>
+                    <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-2 inline-block bg-kv-blue text-white">
                       {subjects.find(s => s.key === selected.subject)?.label ?? 'КОП'}
                     </span>
-                    <h2 className="text-[1.3rem] min-[640px]:text-[1.8rem] font-semibold leading-tight" style={{ color: sc.color }}>
+                    <h2 className="text-[1.3rem] min-[640px]:text-[1.8rem] font-semibold leading-tight text-kv-dark">
                       {selected.title}
                     </h2>
                   </div>
@@ -298,8 +282,7 @@ export default function CatalogPage() {
                   <h4 className="text-xs font-semibold uppercase tracking-widest text-kv-muted mb-3">Авторы</h4>
                   <div className="flex flex-wrap gap-2">
                     {selected.authors.map((a, i) => (
-                      <span key={a} className="flex items-center gap-2 px-4 py-2 rounded-full text-sm"
-                        style={{ background: i === 0 ? sc.bg : '#f1f5f9', color: i === 0 ? sc.color : '#64748b' }}>
+                      <span key={a} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm ${i === 0 ? 'bg-[#EEF3FF] text-kv-blue' : 'bg-[#f1f5f9] text-[#64748b]'}`}>
                         <User className="w-3.5 h-3.5" /> {a}{i === 0 ? ' (капитан)' : ''}
                       </span>
                     ))}
@@ -307,19 +290,18 @@ export default function CatalogPage() {
                 </div>
 
                 {/* Files */}
-                <div className="rounded-[1.5rem] p-5 min-[640px]:p-7" style={{ background: sc.light, border: `1px solid ${sc.bg}` }}>
+                <div className="rounded-[1.5rem] p-5 min-[640px]:p-7 bg-[#f5f7ff] border border-[#EEF3FF]">
                   <h4 className="text-sm font-semibold text-kv-dark mb-4 flex items-center gap-2">
-                    <span style={{ color: sc.color }}><File className="w-4 h-4" /></span> Файлы комплекта
+                    <span className="text-kv-blue"><File className="w-4 h-4" /></span> Файлы комплекта
                   </h4>
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-3">
                     {selected.files.map((f) => {
                       const FIcon = fileIconMap[f.icon] ?? File
                       return (
                         <div key={f.name}
-                          className="bg-white rounded-2xl p-4 text-center border cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
-                          style={{ borderColor: sc.bg }}
+                          className="bg-white rounded-2xl p-4 text-center border border-[#EEF3FF] cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
                           onClick={() => alert(`Скачивание ${f.name} (демо-режим)`)}>
-                          <span style={{ color: sc.color }} className="flex justify-center mb-2"><FIcon className="w-7 h-7" /></span>
+                          <span className="flex justify-center mb-2 text-kv-blue"><FIcon className="w-7 h-7" /></span>
                           <span className="text-xs block font-medium text-kv-dark">{f.name}</span>
                           <small className="text-kv-muted text-[0.6rem] mt-0.5 block">{f.size}</small>
                         </div>
@@ -332,13 +314,11 @@ export default function CatalogPage() {
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div className="flex flex-wrap gap-2">
                     {selected.tech.map((t) => (
-                      <span key={t} className="text-xs px-3 py-1.5 rounded-full font-medium"
-                        style={{ background: sc.bg, color: sc.color }}>{t}</span>
+                      <span key={t} className="text-xs px-3 py-1.5 rounded-full font-medium bg-[#EEF3FF] text-kv-blue">{t}</span>
                     ))}
                   </div>
                   <a href={selected.contact} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-white px-6 py-3 rounded-full no-underline font-medium hover:opacity-90 transition-opacity text-sm"
-                    style={{ background: sc.color }}>
+                    className="inline-flex items-center gap-2 text-white px-6 py-3 rounded-full no-underline font-medium hover:opacity-90 transition-opacity text-sm bg-kv-blue">
                     <MessageCircle className="w-4 h-4" /> Связаться с авторами
                   </a>
                 </div>
