@@ -1,7 +1,7 @@
 export type TeamAccount = {
   code: string
   password: string
-  track: 'А1' | 'А2'
+  track: 'А1' | 'А2' | 'А3'
   curatorLogin: string
 }
 

@@ -7,6 +7,7 @@ import {
   LayoutDashboard, ClipboardList, Bell, MessageSquare,
   BookOpen, CheckCircle2, FolderOpen, Send, X, AlertTriangle,
   UserCheck, UserPlus, Inbox, Package, Plus, Edit2, Trash2, BarChart3, TrendingUp,
+  Activity, Calendar, Filter,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -99,6 +100,7 @@ export default function CuratorPage() {
     title: '', excerpt: '', fullDesc: '', subject: 'it', authors: '', tech: '',
   })
   const [catalogDeleteId,    setCatalogDeleteId]    = useState<number | null>(null)
+  const [analyticsView,      setAnalyticsView]      = useState<'status' | 'timeline' | 'funnel'>('status')
 
   useEffect(() => {
     ;(async () => {
@@ -294,77 +296,166 @@ export default function CuratorPage() {
               </div>
 
               {/* Analytics */}
-              <div className="grid grid-cols-1 min-[900px]:grid-cols-2 gap-5 mb-6">
-                {/* Status breakdown */}
-                <div className="bg-white rounded-[3rem] p-8">
-                  <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-kv-blue" /> Статусы проектов
+              <div className="bg-white rounded-[3rem] p-8 mb-6">
+                {/* Header + view switcher */}
+                <div className="flex items-center justify-between mb-7 flex-wrap gap-4">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-kv-blue" /> Аналитика проектов
                   </h3>
-                  <div className="space-y-3.5">
+                  <div className="flex gap-2 p-1 bg-kv-light rounded-2xl">
                     {([
-                      { label: 'Запрос обратной связи', key: 'feedback_requested', color: '#1565c0' },
-                      { label: 'На рассмотрении',        key: 'review',             color: '#ef6c00' },
-                      { label: 'Одобрено',               key: 'approved',           color: '#2e7d32' },
-                      { label: 'Отклонено',              key: 'rejected',           color: '#c62828' },
-                    ] as { label: string; key: string; color: string }[]).map(({ label, key, color }) => {
-                      const count = projects.filter((p) => p.status === key).length
-                      const total = projects.length || 1
-                      const pct = Math.round((count / total) * 100)
-                      return (
-                        <div key={key}>
-                          <div className="flex items-center justify-between mb-1.5 text-sm">
-                            <span className="text-kv-text">{label}</span>
-                            <span className="font-bold tabular-nums" style={{ color }}>{count}</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-[#f1f5f9] overflow-hidden">
-                            <div className="h-full rounded-full transition-all duration-700"
-                              style={{ width: `${count > 0 ? Math.max(pct, 4) : 0}%`, background: color }} />
-                          </div>
-                        </div>
-                      )
-                    })}
+                      { id: 'status',   label: 'Статусы',    Icon: Filter },
+                      { id: 'timeline', label: 'Хронология', Icon: Calendar },
+                      { id: 'funnel',   label: 'Воронка',    Icon: Activity },
+                    ] as { id: 'status' | 'timeline' | 'funnel'; label: string; Icon: React.ComponentType<{ className?: string }> }[]).map(({ id, label, Icon }) => (
+                      <button key={id}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium border-none cursor-pointer transition-all ${analyticsView === id ? 'bg-kv-blue text-white shadow-sm' : 'bg-transparent text-kv-muted hover:text-kv-dark'}`}
+                        onClick={() => setAnalyticsView(id)}>
+                        <Icon className="w-3.5 h-3.5" /> {label}
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-kv-muted text-xs mt-5 border-t border-kv-border pt-4">
-                    Итого: {projects.length} проект{projects.length === 1 ? '' : projects.length < 5 ? 'а' : 'ов'}
-                  </p>
                 </div>
 
-                {/* Track distribution */}
-                <div className="bg-white rounded-[3rem] p-8">
-                  <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-kv-blue" /> По трекам практики
-                  </h3>
-                  {(() => {
-                    const tracks = ['А1', 'А2', 'А3']
-                    const colors = ['#2B3B6B', '#4C1D95', '#4f6ad0']
-                    const tCounts = tracks.map((t) => projects.filter((p) => p.track === t).length)
-                    const maxVal = Math.max(...tCounts, 1)
-                    return (
-                      <>
-                        <div className="flex items-end gap-4 mb-3" style={{ height: '96px' }}>
-                          {tCounts.map((count, i) => {
-                            const pct = Math.max(Math.round((count / maxVal) * 100), count > 0 ? 8 : 3)
-                            return (
-                              <div key={tracks[i]} className="flex-1 rounded-t-xl transition-all duration-700"
-                                style={{ height: `${pct}%`, background: colors[i], opacity: count > 0 ? 1 : 0.18 }} />
-                            )
-                          })}
-                        </div>
-                        <div className="flex gap-4">
-                          {tCounts.map((count, i) => (
-                            <div key={tracks[i]} className="flex-1 text-center">
-                              <div className="font-bold text-sm" style={{ color: colors[i] }}>{count}</div>
-                              <div className="text-xs text-kv-muted mt-0.5">{tracks[i]}</div>
+                {/* ── VIEW: STATUS ── */}
+                {analyticsView === 'status' && (() => {
+                  const total = projects.length || 1
+                  const rows = [
+                    { label: 'Запрос обратной связи', key: 'feedback_requested', color: '#1565c0', bg: '#e3f2fd' },
+                    { label: 'На рассмотрении',        key: 'review',             color: '#ef6c00', bg: '#fff3e0' },
+                    { label: 'Одобрено',               key: 'approved',           color: '#2e7d32', bg: '#e8f5e9' },
+                    { label: 'Отклонено',              key: 'rejected',           color: '#c62828', bg: '#ffebee' },
+                  ] as { label: string; key: string; color: string; bg: string }[]
+                  return (
+                    <div className="space-y-4">
+                      {rows.map(({ label, key, color, bg }) => {
+                        const count = projects.filter((p) => p.status === key).length
+                        const pct = Math.round((count / total) * 100)
+                        return (
+                          <div key={key} className="flex items-center gap-4">
+                            <div className="w-32 min-[700px]:w-44 flex-shrink-0">
+                              <span className="text-xs text-kv-text leading-tight block">{label}</span>
                             </div>
-                          ))}
+                            <div className="flex-1 h-7 rounded-xl overflow-hidden" style={{ background: bg }}>
+                              <div className="h-full rounded-xl flex items-center px-3 transition-all duration-700"
+                                style={{ width: `${count > 0 ? Math.max(pct, 6) : 0}%`, background: color }}>
+                                {count > 0 && <span className="text-white text-xs font-bold">{count}</span>}
+                              </div>
+                            </div>
+                            <span className="w-10 text-right text-xs font-semibold tabular-nums" style={{ color }}>{pct}%</span>
+                          </div>
+                        )
+                      })}
+                      <p className="text-kv-muted text-xs pt-4 border-t border-kv-border">
+                        Всего проектов: <strong>{projects.length}</strong>
+                      </p>
+                    </div>
+                  )
+                })()}
+
+                {/* ── VIEW: TIMELINE ── */}
+                {analyticsView === 'timeline' && (() => {
+                  const monthsMap: Record<string, { submitted: number; approved: number }> = {}
+                  projects.forEach((p) => {
+                    const raw = (p as { submittedAt?: string }).submittedAt
+                    if (!raw) return
+                    const d = new Date(raw)
+                    if (isNaN(d.getTime())) return
+                    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+                    if (!monthsMap[key]) monthsMap[key] = { submitted: 0, approved: 0 }
+                    monthsMap[key].submitted++
+                    if (p.status === 'approved') monthsMap[key].approved++
+                  })
+                  const months = Object.entries(monthsMap).sort(([a], [b]) => a.localeCompare(b))
+                  const maxVal = Math.max(...months.map(([, v]) => v.submitted), 1)
+                  const MONTH_NAMES = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек']
+                  if (months.length === 0) return (
+                    <div className="text-center py-10 text-kv-muted text-sm">
+                      <Calendar className="w-8 h-8 mx-auto mb-3 opacity-20" />
+                      Нет данных о датах подачи проектов
+                    </div>
+                  )
+                  return (
+                    <>
+                      <div className="flex items-end gap-3 mb-3" style={{ height: '120px' }}>
+                        {months.map(([key, val]) => {
+                          const subPct  = Math.max(Math.round((val.submitted / maxVal) * 100), 8)
+                          const appPct  = Math.max(Math.round((val.approved  / maxVal) * 100), val.approved > 0 ? 4 : 0)
+                          const [, mm]  = key.split('-')
+                          const mName   = MONTH_NAMES[parseInt(mm) - 1]
+                          return (
+                            <div key={key} className="flex-1 flex flex-col items-center gap-1">
+                              <div className="w-full flex items-end gap-0.5" style={{ height: '96px' }}>
+                                <div className="flex-1 rounded-t-lg transition-all duration-700"
+                                  style={{ height: `${subPct}%`, background: '#2B3B6B' }} title={`Подано: ${val.submitted}`} />
+                                <div className="flex-1 rounded-t-lg transition-all duration-700"
+                                  style={{ height: `${appPct}%`, background: '#4C1D95', opacity: val.approved > 0 ? 1 : 0 }} title={`Одобрено: ${val.approved}`} />
+                              </div>
+                              <span className="text-[10px] text-kv-muted">{mName}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <div className="flex items-center gap-5 pt-4 border-t border-kv-border">
+                        <span className="flex items-center gap-2 text-xs text-kv-muted">
+                          <span className="w-3 h-3 rounded-sm inline-block bg-[#2B3B6B]" /> Подано
+                        </span>
+                        <span className="flex items-center gap-2 text-xs text-kv-muted">
+                          <span className="w-3 h-3 rounded-sm inline-block bg-[#4C1D95]" /> Одобрено
+                        </span>
+                        <span className="text-xs text-kv-muted ml-auto">
+                          {months.length} {months.length === 1 ? 'месяц' : months.length < 5 ? 'месяца' : 'месяцев'}
+                        </span>
+                      </div>
+                    </>
+                  )
+                })()}
+
+                {/* ── VIEW: FUNNEL ── */}
+                {analyticsView === 'funnel' && (() => {
+                  const total     = projects.length
+                  const reviewed  = projects.filter((p) => ['review', 'approved', 'rejected'].includes(p.status)).length
+                  const approved  = projects.filter((p) => p.status === 'approved').length
+                  const rejected  = projects.filter((p) => p.status === 'rejected').length
+                  const stages = [
+                    { label: 'Всего подано',       count: total,    color: '#2B3B6B', pct: 100 },
+                    { label: 'Дошли до ревью',      count: reviewed, color: '#4C1D95', pct: total ? Math.round((reviewed / total) * 100) : 0 },
+                    { label: 'Одобрено',            count: approved, color: '#2e7d32', pct: total ? Math.round((approved / total) * 100) : 0 },
+                    { label: 'Отклонено',           count: rejected, color: '#c62828', pct: total ? Math.round((rejected / total) * 100) : 0 },
+                  ]
+                  return (
+                    <div className="space-y-3">
+                      {stages.map(({ label, count, color, pct }) => (
+                        <div key={label}>
+                          <div className="flex items-center justify-between mb-1.5 text-sm">
+                            <span className="text-kv-text">{label}</span>
+                            <span className="font-bold tabular-nums" style={{ color }}>{count} <span className="text-kv-muted font-normal text-xs">({pct}%)</span></span>
+                          </div>
+                          <div className="h-8 rounded-xl bg-[#f1f5f9] overflow-hidden">
+                            <div className="h-full rounded-xl flex items-center justify-end pr-3 transition-all duration-700"
+                              style={{ width: `${count > 0 ? Math.max(pct, 8) : 0}%`, background: color }}>
+                              {pct >= 15 && <span className="text-white text-xs font-semibold">{pct}%</span>}
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-kv-muted text-xs mt-5 border-t border-kv-border pt-4">
-                          А1 — индивидуальная · А2/А3 — групповая практика
-                        </p>
-                      </>
-                    )
-                  })()}
-                </div>
+                      ))}
+                      <div className="mt-5 pt-4 border-t border-kv-border grid grid-cols-2 gap-4">
+                        <div className="bg-[#e8f5e9] rounded-2xl p-4 text-center">
+                          <div className="text-[1.6rem] font-bold text-[#2e7d32]">
+                            {total ? Math.round((approved / total) * 100) : 0}%
+                          </div>
+                          <div className="text-xs text-[#2e7d32] mt-0.5">Конверсия в одобрение</div>
+                        </div>
+                        <div className="bg-[#f3eeff] rounded-2xl p-4 text-center">
+                          <div className="text-[1.6rem] font-bold text-[#4C1D95]">
+                            {total ? Math.round((reviewed / total) * 100) : 0}%
+                          </div>
+                          <div className="text-xs text-[#4C1D95] mt-0.5">Дошли до ревью</div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
 
               {/* My assigned projects */}

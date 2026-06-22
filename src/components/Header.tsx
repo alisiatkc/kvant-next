@@ -33,7 +33,7 @@ export default function Header({ active }: HeaderProps) {
             </svg>
             <span className="absolute inset-0 flex items-center justify-center text-white text-[12px] font-bold z-10 tracking-tight">К</span>
           </div>
-          <span className="text-[1.2rem] font-semibold text-kv-dark tracking-tight">КвантЛаб</span>
+          <span className="text-[1.1rem] font-semibold text-kv-dark tracking-tight leading-tight">Проектный<br/>навигатор</span>
         </Link>
 
         {/* Desktop nav */}

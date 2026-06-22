@@ -110,8 +110,8 @@ function getAiResponse(message: string): string {
   if (m.includes('трек') || m.includes('направлен'))  return 'Трек А1 (конструирование) — создание физических объектов с помощью лазерной резки и 3D-печати. Трек А2 (исследование) — анализ данных и научный метод. Оба трека заканчиваются апробацией КОП в реальной школе.'
   if (m.includes('блок') || m.includes('заблок'))     return 'Если задача заблокирована, отметьте её флагом «Заблокировано» и укажите причину — это поможет команде понять, что нужно сделать в первую очередь для разблокировки.'
   if (m.includes('срок') || m.includes('дедлайн') || m.includes('дата')) return 'Следите за сроками: задачи с истёкшим дедлайном выделены красным. Планируйте с запасом 10–15% от общего времени на непредвиденные задержки.'
-  if (m.includes('привет') || m.includes('здравствуй') || m.includes('здарова')) return 'Привет! Я ИИ-ассистент КвантЛаб. Помогу с разработкой вашего КОП: паспорт, планирование задач, подготовка к апробации. Что вас интересует?'
-  return 'Я ИИ-ассистент КвантЛаб. Задайте вопрос о паспорте проекта, планировании задач, канбан-доске, апробации или публикации КОП — и я помогу.'
+  if (m.includes('привет') || m.includes('здравствуй') || m.includes('здарова')) return 'Привет! Я ИИ-ассистент Проектного навигатора. Помогу с разработкой вашего КОП: паспорт, планирование задач, подготовка к апробации. Что вас интересует?'
+  return 'Я ИИ-ассистент Проектного навигатора. Задайте вопрос о паспорте проекта, планировании задач, канбан-доске, апробации или публикации КОП — и я помогу.'
 }
 
 function teamKey(key: string, team: string) {
@@ -137,7 +137,7 @@ export default function CabinetPage() {
   // ── team identity ─────────────────────────────────────────────────────────
   const [captainName, setCaptainName] = useState('')
   const [teamName,    setTeamName]    = useState('')
-  const [track,       setTrack]       = useState<'А1' | 'А2'>('А1')
+  const [track,       setTrack]       = useState<'А1' | 'А2' | 'А3'>('А1')
   const [authors,     setAuthors]     = useState<string[]>([])
 
   // ── practice dates ────────────────────────────────────────────────────────
@@ -180,7 +180,7 @@ export default function CabinetPage() {
   // ── AI assistant ──────────────────────────────────────────────────────────
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([
     { id: 'init', role: 'assistant', time: '',
-      text: 'Привет! Я ИИ-ассистент КвантЛаб. Задавайте вопросы о разработке КОП, планировании задач, паспорте проекта и апробации.' },
+      text: 'Привет! Я ИИ-ассистент Проектного навигатора. Задавайте вопросы о разработке КОП, планировании задач, паспорте проекта и апробации.' },
   ])
   const [aiInput,   setAiInput]   = useState('')
   const [aiTyping,  setAiTyping]  = useState(false)
@@ -264,7 +264,7 @@ export default function CabinetPage() {
       try {
         const savedCode  = localStorage.getItem('cabinet_teamCode')
         const savedTeam  = localStorage.getItem('cabinet_teamName') || ''
-        const savedTrack = localStorage.getItem('cabinet_track') as 'А1' | 'А2' | null
+        const savedTrack = localStorage.getItem('cabinet_track') as 'А1' | 'А2' | 'А3' | null
         if (savedCode) {
           const account = TEAM_ACCOUNTS.find((a) => a.code === savedCode)
           if (!account) return
@@ -420,6 +420,7 @@ export default function CabinetPage() {
       localStorage.setItem(teamKey('cabinet_projectBlock',   teamCode), projectBlock)
       localStorage.setItem(teamKey('cabinet_projectDesc',    teamCode), projectDesc)
       localStorage.setItem(teamKey('cabinet_productionFile', teamCode), productionFile)
+      localStorage.setItem('cabinet_track', track)
     } catch {}
     setPassportSaved(true)
     setTimeout(() => setPassportSaved(false), 3000)
@@ -609,7 +610,7 @@ export default function CabinetPage() {
             <Link href="/" className="flex items-center gap-2 text-kv-blue font-medium no-underline mb-8 text-sm">
               <ArrowLeft className="w-4 h-4" /> На главную
             </Link>
-            <h2 className="text-[2.2rem] font-semibold mb-1">Вход в КвантЛаб</h2>
+            <h2 className="text-[2.2rem] font-semibold mb-1">Вход в Проектный навигатор</h2>
             <p className="text-kv-text mb-8 text-sm">Выберите роль для входа</p>
 
             <div className="flex gap-3 mb-8 p-1 bg-kv-light rounded-2xl">
@@ -936,6 +937,23 @@ export default function CabinetPage() {
                       <input className="input-kv" placeholder="Математика, 7–8 класс" value={projectBlock} onChange={(e) => setProjectBlock(e.target.value)} />
                     </div>
                     <div className="col-span-2 max-[700px]:col-span-1">
+                      <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Формат практики</label>
+                      <div className="flex gap-3 flex-wrap">
+                        {([
+                          { val: 'А1', title: 'А1 — Индивидуальная', desc: 'Самостоятельная разработка КОП' },
+                          { val: 'А2', title: 'А2 — Групповая (2–3 чел.)', desc: 'Малая команда, один КОП' },
+                          { val: 'А3', title: 'А3 — Групповая (4–6 чел.)', desc: 'Полная команда, расширенный КОП' },
+                        ] as { val: 'А1' | 'А2' | 'А3'; title: string; desc: string }[]).map(({ val, title, desc }) => (
+                          <button key={val}
+                            className={`flex-1 min-w-[140px] px-4 py-3 rounded-2xl border text-left cursor-pointer transition-all ${track === val ? 'border-kv-blue bg-[#EEF3FF] text-kv-blue' : 'border-kv-border bg-white text-kv-dark hover:border-kv-blue'}`}
+                            onClick={() => { setTrack(val); try { localStorage.setItem('cabinet_track', val) } catch {} }}>
+                            <span className="font-semibold text-sm block">{title}</span>
+                            <span className="text-xs opacity-70 mt-0.5 block">{desc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="col-span-2 max-[700px]:col-span-1">
                       <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Описание КОП</label>
                       <textarea className="textarea-kv" rows={4} placeholder="Цель, целевая аудитория, особенности и методические задачи" value={projectDesc} onChange={(e) => setProjectDesc(e.target.value)} />
                     </div>
@@ -1117,7 +1135,7 @@ export default function CabinetPage() {
                       <Bot className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-[1.1rem] font-semibold leading-tight">ИИ-ассистент КвантЛаб</h3>
+                      <h3 className="text-[1.1rem] font-semibold leading-tight">ИИ-ассистент Проектного навигатора</h3>
                       <p className="text-kv-muted text-xs">Помогает с разработкой КОП</p>
                     </div>
                   </div>
