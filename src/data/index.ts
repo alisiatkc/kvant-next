@@ -72,6 +72,7 @@ export type Project = {
   tech: string[]
   contact: string
   likes: number
+  photos?: string[]
 }
 
 export const projects: Project[] = [
@@ -90,7 +91,12 @@ export const projects: Project[] = [
     image: '📐',
     tech: ['Лазерная резка', 'Фанера 3мм', 'AutoCAD'],
     contact: 'https://vk.com/technoparkrgpu',
-    likes: 0,
+    likes: 12,
+    photos: [
+      'https://picsum.photos/seed/kop1a/700/460',
+      'https://picsum.photos/seed/kop1b/700/460',
+      'https://picsum.photos/seed/kop1c/700/460',
+    ],
   },
   {
     id: 2,
@@ -107,7 +113,11 @@ export const projects: Project[] = [
     image: '🧬',
     tech: ['3D-печать', 'PLA пластик', 'Blender'],
     contact: 'https://vk.com/technoparkrgpu',
-    likes: 0,
+    likes: 8,
+    photos: [
+      'https://picsum.photos/seed/kop2a/700/460',
+      'https://picsum.photos/seed/kop2b/700/460',
+    ],
   },
   {
     id: 3,
@@ -124,7 +134,12 @@ export const projects: Project[] = [
     image: '⚡',
     tech: ['Лазерная гравировка', 'Электроника', 'Пайка'],
     contact: 'https://vk.com/technoparkrgpu',
-    likes: 0,
+    likes: 19,
+    photos: [
+      'https://picsum.photos/seed/kop3a/700/460',
+      'https://picsum.photos/seed/kop3b/700/460',
+      'https://picsum.photos/seed/kop3c/700/460',
+    ],
   },
   {
     id: 4,
@@ -141,7 +156,11 @@ export const projects: Project[] = [
     image: '💻',
     tech: ['Векторная графика', 'Печать', 'Дизайн'],
     contact: 'https://vk.com/technoparkrgpu',
-    likes: 0,
+    likes: 5,
+    photos: [
+      'https://picsum.photos/seed/kop4a/700/460',
+      'https://picsum.photos/seed/kop4b/700/460',
+    ],
   },
   {
     id: 5,
@@ -158,7 +177,11 @@ export const projects: Project[] = [
     image: '💰',
     tech: ['Полиграфия', 'Дизайн', 'Экономика'],
     contact: 'https://vk.com/technoparkrgpu',
-    likes: 0,
+    likes: 7,
+    photos: [
+      'https://picsum.photos/seed/kop5a/700/460',
+      'https://picsum.photos/seed/kop5b/700/460',
+    ],
   },
   {
     id: 6,
@@ -174,7 +197,12 @@ export const projects: Project[] = [
     image: '📚',
     tech: ['Печать', 'Ламинация', 'Педагогика'],
     contact: 'https://vk.com/technoparkrgpu',
-    likes: 0,
+    likes: 14,
+    photos: [
+      'https://picsum.photos/seed/kop6a/700/460',
+      'https://picsum.photos/seed/kop6b/700/460',
+      'https://picsum.photos/seed/kop6c/700/460',
+    ],
   },
   {
     id: 7,
@@ -190,7 +218,11 @@ export const projects: Project[] = [
     image: '📐',
     tech: ['Лазерная резка', 'Фанера 4мм'],
     contact: 'https://vk.com/technoparkrgpu',
-    likes: 0,
+    likes: 3,
+    photos: [
+      'https://picsum.photos/seed/kop7a/700/460',
+      'https://picsum.photos/seed/kop7b/700/460',
+    ],
   },
   {
     id: 8,
@@ -206,7 +238,158 @@ export const projects: Project[] = [
     image: '🌿',
     tech: ['Лазерная резка', 'Акрил', 'Светодиоды'],
     contact: 'https://vk.com/technoparkrgpu',
-    likes: 0,
+    likes: 21,
+    photos: [
+      'https://picsum.photos/seed/kop8a/700/460',
+      'https://picsum.photos/seed/kop8b/700/460',
+      'https://picsum.photos/seed/kop8c/700/460',
+    ],
+  },
+  {
+    id: 9,
+    title: 'Маятник Ньютона',
+    excerpt: '3D-печатная модель для уроков физики, 9 класс',
+    fullDesc: 'Напечатанный на 3D-принтере маятник Ньютона с шариками из полимера. Наглядно демонстрирует закон сохранения импульса и энергии. Сборка занимает 10 минут — идеальна для лабораторных работ.',
+    subject: 'physics',
+    authors: ['Орлов Никита', 'Захарова Дарья', 'Смирнов Роман'],
+    files: [
+      { name: 'Стойка.stl', size: '2.4 МБ', icon: 'File' },
+      { name: 'Шарик.stl', size: '0.8 МБ', icon: 'File' },
+      { name: 'Сборка.pdf', size: '1.1 МБ', icon: 'FileText' },
+    ],
+    image: '⚙️',
+    tech: ['3D-печать', 'PETG пластик', 'Леска'],
+    contact: 'https://vk.com/technoparkrgpu',
+    likes: 9,
+    photos: [
+      'https://picsum.photos/seed/kop9a/700/460',
+      'https://picsum.photos/seed/kop9b/700/460',
+    ],
+  },
+  {
+    id: 10,
+    title: 'Финансовые жетоны',
+    excerpt: 'Набор для уроков экономики и финансовой грамотности',
+    fullDesc: 'Деревянные жетоны, карточки доходов/расходов и игровое поле для моделирования личного бюджета. Подходит для 8–9 классов. Апробирован на уроках экономики — ученики вовлекаются с первых минут.',
+    subject: 'economics',
+    authors: ['Беляева Ирина', 'Кузнецов Артём'],
+    files: [
+      { name: 'Жетоны.dxf', size: '1.3 МБ', icon: 'File' },
+      { name: 'Карточки.pdf', size: '2.0 МБ', icon: 'FileText' },
+    ],
+    image: '💳',
+    tech: ['Лазерная резка', 'Фанера 6мм', 'Покраска'],
+    contact: 'https://vk.com/technoparkrgpu',
+    likes: 6,
+    photos: [
+      'https://picsum.photos/seed/kop10a/700/460',
+      'https://picsum.photos/seed/kop10b/700/460',
+    ],
+  },
+  {
+    id: 11,
+    title: 'Сенсорные вкладыши',
+    excerpt: 'Тактильный набор для сенсорного развития, 2–4 года',
+    fullDesc: 'Деревянные вкладыши с текстурными вставками — гладкими, шершавыми, рельефными. Развивают мелкую моторику, тактильное восприятие и пространственное мышление у детей раннего возраста. Все материалы безопасны.',
+    subject: 'pedagogy',
+    authors: ['Романова Полина', 'Макарова Анастасия', 'Лебедева Юлия'],
+    files: [
+      { name: 'Вкладыши.dxf', size: '1.8 МБ', icon: 'File' },
+      { name: 'Методические заметки.pdf', size: '0.9 МБ', icon: 'FileText' },
+    ],
+    image: '🧩',
+    tech: ['Лазерная резка', 'Фанера 8мм', 'Шлифовка'],
+    contact: 'https://vk.com/technoparkrgpu',
+    likes: 16,
+    photos: [
+      'https://picsum.photos/seed/kop11a/700/460',
+      'https://picsum.photos/seed/kop11b/700/460',
+      'https://picsum.photos/seed/kop11c/700/460',
+    ],
+  },
+  {
+    id: 12,
+    title: 'Генетическое лото',
+    excerpt: 'Игра по генетике для 9–10 класса',
+    fullDesc: 'Карточная игра по законам Менделя: задачи на моногибридное и дигибридное скрещивание в игровом формате. Снижает тревогу перед ОГЭ/ЕГЭ по биологии — апробировано в двух классах с ростом оценок.',
+    subject: 'bio',
+    authors: ['Кириллова Вера', 'Степанов Максим'],
+    files: [
+      { name: 'Карточки.svg', size: '3.4 МБ', icon: 'File' },
+      { name: 'Правила.pdf', size: '0.6 МБ', icon: 'FileText' },
+    ],
+    image: '🧬',
+    tech: ['Полиграфия', 'Ламинация', 'Дизайн'],
+    contact: 'https://vk.com/technoparkrgpu',
+    likes: 11,
+    photos: [
+      'https://picsum.photos/seed/kop12a/700/460',
+      'https://picsum.photos/seed/kop12b/700/460',
+    ],
+  },
+  {
+    id: 13,
+    title: 'Числовая лента',
+    excerpt: 'Интерактивный манипулятив для начальной школы',
+    fullDesc: 'Деревянная числовая лента 0–100 с подвижными фишками и разметкой десятков. Помогает первоклассникам освоить счёт, состав числа и арифметику. Удобна для работы у доски и в малых группах.',
+    subject: 'math',
+    authors: ['Зайцева Татьяна', 'Воробьёв Игорь'],
+    files: [
+      { name: 'Лента.dxf', size: '0.5 МБ', icon: 'File' },
+      { name: 'Фишки.dxf', size: '0.2 МБ', icon: 'File' },
+      { name: 'Задания.pdf', size: '1.4 МБ', icon: 'FileText' },
+    ],
+    image: '🔢',
+    tech: ['Лазерная резка', 'Фанера 4мм', 'Покраска'],
+    contact: 'https://vk.com/technoparkrgpu',
+    likes: 4,
+    photos: [
+      'https://picsum.photos/seed/kop13a/700/460',
+      'https://picsum.photos/seed/kop13b/700/460',
+    ],
+  },
+  {
+    id: 14,
+    title: 'Кодирование без компьютера',
+    excerpt: 'Офлайн-игра по основам программирования, 3–5 класс',
+    fullDesc: 'Командная игра, где ученики «программируют» друг друга: пишут инструкции стрелками и символами, выполняют алгоритмы на игровом поле. Отличная подготовка к Scratch и блочному программированию.',
+    subject: 'it',
+    authors: ['Антонова Ксения', 'Лукьянов Евгений', 'Фомина Диана'],
+    files: [
+      { name: 'Поле.dxf', size: '1.1 МБ', icon: 'File' },
+      { name: 'Карточки-команды.svg', size: '1.8 МБ', icon: 'File' },
+      { name: 'Сценарии.pdf', size: '0.8 МБ', icon: 'FileText' },
+    ],
+    image: '🤖',
+    tech: ['Лазерная резка', 'Акрил 3мм', 'Трафаретная печать'],
+    contact: 'https://vk.com/technoparkrgpu',
+    likes: 17,
+    photos: [
+      'https://picsum.photos/seed/kop14a/700/460',
+      'https://picsum.photos/seed/kop14b/700/460',
+      'https://picsum.photos/seed/kop14c/700/460',
+    ],
+  },
+  {
+    id: 15,
+    title: 'Оптические иллюзии',
+    excerpt: 'Набор демонстрационных стендов по физике, 8 класс',
+    fullDesc: 'Серия акриловых стендов с линзами, призмами и дифракционными решётками. Каждый стенд сопровождается QR-кодом с видеопояснением. Апробирован на уроке оптики — 100% учеников справились с практической частью.',
+    subject: 'physics',
+    authors: ['Громов Александр'],
+    files: [
+      { name: 'Стенд-линза.dxf', size: '0.9 МБ', icon: 'File' },
+      { name: 'Стенд-призма.dxf', size: '1.1 МБ', icon: 'File' },
+      { name: 'Описание.pdf', size: '2.2 МБ', icon: 'FileText' },
+    ],
+    image: '🔭',
+    tech: ['Лазерная резка', 'Акрил 5мм', 'Оптика'],
+    contact: 'https://vk.com/technoparkrgpu',
+    likes: 10,
+    photos: [
+      'https://picsum.photos/seed/kop15a/700/460',
+      'https://picsum.photos/seed/kop15b/700/460',
+    ],
   },
 ]
 

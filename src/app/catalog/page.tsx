@@ -4,6 +4,7 @@ import Link from 'next/link'
 import {
   Hash, Activity, Zap, Code, TrendingUp, BookOpen, Box,
   Heart, Award, Users, File, FileText, User, MessageCircle, X, ArrowLeft,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -34,6 +35,7 @@ export default function CatalogPage() {
   const [filter, setFilter] = useState('all')
   const [topFilter, setTopFilter] = useState(false)
   const [selected, setSelected] = useState<Project | null>(null)
+  const [photoIdx, setPhotoIdx] = useState(0)
 
   useEffect(() => {
     (async () => {
@@ -102,19 +104,21 @@ export default function CatalogPage() {
 
           {/* ── HERO BANNER ── */}
           <div className="mt-8 min-[640px]:mt-12 mb-8 rounded-[2rem] min-[640px]:rounded-[2.5rem] overflow-hidden relative"
-            style={{ background: 'linear-gradient(135deg, #1a2d5a 0%, #2B3B6B 55%, #3d2060 100%)' }}>
-            <div className="absolute inset-0 opacity-[0.06]">
-              <svg width="100%" height="100%"><defs><pattern id="cat-grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M 32 0 L 0 0 0 32" fill="none" stroke="white" strokeWidth="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#cat-grid)"/></svg>
-            </div>
+            style={{ background: 'linear-gradient(135deg, #EEF3FF 0%, #e8e0ff 55%, #F3EEFF 100%)' }}>
+            {/* decorative blobs */}
+            <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full opacity-30 pointer-events-none"
+              style={{ background: 'radial-gradient(circle, #4C1D95 0%, transparent 70%)' }} />
+            <div className="absolute -bottom-10 -left-10 w-56 h-56 rounded-full opacity-20 pointer-events-none"
+              style={{ background: 'radial-gradient(circle, #2B3B6B 0%, transparent 70%)' }} />
             <div className="relative px-8 min-[640px]:px-12 py-10 min-[640px]:py-14 flex flex-col min-[700px]:flex-row items-start min-[700px]:items-center justify-between gap-6">
               <div>
-                <Link href="/" className="inline-flex items-center gap-1.5 text-white/60 hover:text-white/90 no-underline text-xs font-medium mb-4 transition-colors">
+                <Link href="/" className="inline-flex items-center gap-1.5 text-kv-blue/70 hover:text-kv-blue no-underline text-xs font-medium mb-4 transition-colors">
                   <ArrowLeft className="w-3.5 h-3.5" /> На главную
                 </Link>
-                <h1 className="text-[clamp(1.6rem,5vw,2.8rem)] font-semibold tracking-tight text-white leading-tight mb-3">
+                <h1 className="text-[clamp(1.6rem,5vw,2.8rem)] font-semibold tracking-tight text-kv-dark leading-tight mb-3">
                   Коробочные образовательные<br/>комплекты
                 </h1>
-                <p className="text-white/70 text-sm min-[640px]:text-base max-w-[500px]">
+                <p className="text-kv-text text-sm min-[640px]:text-base max-w-[500px]">
                   Готовые разработки студентов педагогического технопарка — скачивайте, используйте, оставляйте обратную связь
                 </p>
               </div>
@@ -123,10 +127,10 @@ export default function CatalogPage() {
                   { n: displayed.length, label: 'КОП в каталоге' },
                   { n: projects.reduce((s, p) => s + p.likes, 0), label: 'голосов' },
                 ].map(({ n, label }) => (
-                  <div key={label} className="text-center rounded-2xl px-5 py-4"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
-                    <div className="text-[1.8rem] font-bold text-white leading-none">{n}</div>
-                    <div className="text-white/60 text-xs mt-1">{label}</div>
+                  <div key={label} className="text-center rounded-2xl px-5 py-4 bg-white/70 backdrop-blur-sm"
+                    style={{ border: '1px solid rgba(43,59,107,0.12)' }}>
+                    <div className="text-[1.8rem] font-bold text-kv-dark leading-none">{n}</div>
+                    <div className="text-kv-muted text-xs mt-1">{label}</div>
                   </div>
                 ))}
               </div>
@@ -186,7 +190,7 @@ export default function CatalogPage() {
                   className={`bg-white rounded-[1.75rem] border cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-card-hover relative overflow-hidden flex flex-col ${
                     topFilter && isTop ? 'border-[#fcd34d] ring-2 ring-[#fcd34d]/30' : 'border-kv-border'
                   }`}
-                  onClick={() => setSelected(project)}>
+                  onClick={() => { setSelected(project); setPhotoIdx(0) }}>
 
                   {/* Cover */}
                   <div className="h-[88px] flex items-center justify-between px-6 relative"
@@ -272,6 +276,47 @@ export default function CatalogPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Photo gallery */}
+              {selected.photos && selected.photos.length > 0 && (() => {
+                const photos = selected.photos!
+                const total = photos.length
+                return (
+                  <div className="relative bg-[#f0f2f8] overflow-hidden" style={{ height: '240px' }}>
+                    <img
+                      key={photoIdx}
+                      src={photos[photoIdx]}
+                      alt={`Фото работы ${photoIdx + 1}`}
+                      className="w-full h-full object-cover"
+                      style={{ transition: 'opacity 0.3s' }}
+                    />
+                    {total > 1 && (
+                      <>
+                        <button
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center cursor-pointer border-none hover:bg-white transition-colors shadow-sm"
+                          onClick={() => setPhotoIdx((i) => (i - 1 + total) % total)}>
+                          <ChevronLeft className="w-5 h-5 text-kv-dark" />
+                        </button>
+                        <button
+                          className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center cursor-pointer border-none hover:bg-white transition-colors shadow-sm"
+                          onClick={() => setPhotoIdx((i) => (i + 1) % total)}>
+                          <ChevronRight className="w-5 h-5 text-kv-dark" />
+                        </button>
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                          {photos.map((_, i) => (
+                            <button key={i}
+                              className={`w-2 h-2 rounded-full border-none cursor-pointer transition-all ${i === photoIdx ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}`}
+                              onClick={() => setPhotoIdx(i)} />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    <div className="absolute top-3 right-3 bg-black/30 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full">
+                      {photoIdx + 1} / {total}
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* Body */}
               <div className="px-8 min-[640px]:px-12 py-7 min-[640px]:py-9 space-y-7">
