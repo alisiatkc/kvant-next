@@ -309,7 +309,7 @@ export default function CatalogPage() {
                 {/* Files */}
                 <div className="rounded-[1.5rem] p-5 min-[640px]:p-7" style={{ background: sc.light, border: `1px solid ${sc.bg}` }}>
                   <h4 className="text-sm font-semibold text-kv-dark mb-4 flex items-center gap-2">
-                    <File className="w-4 h-4" style={{ color: sc.color }} /> Файлы комплекта
+                    <span style={{ color: sc.color }}><File className="w-4 h-4" /></span> Файлы комплекта
                   </h4>
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-3">
                     {selected.files.map((f) => {
@@ -319,7 +319,7 @@ export default function CatalogPage() {
                           className="bg-white rounded-2xl p-4 text-center border cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
                           style={{ borderColor: sc.bg }}
                           onClick={() => alert(`Скачивание ${f.name} (демо-режим)`)}>
-                          <FIcon className="w-7 h-7 mx-auto mb-2" style={{ color: sc.color }} />
+                          <span style={{ color: sc.color }} className="flex justify-center mb-2"><FIcon className="w-7 h-7" /></span>
                           <span className="text-xs block font-medium text-kv-dark">{f.name}</span>
                           <small className="text-kv-muted text-[0.6rem] mt-0.5 block">{f.size}</small>
                         </div>
