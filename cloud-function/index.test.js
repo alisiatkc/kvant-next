@@ -122,3 +122,55 @@ test('getCatalog skips malformed stored records', async () => {
   assert.equal(response.statusCode, 200)
   assert.deepEqual(body.projects, [{ id: 101, title: 'Проект' }])
 })
+
+test('saveWorkspace stores the team workspace', async () => {
+  const workspace = {
+    projectName: 'Исследовательский проект',
+    tasks: [{ id: '1', title: 'Собрать данные' }],
+    notes: 'Первый цикл наблюдений',
+  }
+
+  const response = await handler(event('saveWorkspace', {
+    teamCode: 'kvant-01',
+    workspace,
+  }))
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(calls.length, 1)
+  assert.ok(calls[0] instanceof PutCommand)
+  assert.equal(calls[0].input.TableName, 'team_workspaces')
+  assert.equal(calls[0].input.Item.id, 'kvant-01')
+  assert.deepEqual(JSON.parse(calls[0].input.Item.data), workspace)
+  assert.ok(calls[0].input.Item.updatedAt)
+})
+
+test('getWorkspace returns the saved workspace', async () => {
+  const workspace = { projectName: 'Цифровой проект', tasks: [], notes: '' }
+  sendResult = {
+    Item: {
+      id: 'kvant-01',
+      data: JSON.stringify(workspace),
+      updatedAt: '2026-09-13T12:00:00.000Z',
+    },
+  }
+
+  const response = await handler({
+    httpMethod: 'GET',
+    queryStringParameters: { action: 'getWorkspace', teamCode: 'kvant-01' },
+  })
+  const body = JSON.parse(response.body)
+
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(body.workspace, workspace)
+  assert.equal(body.updatedAt, '2026-09-13T12:00:00.000Z')
+})
+
+test('workspace actions reject an invalid team code', async () => {
+  const response = await handler(event('saveWorkspace', {
+    teamCode: '../other-team',
+    workspace: {},
+  }))
+
+  assert.equal(response.statusCode, 400)
+  assert.equal(calls.length, 0)
+})

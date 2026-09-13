@@ -35,20 +35,78 @@ export type CatalogEntry = {
   likes: number
 }
 
+export type TeamWorkspace = {
+  teamName: string
+  captainName: string
+  track: string
+  authors: string[]
+  practiceStart: string
+  practiceEnd: string
+  projectName: string
+  projectBlock: string
+  projectDesc: string
+  productionFile: string
+  tasks: Array<{
+    id: string
+    title: string
+    desc: string
+    status: 'planned' | 'inprogress' | 'testing' | 'done'
+    priority: 'low' | 'medium' | 'high'
+    dueDate: string
+    createdAt: string
+    blocked: boolean
+    blockedReason?: string
+  }>
+  files: Array<{ name: string; icon: string; size?: string }>
+  sprints: Array<{
+    id: string
+    name: string
+    goal: string
+    startDate: string
+    endDate: string
+    status: 'planned' | 'active' | 'completed'
+    retroNotes: string
+    createdAt: string
+  }>
+  notes: string
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 async function apiCall(
   action: string,
   method: 'GET' | 'POST',
   body?: object,
+  query?: Record<string, string>,
 ): Promise<Record<string, unknown>> {
-  const res = await fetch(`${API_URL}?action=${action}`, {
+  const params = new URLSearchParams({ action, ...query })
+  const res = await fetch(`${API_URL}?${params.toString()}`, {
     method,
     headers: method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   })
   if (!res.ok) throw new Error(`API ${action} failed: ${res.status}`)
   return res.json()
+}
+
+function workspaceStorageKey(teamCode: string): string {
+  return `teamWorkspace_${teamCode.replace(/\s+/g, '_')}`
+}
+
+export async function getTeamWorkspace(teamCode: string): Promise<TeamWorkspace | null> {
+  if (API_URL) {
+    const data = await apiCall('getWorkspace', 'GET', undefined, { teamCode })
+    return (data.workspace as TeamWorkspace | null) ?? null
+  }
+  return JSON.parse(localStorage.getItem(workspaceStorageKey(teamCode)) || 'null')
+}
+
+export async function saveTeamWorkspace(teamCode: string, workspace: TeamWorkspace): Promise<void> {
+  if (API_URL) {
+    await apiCall('saveWorkspace', 'POST', { teamCode, workspace })
+    return
+  }
+  localStorage.setItem(workspaceStorageKey(teamCode), JSON.stringify(workspace))
 }
 
 export async function submitProject(project: SubmittedProject): Promise<void> {
