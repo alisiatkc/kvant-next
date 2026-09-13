@@ -196,6 +196,7 @@ export default function CabinetPage() {
   // ── notes ────────────────────────────────────────────────────────────────
   const [notes,      setNotes]      = useState('')
   const [notesSaved, setNotesSaved] = useState(false)
+  const [workspaceSyncState, setWorkspaceSyncState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   // ── publication ───────────────────────────────────────────────────────────
   const [published,          setPublished]          = useState(false)
@@ -284,8 +285,10 @@ export default function CabinetPage() {
     try {
       const serverWorkspace = await getTeamWorkspace(code)
       if (serverWorkspace) applyWorkspace(serverWorkspace)
+      setWorkspaceSyncState('saved')
     } catch {
       // Keep the local snapshot when the API is temporarily unavailable.
+      setWorkspaceSyncState('error')
     } finally {
       workspaceLoadedRef.current = true
     }
@@ -396,8 +399,11 @@ export default function CabinetPage() {
       localStorage.setItem(teamKey('cabinet_notes', teamCode), notes)
     } catch {}
 
+    setWorkspaceSyncState('saving')
     workspaceSaveTimerRef.current = setTimeout(() => {
-      saveTeamWorkspace(teamCode, workspace).catch(() => {})
+      saveTeamWorkspace(teamCode, workspace)
+        .then(() => setWorkspaceSyncState('saved'))
+        .catch(() => setWorkspaceSyncState('error'))
     }, 800)
 
     return () => {
@@ -874,6 +880,12 @@ export default function CabinetPage() {
               <span className="text-xl font-semibold">{captainName} <span className="text-kv-muted font-normal text-base">· {teamName}</span></span>
             </div>
             <div className="flex items-center gap-2.5 flex-wrap">
+              <span className={`text-xs flex items-center gap-1.5 ${workspaceSyncState === 'error' ? 'text-[#c62828]' : 'text-kv-muted'}`}>
+                {workspaceSyncState === 'saving' && <RefreshCw className="w-3 h-3 animate-spin" />}
+                {workspaceSyncState === 'saved' && <CheckCircle2 className="w-3 h-3 text-[#2e7d32]" />}
+                {workspaceSyncState === 'error' && <AlertTriangle className="w-3 h-3" />}
+                {workspaceSyncState === 'saving' ? 'Синхронизация…' : workspaceSyncState === 'error' ? 'Сохранено локально' : 'Сохранено'}
+              </span>
               <span className="tag-kv">{track}</span>
               <span className={`status-badge flex items-center gap-1.5 ${published ? `${sc.bg} ${sc.color}` : 'bg-kv-light text-kv-muted'}`}>
                 {published ? <><sc.Icon className="w-3.5 h-3.5" /> {sc.label}</> : 'Черновик'}
