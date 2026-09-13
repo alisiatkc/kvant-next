@@ -116,15 +116,15 @@ export default function CatalogPage() {
                   <ArrowLeft className="w-3.5 h-3.5" /> На главную
                 </Link>
                 <h1 className="text-[clamp(1.6rem,5vw,2.8rem)] font-semibold tracking-tight text-kv-dark leading-tight mb-3">
-                  Коробочные образовательные<br/>комплекты
+                  Каталог образовательных<br/>решений
                 </h1>
                 <p className="text-kv-text text-sm min-[640px]:text-base max-w-[500px]">
-                  Готовые разработки студентов педагогического технопарка — скачивайте, используйте, оставляйте обратную связь
+                  Результаты студенческих проектов, адаптированные в воспроизводимые КОП: изучайте материалы, применяйте решения и оставляйте обратную связь
                 </p>
               </div>
               <div className="flex gap-4 flex-shrink-0">
                 {[
-                  { n: displayed.length, label: 'КОП в каталоге' },
+                  { n: displayed.length, label: 'решений в каталоге' },
                   { n: projects.reduce((s, p) => s + p.likes, 0), label: 'голосов' },
                 ].map(({ n, label }) => (
                   <div key={label} className="text-center rounded-2xl px-5 py-4 bg-white/70 backdrop-blur-sm"

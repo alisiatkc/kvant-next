@@ -101,17 +101,17 @@ function taskAgeDays(createdAt: string): number {
 
 function getAiResponse(message: string): string {
   const m = message.toLowerCase()
-  if (m.includes('паспорт') || m.includes('описан'))  return 'Паспорт КОП должен содержать: название, предметную область, целевую аудиторию, цели и задачи, ожидаемые результаты. Также укажите методику применения и необходимые ресурсы — это помогает учителям быстрее освоить комплект.'
-  if (m.includes('задач') || m.includes('план'))       return 'Хороший план КОП-проекта включает: анализ требований → прототип → тестирование → апробация. Распределите задачи по канбан-доске и следите за WIP-лимитами: не более 3 задач «В работе» одновременно.'
-  if (m.includes('апробац'))                           return 'Для апробации выберите класс, соответствующий целевой аудитории КОП. Подготовьте анкету для учеников и учителя. Зафиксируйте время выполнения заданий, уровень вовлечённости (1–5) и что можно улучшить.'
-  if (m.includes('публик') || m.includes('отправ') || m.includes('куратор')) return 'Сначала нажмите «Сообщить куратору», чтобы получить предварительную обратную связь. После её учёта используйте «Опубликовать КОП» для финальной отправки на рассмотрение.'
-  if (m.includes('коп') || m.includes('комплект'))    return 'Коробочный образовательный продукт (КОП) — готовый комплект для проведения уроков: рабочие материалы, методичка, производственные файлы. Он должен быть воспроизводим в любой школе без дополнительной подготовки.'
-  if (m.includes('файл') || m.includes('dxf') || m.includes('stl') || m.includes('производств')) return 'Производственный файл — ключевая часть КОП. DXF/SVG — для лазерной резки, STL — для 3D-печати, PDF — для раздаточных материалов. Загрузите его во вкладке «Рабочие файлы».'
-  if (m.includes('трек') || m.includes('направлен'))  return 'Трек А1 (конструирование) — создание физических объектов с помощью лазерной резки и 3D-печати. Трек А2 (исследование) — анализ данных и научный метод. Оба трека заканчиваются апробацией КОП в реальной школе.'
+  if (m.includes('паспорт') || m.includes('описан'))  return 'Паспорт проекта должен содержать: проблему, цель, ожидаемый результат, пользователей, задачи и критерии готовности. Если результат будет адаптирован в КОП, дополнительно опишите сценарий применения и необходимые ресурсы.'
+  if (m.includes('задач') || m.includes('план'))       return 'Хороший план проекта включает: анализ проблемы → проверяемый результат → экспертную оценку → апробацию → упаковку опыта. Распределите задачи по канбан-доске и держите не более 3 задач «В работе» одновременно.'
+  if (m.includes('апробац'))                           return 'Способ апробации зависит от проекта: это может быть занятие, демонстрация, исследование или экспертная проверка. Заранее определите критерии, соберите наблюдения и обратную связь, а затем зафиксируйте, что нужно улучшить.'
+  if (m.includes('публик') || m.includes('отправ') || m.includes('куратор')) return 'Сначала нажмите «Сообщить куратору», чтобы получить предварительную обратную связь. После доработки результата используйте «Подготовить КОП к публикации» для финальной проверки воспроизводимости и отправки в каталог.'
+  if (m.includes('коп') || m.includes('комплект'))    return 'КОП — это форма упаковки результата проекта в воспроизводимое образовательное решение. В КОП можно адаптировать исследовательский, конструкторский, методический или цифровой проект, дополнив результат инструкцией, сценарием применения и методическими материалами.'
+  if (m.includes('файл') || m.includes('dxf') || m.includes('stl') || m.includes('производств')) return 'Состав файлов зависит от проекта: DXF/SVG подходят для лазерной резки, STL — для 3D-печати, PDF — для методик и раздаточных материалов, а таблицы и данные — для исследования. Добавьте во вкладку «Рабочие файлы» всё, что нужно для проверки и воспроизведения результата.'
+  if (m.includes('трек') || m.includes('направлен'))  return 'Направление проекта определяет способ работы и форму результата, но не ограничивает возможность создать КОП. Конструкторский, исследовательский, методический и цифровой результат можно адаптировать для образовательного применения и апробации.'
   if (m.includes('блок') || m.includes('заблок'))     return 'Если задача заблокирована, отметьте её флагом «Заблокировано» и укажите причину — это поможет команде понять, что нужно сделать в первую очередь для разблокировки.'
   if (m.includes('срок') || m.includes('дедлайн') || m.includes('дата')) return 'Следите за сроками: задачи с истёкшим дедлайном выделены красным. Планируйте с запасом 10–15% от общего времени на непредвиденные задержки.'
-  if (m.includes('привет') || m.includes('здравствуй') || m.includes('здарова')) return 'Привет! Я ИИ-ассистент Проектного навигатора. Помогу с разработкой вашего КОП: паспорт, планирование задач, подготовка к апробации. Что вас интересует?'
-  return 'Я ИИ-ассистент Проектного навигатора. Задайте вопрос о паспорте проекта, планировании задач, канбан-доске, апробации или публикации КОП — и я помогу.'
+  if (m.includes('привет') || m.includes('здравствуй') || m.includes('здарова')) return 'Привет! Я ИИ-ассистент Проектного навигатора. Помогу оформить замысел, спланировать задачи, подготовить апробацию и адаптировать результат в КОП. Что вас интересует?'
+  return 'Я ИИ-ассистент Проектного навигатора. Задайте вопрос о паспорте проекта, планировании, апробации или адаптации результата в КОП — и я помогу.'
 }
 
 function teamKey(key: string, team: string) {
@@ -180,7 +180,7 @@ export default function CabinetPage() {
   // ── AI assistant ──────────────────────────────────────────────────────────
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([
     { id: 'init', role: 'assistant', time: '',
-      text: 'Привет! Я ИИ-ассистент Проектного навигатора. Задавайте вопросы о разработке КОП, планировании задач, паспорте проекта и апробации.' },
+      text: 'Привет! Я ИИ-ассистент Проектного навигатора. Задавайте вопросы о проекте, планировании задач, апробации и адаптации результата в КОП.' },
   ])
   const [aiInput,   setAiInput]   = useState('')
   const [aiTyping,  setAiTyping]  = useState(false)
@@ -592,7 +592,7 @@ export default function CabinetPage() {
   const STAGES = [
     { Icon: Lightbulb, label: 'Идея',      hint: 'Проект начат' },
     { Icon: Hammer,    label: 'Разработка', hint: 'Паспорт заполнен' },
-    { Icon: School,    label: 'Апробация',  hint: 'КОП направлен' },
+    { Icon: School,    label: 'Апробация',  hint: 'Результат проверен' },
     { Icon: BarChart3, label: 'Рефлексия',  hint: 'Апробация пройдена' },
   ]
 
@@ -891,10 +891,10 @@ export default function CabinetPage() {
                     <div className={`rounded-[1.75rem] p-6 flex items-start gap-4 ${sc.bg}`}>
                       <sc.Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${sc.color}`} />
                       <div>
-                        <p className={`font-medium ${sc.color}`}>Статус КОП: {sc.label}</p>
+                    <p className={`font-medium ${sc.color}`}>Статус проекта: {sc.label}</p>
                         {projectStatus === 'feedback_requested' && <p className="text-sm text-kv-muted mt-1">Куратор получил запрос и скоро оставит комментарий. Нажмите <RefreshCw className="w-3 h-3 inline" /> чтобы проверить.</p>}
                         {projectStatus === 'review'             && <p className="text-sm text-kv-muted mt-1">Проект направлен на публикацию — куратор рассматривает его.</p>}
-                        {projectStatus === 'approved'           && <p className="text-sm text-kv-muted mt-1">КОП одобрен и опубликован в каталоге. Переходите к апробации!</p>}
+                        {projectStatus === 'approved'           && <p className="text-sm text-kv-muted mt-1">КОП одобрен и опубликован в каталоге. Фиксируйте результаты его дальнейшего применения и обратную связь.</p>}
                         {projectStatus === 'rejected'           && <p className="text-sm text-kv-muted mt-1">Куратор отклонил проект — уточните причины и внесите правки.</p>}
                       </div>
                     </div>
@@ -914,7 +914,7 @@ export default function CabinetPage() {
                       )}
                       {canPublish && (
                         <button className="flex items-center gap-2 px-5 py-3 text-sm font-medium rounded-full bg-[#e8f5e9] text-[#2e7d32] border-none cursor-pointer hover:bg-[#c8e6c9] transition-colors" onClick={() => setShowPublishConfirm(true)}>
-                          <CheckCircle2 className="w-4 h-4" /> Опубликовать КОП
+                          <CheckCircle2 className="w-4 h-4" /> Подготовить КОП к публикации
                         </button>
                       )}
                     </div>
@@ -926,10 +926,10 @@ export default function CabinetPage() {
               {activeTab === 'passport' && (
                 <div className="bg-white rounded-[2.5rem] p-8">
                   <h3 className="text-[1.3rem] font-semibold mb-1">Паспорт проекта</h3>
-                  <p className="text-kv-muted text-sm mb-7">Основной документ коробочного образовательного комплекта</p>
+                  <p className="text-kv-muted text-sm mb-7">Основной документ проекта: от замысла до апробации и возможной упаковки в КОП</p>
                   <div className="grid grid-cols-2 gap-5 max-[700px]:grid-cols-1">
                     <div>
-                      <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Название КОП</label>
+                      <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Название проекта</label>
                       <input className="input-kv" placeholder="Геометрический конструктор" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
                     </div>
                     <div>
@@ -937,12 +937,12 @@ export default function CabinetPage() {
                       <input className="input-kv" placeholder="Математика, 7–8 класс" value={projectBlock} onChange={(e) => setProjectBlock(e.target.value)} />
                     </div>
                     <div className="col-span-2 max-[700px]:col-span-1">
-                      <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Формат практики</label>
+                      <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Формат команды</label>
                       <div className="flex gap-3 flex-wrap">
                         {([
-                          { val: 'А1', title: 'А1 — Индивидуальная', desc: 'Самостоятельная разработка КОП' },
-                          { val: 'А2', title: 'А2 — Групповая (2–3 чел.)', desc: 'Малая команда, один КОП' },
-                          { val: 'А3', title: 'А3 — Групповая (4–6 чел.)', desc: 'Полная команда, расширенный КОП' },
+                          { val: 'А1', title: 'А1 — Индивидуальная', desc: 'Самостоятельная работа над проектом' },
+                          { val: 'А2', title: 'А2 — Групповая (2–3 чел.)', desc: 'Малая проектная команда' },
+                          { val: 'А3', title: 'А3 — Групповая (4–6 чел.)', desc: 'Полная проектная команда' },
                         ] as { val: 'А1' | 'А2' | 'А3'; title: string; desc: string }[]).map(({ val, title, desc }) => (
                           <button key={val}
                             className={`flex-1 min-w-[140px] px-4 py-3 rounded-2xl border text-left cursor-pointer transition-all ${track === val ? 'border-kv-blue bg-[#EEF3FF] text-kv-blue' : 'border-kv-border bg-white text-kv-dark hover:border-kv-blue'}`}
@@ -954,7 +954,7 @@ export default function CabinetPage() {
                       </div>
                     </div>
                     <div className="col-span-2 max-[700px]:col-span-1">
-                      <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Описание КОП</label>
+                      <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Описание проекта и ожидаемого результата</label>
                       <textarea className="textarea-kv" rows={4} placeholder="Цель, целевая аудитория, особенности и методические задачи" value={projectDesc} onChange={(e) => setProjectDesc(e.target.value)} />
                     </div>
                   </div>
@@ -975,8 +975,8 @@ export default function CabinetPage() {
 
                   <div className="bg-kv-light rounded-[1.75rem] p-6 mt-7 flex items-center justify-between flex-wrap gap-4">
                     <div>
-                      <h4 className="font-medium mb-1 text-sm">Производственный файл</h4>
-                      <p className="text-kv-muted text-xs">DXF/SVG для лазера · STL для 3D-печати · PDF для методики</p>
+                      <h4 className="font-medium mb-1 text-sm">Ключевой файл результата</h4>
+                      <p className="text-kv-muted text-xs">Данные исследования, прототип, код, методика или производственный файл</p>
                       {productionFile && <p className="mt-2 flex items-center gap-1.5 text-kv-blue text-sm"><Paperclip className="w-4 h-4" />{productionFile}</p>}
                     </div>
                     <button className="bg-white border border-kv-blue text-kv-blue px-5 py-2.5 rounded-full cursor-pointer flex items-center gap-2 hover:bg-kv-light transition-colors text-sm font-medium"
@@ -1014,7 +1014,7 @@ export default function CabinetPage() {
                     <div className="text-center py-16 text-kv-muted">
                       <CheckCircle2 className="w-10 h-10 mx-auto mb-3 opacity-20" />
                       <p className="text-sm">Задач пока нет</p>
-                      <p className="text-xs mt-1">Создайте первую задачу, чтобы отслеживать работу над КОП</p>
+                      <p className="text-xs mt-1">Создайте первую задачу, чтобы отслеживать работу над проектом</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto -mx-2 px-2 pb-2">
@@ -1136,7 +1136,7 @@ export default function CabinetPage() {
                     </div>
                     <div>
                       <h3 className="text-[1.1rem] font-semibold leading-tight">ИИ-ассистент Проектного навигатора</h3>
-                      <p className="text-kv-muted text-xs">Помогает с разработкой КОП</p>
+                      <p className="text-kv-muted text-xs">Помогает вести проект и подготовить КОП</p>
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">
@@ -1181,7 +1181,7 @@ export default function CabinetPage() {
                   )}
 
                   <div className="flex gap-3">
-                    <input className="input-kv flex-1" placeholder="Задайте вопрос об КОП…" value={aiInput}
+                    <input className="input-kv flex-1" placeholder="Задайте вопрос о проекте…" value={aiInput}
                       onChange={(e) => setAiInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendAiMessage()} />
                     <button className="btn-blue px-5" onClick={sendAiMessage} disabled={aiTyping}><Send className="w-4 h-4" /></button>
@@ -1194,7 +1194,7 @@ export default function CabinetPage() {
                 <div className="bg-white rounded-[2.5rem] p-8">
                   <h3 className="text-[1.3rem] font-semibold mb-1">Заметки проекта</h3>
                   <p className="text-kv-muted text-sm mb-6">Идеи, ссылки, наблюдения — записывайте по ходу работы</p>
-                  <textarea className="textarea-kv w-full min-h-[380px]" placeholder="Начните писать заметки о вашем КОП…" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                  <textarea className="textarea-kv w-full min-h-[380px]" placeholder="Начните писать заметки о вашем проекте…" value={notes} onChange={(e) => setNotes(e.target.value)} />
                   {notesSaved && <div className="mt-3 bg-[#e8f5e9] px-5 py-3 rounded-2xl text-[#2e7d32] text-sm flex items-center gap-2"><CheckCircle className="w-4 h-4" />Заметки сохранены</div>}
                   <button className="bg-kv-blue text-white border-none rounded-full px-9 py-3.5 text-base font-medium cursor-pointer hover:bg-kv-dark transition-colors mt-5"
                     onClick={() => { try { localStorage.setItem(teamKey('cabinet_notes', teamCode), notes) } catch {} setNotesSaved(true); setTimeout(() => setNotesSaved(false), 2500) }}>
@@ -1481,7 +1481,7 @@ export default function CabinetPage() {
                     )}
                     {canPublish && (
                       <button className="bg-kv-blue text-white border-none rounded-full px-5 py-2.5 text-sm cursor-pointer hover:bg-kv-dark transition-colors flex items-center gap-2" onClick={() => setShowPublishConfirm(true)}>
-                        <CheckCircle2 className="w-4 h-4" /> Опубликовать КОП
+                        <CheckCircle2 className="w-4 h-4" /> Подготовить КОП к публикации
                       </button>
                     )}
                   </div>
@@ -1570,9 +1570,9 @@ export default function CabinetPage() {
             <div className="w-14 h-14 rounded-full bg-[#e8f5e9] flex items-center justify-center mx-auto mb-5">
               <CheckCircle2 className="w-7 h-7 text-[#2e7d32]" />
             </div>
-            <h3 className="text-[1.7rem] font-semibold mb-3">Направить КОП куратору?</h3>
+            <h3 className="text-[1.7rem] font-semibold mb-3">Направить результат куратору?</h3>
             <p className="text-kv-text text-sm leading-relaxed mb-8">
-              Вы направите проект <strong>«{projectName || 'без названия'}»</strong> куратору для публикации в каталоге. Перед отправкой убедитесь, что все материалы готовы.
+              Вы направите проект <strong>«{projectName || 'без названия'}»</strong> куратору для проверки и адаптации результата в формат КОП. Перед отправкой убедитесь, что приложены материалы, необходимые для его воспроизведения.
             </p>
             <div className="flex gap-3">
               <button className="flex-1 py-3.5 border border-kv-border rounded-full text-kv-text text-sm font-medium cursor-pointer hover:bg-kv-light transition-colors" onClick={() => setShowPublishConfirm(false)}>Отмена</button>
@@ -1606,8 +1606,8 @@ export default function CabinetPage() {
             <div className="w-14 h-14 rounded-full bg-[#e8f5e9] flex items-center justify-center mx-auto mb-5">
               <CheckCircle className="w-7 h-7 text-[#2e7d32]" />
             </div>
-            <h3 className="text-[1.7rem] font-semibold mb-3">КОП направлен!</h3>
-            <p className="text-kv-muted mb-6">Куратор получил проект на рассмотрение. Следите за статусом во вкладке «Обзор».</p>
+            <h3 className="text-[1.7rem] font-semibold mb-3">Проект направлен!</h3>
+            <p className="text-kv-muted mb-6">Куратор получил результат на проверку и подготовку к публикации. Следите за статусом во вкладке «Обзор».</p>
             <button className="w-full py-3.5 bg-kv-blue text-white rounded-full border-none cursor-pointer font-medium hover:bg-kv-dark transition-colors"
               onClick={() => { setShowNotification(false); setActiveTab('overview') }}>
               К обзору

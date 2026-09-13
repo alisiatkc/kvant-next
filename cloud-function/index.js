@@ -37,6 +37,16 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
+const CATALOG_TABLE = 'approved_catalog'
+const CATALOG_SUBJECTS = new Set([
+  'math',
+  'bio',
+  'physics',
+  'it',
+  'economics',
+  'pedagogy',
+])
+
 function respond(statusCode, body) {
   return {
     statusCode,
@@ -48,6 +58,29 @@ function respond(statusCode, body) {
 // Converts a string timestamp ID to a stable numeric catalog ID (> 10000)
 function numericId(sid) {
   return parseInt(sid.slice(-7)) + 10000
+}
+
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+function validateCatalogEntry(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+    return 'entry required'
+  }
+  if (!Number.isSafeInteger(entry.id) || entry.id <= 0) {
+    return 'entry.id must be a positive integer'
+  }
+  if (!isNonEmptyString(entry.title)) {
+    return 'entry.title required'
+  }
+  if (!isNonEmptyString(entry.subject) || !CATALOG_SUBJECTS.has(entry.subject)) {
+    return 'entry.subject is invalid'
+  }
+  if (!Array.isArray(entry.authors) || !Array.isArray(entry.files) || !Array.isArray(entry.tech)) {
+    return 'entry.authors, entry.files and entry.tech must be arrays'
+  }
+  return null
 }
 
 module.exports.handler = async function (event) {
@@ -114,14 +147,14 @@ module.exports.handler = async function (event) {
       const catId = numericId(id)
       if (status === 'approved' && catalogEntry) {
         await ddb.send(new PutCommand({
-          TableName: 'approved_catalog',
+          TableName: CATALOG_TABLE,
           Item: { id: catId, data: JSON.stringify({ ...catalogEntry, id: catId }) },
         }))
       } else {
         // Remove from catalog on reject / return-to-review (ignore if not present)
         try {
           await ddb.send(new DeleteCommand({
-            TableName: 'approved_catalog',
+            TableName: CATALOG_TABLE,
             Key: { id: catId },
           }))
         } catch (_) {}
@@ -132,9 +165,55 @@ module.exports.handler = async function (event) {
 
     // ── GET ?action=getCatalog  (catalog page fetches approved projects) ─────
     if (action === 'getCatalog' && event.httpMethod === 'GET') {
-      const result = await ddb.send(new ScanCommand({ TableName: 'approved_catalog' }))
-      const projects = (result.Items || []).map((item) => JSON.parse(item.data))
+      const result = await ddb.send(new ScanCommand({ TableName: CATALOG_TABLE }))
+      const projects = (result.Items || [])
+        .map((item) => {
+          try {
+            return JSON.parse(item.data)
+          } catch (_) {
+            console.warn('[kvant-api] Invalid approved_catalog item', item.id)
+            return null
+          }
+        })
+        .filter(Boolean)
       return respond(200, { projects })
+    }
+
+    // ── POST ?action=updateCatalog  (curator creates / edits catalog entry) ─
+    if (action === 'updateCatalog' && event.httpMethod === 'POST') {
+      const { entry } = body
+      const validationError = validateCatalogEntry(entry)
+      if (validationError) return respond(400, { error: validationError })
+
+      const normalizedEntry = {
+        ...entry,
+        title: entry.title.trim(),
+        excerpt: typeof entry.excerpt === 'string' ? entry.excerpt.trim() : '',
+        fullDesc: typeof entry.fullDesc === 'string' ? entry.fullDesc.trim() : '',
+        authors: entry.authors.filter(isNonEmptyString).map((value) => value.trim()),
+        tech: entry.tech.filter(isNonEmptyString).map((value) => value.trim()),
+        likes: Number.isFinite(entry.likes) ? Math.max(0, entry.likes) : 0,
+      }
+
+      await ddb.send(new PutCommand({
+        TableName: CATALOG_TABLE,
+        Item: { id: normalizedEntry.id, data: JSON.stringify(normalizedEntry) },
+      }))
+      return respond(200, { ok: true, entry: normalizedEntry })
+    }
+
+    // ── POST ?action=deleteCatalog  (curator removes catalog entry) ─────────
+    if (action === 'deleteCatalog' && event.httpMethod === 'POST') {
+      const { id } = body
+      if (!Number.isSafeInteger(id) || id <= 0) {
+        return respond(400, { error: 'id must be a positive integer' })
+      }
+
+      await ddb.send(new DeleteCommand({
+        TableName: CATALOG_TABLE,
+        Key: { id },
+      }))
+      return respond(200, { ok: true })
     }
 
     return respond(404, { error: `Unknown action: ${action}` })
