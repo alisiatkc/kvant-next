@@ -18,10 +18,10 @@ const contactIconMap: Record<string, React.ComponentType<{ className?: string }>
 }
 
 const statItems = [
-  { value: '3',    label: 'Трека практики',              color: '#2B3B6B', bg: '#EEF3FF' },
-  { value: '12+',  label: 'Команд ежегодно',             color: '#4C1D95', bg: '#F3EEFF' },
-  { value: '6',    label: 'Этапов по Agile',             color: '#2B3B6B', bg: '#EEF3FF' },
-  { value: '100%', label: 'Апробация в учреждениях СПб', color: '#4C1D95', bg: '#F3EEFF' },
+  { value: 'Идея',       label: 'Проблема и замысел',        color: '#2B3B6B', bg: '#EEF3FF' },
+  { value: 'Проект',     label: 'Работа команды',            color: '#4C1D95', bg: '#F3EEFF' },
+  { value: 'Апробация',  label: 'Проверка результата',       color: '#2B3B6B', bg: '#EEF3FF' },
+  { value: 'КОП',        label: 'Форма тиражирования',       color: '#4C1D95', bg: '#F3EEFF' },
 ]
 
 export default function HomePage() {
@@ -130,12 +130,12 @@ export default function HomePage() {
 
             {/* Headline */}
             <h1 className="anim-fade-up anim-d1 text-[clamp(2.4rem,8vw,6rem)] font-semibold tracking-tight leading-[1.05] mb-5 min-[640px]:mb-6">
-              Создавайте КОП<br />
-              <span className="text-kv-blue">От идеи — до каталога</span>
+              Развивайте проекты<br />
+              <span className="text-kv-blue">От идеи — до внедрения</span>
             </h1>
 
             <p className="anim-fade-up anim-d2 text-base min-[640px]:text-[1.2rem] font-light text-kv-text mb-8 min-[640px]:mb-10 max-w-[600px] leading-relaxed">
-              Цифровая среда для практики студентов. Управляйте проектом по Agile, работайте с оборудованием технопарка и апробируйте результаты в образовательных учреждениях.
+              Цифровая образовательная среда для практики студентов: планируйте работу, взаимодействуйте с куратором, фиксируйте результаты и превращайте готовые решения в КОП.
             </p>
 
             <div className="anim-fade-up anim-d3 flex flex-col min-[480px]:flex-row gap-3">
@@ -168,7 +168,7 @@ export default function HomePage() {
               <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Форматы практики</span>
               <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Практика в вашем темпе</h2>
               <p className="text-kv-text font-light text-lg max-w-[560px] leading-relaxed">
-                Мы работаем с двумя форматами практики — оба завершаются разработанным и апробированным КОП в образовательных учреждениях.
+                Семестровый и интенсивный форматы поддерживают единый проектный цикл. Результат любого внутреннего проекта можно апробировать и адаптировать в КОП.
               </p>
             </div>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
@@ -177,7 +177,7 @@ export default function HomePage() {
                   <Calendar className="w-7 h-7 text-kv-blue stroke-[1.5]" />
                 </div>
                 <div className="flex items-center gap-3 mb-4">
-                  <h3 className="text-[1.6rem] font-semibold">А1 · Семестровая</h3>
+                  <h3 className="text-[1.6rem] font-semibold">Семестровая</h3>
                   <span className="tag-kv text-xs">16 недель</span>
                 </div>
                 <p className="text-kv-text leading-relaxed mb-4">
@@ -197,11 +197,11 @@ export default function HomePage() {
                   <Zap className="w-7 h-7 text-[#7c3aed] stroke-[1.5]" />
                 </div>
                 <div className="flex items-center gap-3 mb-4">
-                  <h3 className="text-[1.6rem] font-semibold">А2 · Интенсив</h3>
+                  <h3 className="text-[1.6rem] font-semibold">Интенсив</h3>
                   <span className="bg-[#f5f0ff] text-[#7c3aed] px-4 py-1.5 rounded-full text-xs font-medium inline-block">5 дней</span>
                 </div>
                 <p className="text-kv-text leading-relaxed mb-4">
-                  Проектно-технологическая практика в формате недельного интенсива. Полное погружение в разработку — от идеи до готового КОП и его апробации в сжатые сроки.
+                  Проектно-технологическая практика в формате недельного интенсива. Полное погружение в разработку — от постановки задачи до проверяемого результата и плана его дальнейшей апробации.
                 </p>
                 <ul className="space-y-2 text-sm text-kv-muted">
                   {['Полное погружение', 'Быстрые спринты', 'Результат за 5 дней'].map((t) => (
@@ -223,15 +223,15 @@ export default function HomePage() {
           <div className="container-kv">
             <div className="bg-white rounded-[2rem] min-[640px]:rounded-[3rem] px-6 py-8 min-[640px]:px-[60px] min-[640px]:py-[70px] flex flex-wrap gap-8 min-[640px]:gap-[60px] items-center border border-kv-border shadow-card">
               <div className="flex-[2] min-w-[300px]">
-                <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest block mb-4">Результат практики</span>
+                <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest block mb-4">Упаковка результата</span>
                 <h3 className="text-[clamp(1.7rem,4vw,2.5rem)] font-semibold mb-5 leading-tight">
-                  Коробочный образовательный<br />комплект (КОП)
+                  Как проект становится<br />коробочным образовательным комплектом
                 </h3>
                 <p className="text-kv-text leading-relaxed mb-4 text-[1.05rem]">
-                  Готовое образовательное решение, которое любой учитель может взять и применить на уроке без дополнительной подготовки. В состав входят продукт, инструкция и методические материалы.
+                  Исследовательский, конструкторский, методический или цифровой проект может быть адаптирован в КОП. Для этого его результат переводится в воспроизводимое образовательное решение: продукт или материалы дополняются сценарием применения, инструкцией и методическим сопровождением.
                 </p>
                 <p className="text-kv-muted text-sm leading-relaxed mb-8">
-                  Каждый КОП проходит апробацию в образовательных учреждениях Санкт-Петербурга и публикуется в открытом каталоге технопарка.
+                  В каталоге публикуется не черновая проектная работа, а оформленная и проверенная версия, которую другой педагог сможет понять, применить и при необходимости адаптировать.
                 </p>
                 <div className="flex gap-3 flex-wrap">
                   <Link href="/catalog" className="btn-primary inline-flex items-center gap-2">
@@ -297,7 +297,7 @@ export default function HomePage() {
                     Каталог коробочных комплектов
                   </h4>
                   <p className="text-white/60 text-lg max-w-[520px] leading-relaxed">
-                    Посмотрите КОП, созданные студентами и прошедшие апробацию в образовательных учреждениях Санкт-Петербурга.
+                    Посмотрите результаты студенческих проектов, адаптированные в КОП и подготовленные для образовательного применения.
                   </p>
                 </div>
                 <Link href="/catalog"
@@ -320,7 +320,7 @@ export default function HomePage() {
                 Хотите сотрудничать с технопарком?
               </h4>
               <p className="text-kv-text text-lg mb-3 max-w-[580px] mx-auto leading-relaxed">
-                Образовательные учреждения могут просматривать каталог КОП, запрашивать апробацию и оставлять обратную связь по итогам занятий.
+                Образовательные учреждения могут изучать готовые решения, предлагать площадки для апробации и оставлять обратную связь по итогам применения.
               </p>
               <p className="text-kv-muted mb-10">
                 Заявки на практику подаёт администрация технопарка РГПУ им. А.И. Герцена — место практики согласовывается заранее.
