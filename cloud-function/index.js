@@ -38,6 +38,8 @@ const CORS = {
 }
 
 const CATALOG_TABLE = 'approved_catalog'
+const WORKSPACE_TABLE = 'team_workspaces'
+const MAX_WORKSPACE_BYTES = 350000
 const CATALOG_SUBJECTS = new Set([
   'math',
   'bio',
@@ -81,6 +83,10 @@ function validateCatalogEntry(entry) {
     return 'entry.authors, entry.files and entry.tech must be arrays'
   }
   return null
+}
+
+function validateTeamCode(teamCode) {
+  return typeof teamCode === 'string' && /^[a-zA-Z0-9_-]{3,64}$/.test(teamCode)
 }
 
 module.exports.handler = async function (event) {
@@ -177,6 +183,53 @@ module.exports.handler = async function (event) {
         })
         .filter(Boolean)
       return respond(200, { projects })
+    }
+
+    // ── GET ?action=getWorkspace&teamCode=...  (team loads workspace) ───────
+    if (action === 'getWorkspace' && event.httpMethod === 'GET') {
+      const { teamCode } = qs
+      if (!validateTeamCode(teamCode)) {
+        return respond(400, { error: 'valid teamCode required' })
+      }
+
+      const result = await ddb.send(new GetCommand({
+        TableName: WORKSPACE_TABLE,
+        Key: { id: teamCode },
+      }))
+      if (!result.Item) return respond(200, { workspace: null })
+
+      try {
+        return respond(200, {
+          workspace: JSON.parse(result.Item.data),
+          updatedAt: result.Item.updatedAt || null,
+        })
+      } catch (_) {
+        console.warn('[kvant-api] Invalid team workspace', teamCode)
+        return respond(500, { error: 'workspace data is invalid' })
+      }
+    }
+
+    // ── POST ?action=saveWorkspace  (team saves current workspace) ─────────
+    if (action === 'saveWorkspace' && event.httpMethod === 'POST') {
+      const { teamCode, workspace } = body
+      if (!validateTeamCode(teamCode)) {
+        return respond(400, { error: 'valid teamCode required' })
+      }
+      if (!workspace || typeof workspace !== 'object' || Array.isArray(workspace)) {
+        return respond(400, { error: 'workspace required' })
+      }
+
+      const data = JSON.stringify(workspace)
+      if (Buffer.byteLength(data, 'utf8') > MAX_WORKSPACE_BYTES) {
+        return respond(413, { error: 'workspace is too large' })
+      }
+
+      const updatedAt = new Date().toISOString()
+      await ddb.send(new PutCommand({
+        TableName: WORKSPACE_TABLE,
+        Item: { id: teamCode, data, updatedAt },
+      }))
+      return respond(200, { ok: true, updatedAt })
     }
 
     // ── POST ?action=updateCatalog  (curator creates / edits catalog entry) ─

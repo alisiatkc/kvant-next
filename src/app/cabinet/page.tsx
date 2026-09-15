@@ -14,7 +14,14 @@ import { workshops } from '@/data'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
-import { type SubmittedProject, submitProject, getSubmittedProjects } from '@/lib/storage'
+import {
+  type SubmittedProject,
+  type TeamWorkspace,
+  submitProject,
+  getSubmittedProjects,
+  getTeamWorkspace,
+  saveTeamWorkspace,
+} from '@/lib/storage'
 import { TEAM_ACCOUNTS, CURATOR_ACCOUNTS } from '@/data/accounts'
 
 type Task = {
@@ -189,6 +196,7 @@ export default function CabinetPage() {
   // ── notes ────────────────────────────────────────────────────────────────
   const [notes,      setNotes]      = useState('')
   const [notesSaved, setNotesSaved] = useState(false)
+  const [workspaceSyncState, setWorkspaceSyncState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   // ── publication ───────────────────────────────────────────────────────────
   const [published,          setPublished]          = useState(false)
@@ -226,22 +234,64 @@ export default function CabinetPage() {
   const [newAuthorInput,  setNewAuthorInput]  = useState('')
 
   const projectId = useRef<string>('')
+  const workspaceLoadedRef = useRef(false)
+  const workspaceSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── helpers ───────────────────────────────────────────────────────────────
-  const loadTeamData = (code: string) => {
+  const applyWorkspace = (workspace: TeamWorkspace) => {
+    setTeamName(workspace.teamName || '')
+    setCaptainName(workspace.captainName || '')
+    if (workspace.track === 'А1' || workspace.track === 'А2' || workspace.track === 'А3') {
+      setTrack(workspace.track)
+    }
+    setAuthors(workspace.authors || [])
+    setPracticeStart(workspace.practiceStart || '')
+    setPracticeEnd(workspace.practiceEnd || '')
+    setProjectName(workspace.projectName || '')
+    setProjectBlock(workspace.projectBlock || '')
+    setProjectDesc(workspace.projectDesc || '')
+    setProductionFile(workspace.productionFile || '')
+    setTasks(workspace.tasks || [])
+    setFiles(workspace.files || [])
+    setSprints(workspace.sprints || [])
+    setNotes(workspace.notes || '')
+  }
+
+  const loadTeamData = async (code: string) => {
+    workspaceLoadedRef.current = false
     const savedTasks = localStorage.getItem(teamKey('cabinet_tasks', code))
-    setTasks(savedTasks ? JSON.parse(savedTasks) : [])
     const savedFiles = localStorage.getItem(teamKey('cabinet_files', code))
-    setFiles(savedFiles ? JSON.parse(savedFiles) : [])
     const savedSprints = localStorage.getItem(teamKey('cabinet_sprints', code))
-    setSprints(savedSprints ? JSON.parse(savedSprints) : [])
-    setNotes(         localStorage.getItem(teamKey('cabinet_notes',         code)) || '')
-    setProjectName(   localStorage.getItem(teamKey('cabinet_projectName',   code)) || '')
-    setProjectBlock(  localStorage.getItem(teamKey('cabinet_projectBlock',  code)) || '')
-    setProjectDesc(   localStorage.getItem(teamKey('cabinet_projectDesc',   code)) || '')
-    setProductionFile(localStorage.getItem(teamKey('cabinet_productionFile',code)) || '')
-    setPracticeStart( localStorage.getItem(teamKey('cabinet_practiceStart', code)) || '')
-    setPracticeEnd(   localStorage.getItem(teamKey('cabinet_practiceEnd',   code)) || '')
+    const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', code)) || ''
+    const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', code))
+    const localWorkspace: TeamWorkspace = {
+      teamName: localStorage.getItem('cabinet_teamName') || '',
+      captainName: savedCaptain,
+      track: localStorage.getItem('cabinet_track') || 'А1',
+      authors: savedAuthors ? JSON.parse(savedAuthors) : savedCaptain ? [savedCaptain] : [],
+      practiceStart: localStorage.getItem(teamKey('cabinet_practiceStart', code)) || '',
+      practiceEnd: localStorage.getItem(teamKey('cabinet_practiceEnd', code)) || '',
+      projectName: localStorage.getItem(teamKey('cabinet_projectName', code)) || '',
+      projectBlock: localStorage.getItem(teamKey('cabinet_projectBlock', code)) || '',
+      projectDesc: localStorage.getItem(teamKey('cabinet_projectDesc', code)) || '',
+      productionFile: localStorage.getItem(teamKey('cabinet_productionFile', code)) || '',
+      tasks: savedTasks ? JSON.parse(savedTasks) : [],
+      files: savedFiles ? JSON.parse(savedFiles) : [],
+      sprints: savedSprints ? JSON.parse(savedSprints) : [],
+      notes: localStorage.getItem(teamKey('cabinet_notes', code)) || '',
+    }
+    applyWorkspace(localWorkspace)
+
+    try {
+      const serverWorkspace = await getTeamWorkspace(code)
+      if (serverWorkspace) applyWorkspace(serverWorkspace)
+      setWorkspaceSyncState('saved')
+    } catch {
+      // Keep the local snapshot when the API is temporarily unavailable.
+      setWorkspaceSyncState('error')
+    } finally {
+      workspaceLoadedRef.current = true
+    }
   }
 
   const refreshStatus = async () => {
@@ -272,11 +322,7 @@ export default function CabinetPage() {
           if (savedTeam) setTeamName(savedTeam)
           if (savedTrack) setTrack(savedTrack)
           setCuratorLogin(account.curatorLogin)
-          const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', savedCode)) || ''
-          setCaptainName(savedCaptain)
-          const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', savedCode))
-          setAuthors(savedAuthors ? JSON.parse(savedAuthors) : savedCaptain ? [savedCaptain] : [])
-          loadTeamData(savedCode)
+          await loadTeamData(savedCode)
           setLoggedIn(true)
         }
       } catch {}
@@ -318,10 +364,61 @@ export default function CabinetPage() {
     if (loggedIn && teamCode) try { localStorage.setItem(teamKey('cabinet_authors', teamCode), JSON.stringify(authors)) } catch {}
   }, [authors, loggedIn, teamCode])
 
+  useEffect(() => {
+    if (!loggedIn || !teamCode || !workspaceLoadedRef.current) return
+    if (workspaceSaveTimerRef.current) clearTimeout(workspaceSaveTimerRef.current)
+
+    const workspace: TeamWorkspace = {
+      teamName,
+      captainName,
+      track,
+      authors,
+      practiceStart,
+      practiceEnd,
+      projectName,
+      projectBlock,
+      projectDesc,
+      productionFile,
+      tasks,
+      files,
+      sprints,
+      notes,
+    }
+
+    try {
+      localStorage.setItem('cabinet_teamName', teamName)
+      localStorage.setItem('cabinet_track', track)
+      localStorage.setItem(teamKey('cabinet_captainName', teamCode), captainName)
+      localStorage.setItem(teamKey('cabinet_authors', teamCode), JSON.stringify(authors))
+      localStorage.setItem(teamKey('cabinet_practiceStart', teamCode), practiceStart)
+      localStorage.setItem(teamKey('cabinet_practiceEnd', teamCode), practiceEnd)
+      localStorage.setItem(teamKey('cabinet_projectName', teamCode), projectName)
+      localStorage.setItem(teamKey('cabinet_projectBlock', teamCode), projectBlock)
+      localStorage.setItem(teamKey('cabinet_projectDesc', teamCode), projectDesc)
+      localStorage.setItem(teamKey('cabinet_productionFile', teamCode), productionFile)
+      localStorage.setItem(teamKey('cabinet_notes', teamCode), notes)
+    } catch {}
+
+    setWorkspaceSyncState('saving')
+    workspaceSaveTimerRef.current = setTimeout(() => {
+      saveTeamWorkspace(teamCode, workspace)
+        .then(() => setWorkspaceSyncState('saved'))
+        .catch(() => setWorkspaceSyncState('error'))
+    }, 800)
+
+    return () => {
+      if (workspaceSaveTimerRef.current) clearTimeout(workspaceSaveTimerRef.current)
+    }
+  }, [
+    loggedIn, teamCode, teamName, captainName, track, authors,
+    practiceStart, practiceEnd, projectName, projectBlock, projectDesc,
+    productionFile, tasks, files, sprints, notes,
+  ])
+
   useEffect(() => { aiEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [aiMessages])
 
   // ── handlers ──────────────────────────────────────────────────────────────
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setLoginError('')
     if (userType === 'student') {
       if (!teamCode.trim() || !teamPassword.trim()) {
@@ -348,11 +445,7 @@ export default function CabinetPage() {
       if (savedTeamName) setTeamName(savedTeamName)
       setTrack(account.track)
       setCuratorLogin(account.curatorLogin)
-      const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', code)) || ''
-      setCaptainName(savedCaptain)
-      const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', code))
-      setAuthors(savedAuthors ? JSON.parse(savedAuthors) : savedCaptain ? [savedCaptain] : [])
-      loadTeamData(code)
+      await loadTeamData(code)
       setLoggedIn(true)
     } else {
       const curator = CURATOR_ACCOUNTS.find(
@@ -787,6 +880,12 @@ export default function CabinetPage() {
               <span className="text-xl font-semibold">{captainName} <span className="text-kv-muted font-normal text-base">· {teamName}</span></span>
             </div>
             <div className="flex items-center gap-2.5 flex-wrap">
+              <span className={`text-xs flex items-center gap-1.5 ${workspaceSyncState === 'error' ? 'text-[#c62828]' : 'text-kv-muted'}`}>
+                {workspaceSyncState === 'saving' && <RefreshCw className="w-3 h-3 animate-spin" />}
+                {workspaceSyncState === 'saved' && <CheckCircle2 className="w-3 h-3 text-[#2e7d32]" />}
+                {workspaceSyncState === 'error' && <AlertTriangle className="w-3 h-3" />}
+                {workspaceSyncState === 'saving' ? 'Синхронизация…' : workspaceSyncState === 'error' ? 'Сохранено локально' : 'Сохранено'}
+              </span>
               <span className="tag-kv">{track}</span>
               <span className={`status-badge flex items-center gap-1.5 ${published ? `${sc.bg} ${sc.color}` : 'bg-kv-light text-kv-muted'}`}>
                 {published ? <><sc.Icon className="w-3.5 h-3.5" /> {sc.label}</> : 'Черновик'}
