@@ -32,6 +32,39 @@ export type AuthUser = {
   id?: string
 }
 
+export type ResearchStage = 'T0' | 'T1' | 'T2' | 'T3'
+
+export type ResearchAnswers = {
+  processClarity: number
+  selfOrganization: number
+  teamwork: number
+  communication: number
+  materialsAccess: number
+  usefulness: number
+  usability: number
+  projectResult: number
+}
+
+export type ResearchMeasurementInput = {
+  participantCode: string
+  stage: ResearchStage
+  previousPractice?: boolean
+  consentConfirmed: boolean
+  answers: ResearchAnswers
+}
+
+export type ResearchMeasurement = {
+  id: string
+  teamCode: string
+  participantId: string
+  stage: ResearchStage
+  previousPractice: boolean | null
+  consentConfirmed: boolean
+  instrumentVersion: string
+  answers: ResearchAnswers
+  createdAt: string
+}
+
 export type CatalogEntry = {
   id: number
   title: string
@@ -293,4 +326,41 @@ export async function deleteCatalogEntry(id: number): Promise<void> {
   }
   const existing: CatalogEntry[] = JSON.parse(localStorage.getItem('approvedCatalogProjects') || '[]')
   localStorage.setItem('approvedCatalogProjects', JSON.stringify(existing.filter((e) => e.id !== id)))
+}
+
+export async function submitResearchMeasurement(measurement: ResearchMeasurementInput): Promise<{ participantId: string; savedAt: string }> {
+  if (API_URL) {
+    const data = await apiCall('submitMeasurement', 'POST', { measurement })
+    return { participantId: data.participantId as string, savedAt: data.savedAt as string }
+  }
+  if (!DEMO_MODE) throw new Error('Сервер исследования ещё не подключён')
+  const user = await getCurrentUser()
+  if (!user?.teamCode) throw new Error('Требуется вход команды')
+  const participantId = measurement.participantCode.trim().toUpperCase()
+  const record: ResearchMeasurement = {
+    id: `${user.teamCode}:${participantId}:${measurement.stage}`,
+    teamCode: user.teamCode,
+    participantId,
+    stage: measurement.stage,
+    previousPractice: measurement.stage === 'T0' ? measurement.previousPractice ?? false : null,
+    consentConfirmed: true,
+    instrumentVersion: '1.0-demo',
+    answers: measurement.answers,
+    createdAt: new Date().toISOString(),
+  }
+  const existing: ResearchMeasurement[] = JSON.parse(localStorage.getItem('researchMeasurements') || '[]')
+  localStorage.setItem('researchMeasurements', JSON.stringify([
+    ...existing.filter((item) => item.id !== record.id),
+    record,
+  ]))
+  return { participantId, savedAt: record.createdAt }
+}
+
+export async function getResearchMeasurements(): Promise<ResearchMeasurement[]> {
+  if (API_URL) {
+    const data = await apiCall('getMeasurements', 'GET')
+    return (data.measurements as ResearchMeasurement[]) ?? []
+  }
+  if (!DEMO_MODE) return []
+  return JSON.parse(localStorage.getItem('researchMeasurements') || '[]')
 }

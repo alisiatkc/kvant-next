@@ -65,9 +65,12 @@ unset AUTH_PASSWORD
 
 - `submitted_projects` — строковый `id`;
 - `team_workspaces` — строковый `id`;
+- `research_measurements` — строковый `id`, обезличенные измерения T0–T3;
 - `approved_catalog` — числовой `id`.
 
 Переменные подключения Cloud Function: `YDB_ENDPOINT`, `YDB_ACCESS_KEY_ID`, `YDB_SECRET_ACCESS_KEY`, `YDB_REGION`.
+
+Перед началом T0 зафиксируйте формулировки восьми утверждений. Если инструмент изменяется после начала сбора данных, увеличьте `RESEARCH_INSTRUMENT_VERSION` в `cloud-function/index.js`, чтобы версии ответов не смешивались при анализе.
 
 ## Проверка
 

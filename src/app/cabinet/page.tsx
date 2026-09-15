@@ -17,6 +17,8 @@ import Link from 'next/link'
 import {
   type SubmittedProject,
   type TeamWorkspace,
+  type ResearchStage,
+  type ResearchAnswers,
   submitProject,
   getSubmittedProjects,
   getTeamWorkspace,
@@ -24,6 +26,7 @@ import {
   loginUser,
   getCurrentUser,
   clearSession,
+  submitResearchMeasurement,
 } from '@/lib/storage'
 
 type Task = {
@@ -41,7 +44,7 @@ type ApprobationRecord = {
   whatWorked: string; whatNeedsWork: string; recommendations: string
 }
 type AiMessage = { id: string; role: 'user' | 'assistant'; text: string; time: string }
-type Tab = 'overview' | 'passport' | 'tasks' | 'sprints' | 'files' | 'ai' | 'notes' | 'approbation' | 'workshops'
+type Tab = 'overview' | 'passport' | 'tasks' | 'sprints' | 'files' | 'ai' | 'notes' | 'research' | 'approbation' | 'workshops'
 
 type Sprint = {
   id: string
@@ -61,6 +64,35 @@ const AI_QUESTIONS: Record<string, string[]> = {
   информатика: ['Понятны ли инструкции?', 'Какие алгоритмические задачи удалось решить?', 'Что можно упростить?', 'Подходит ли для самостоятельной работы?'],
   экономика:   ['Насколько игра отражает реальные процессы?', 'Было ли интересно?', 'Какие дополнения предложили бы ученики?', 'Сколько времени заняло занятие?'],
   педагогика:  ['Насколько игровая форма помогла?', 'Удалось ли удержать внимание детей?', 'Что улучшить в методике?', 'Подходит ли для разных возрастных групп?'],
+}
+
+const RESEARCH_STAGE_CFG: Array<{ id: ResearchStage; title: string; description: string }> = [
+  { id: 'T0', title: 'Перед проектной работой', description: 'После короткого знакомства со средой, но до начала проекта' },
+  { id: 'T1', title: 'После первого цикла', description: 'Первое повторное измерение после частичного использования' },
+  { id: 'T2', title: 'Перед интенсивом', description: 'Состояние перед ноябрьским интенсивом' },
+  { id: 'T3', title: 'После интенсива', description: 'Итоговое измерение после полного проектного цикла' },
+]
+
+const RESEARCH_QUESTIONS: Array<{ key: keyof ResearchAnswers; label: string }> = [
+  { key: 'processClarity', label: 'Мне понятны этапы и последовательность работы над проектом' },
+  { key: 'selfOrganization', label: 'Мне удаётся самостоятельно планировать и контролировать свою работу' },
+  { key: 'teamwork', label: 'В команде понятно распределены роли и ответственность' },
+  { key: 'communication', label: 'Мне удобно взаимодействовать с командой и куратором' },
+  { key: 'materialsAccess', label: 'Мне легко находить необходимые материалы и результаты работы' },
+  { key: 'usefulness', label: 'Среда помогает мне продвигаться в работе над проектом' },
+  { key: 'usability', label: 'Интерфейс среды понятен и удобен' },
+  { key: 'projectResult', label: 'Я понимаю, каким должен быть итоговый результат проекта' },
+]
+
+const EMPTY_RESEARCH_ANSWERS: ResearchAnswers = {
+  processClarity: 0,
+  selfOrganization: 0,
+  teamwork: 0,
+  communication: 0,
+  materialsAccess: 0,
+  usefulness: 0,
+  usability: 0,
+  projectResult: 0,
 }
 
 const PRIORITY_CFG = {
@@ -84,6 +116,7 @@ const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: str
   { id: 'files',       label: 'Рабочие файлы',   Icon: FolderOpen },
   { id: 'ai',          label: 'ИИ-ассистент',    Icon: Bot },
   { id: 'notes',       label: 'Заметки',         Icon: BookOpen },
+  { id: 'research',    label: 'Исследование',    Icon: BarChart3 },
   { id: 'approbation', label: 'Апробация',       Icon: School },
   { id: 'workshops',   label: 'Мастер-классы',  Icon: Video },
 ]
@@ -217,6 +250,16 @@ export default function CabinetPage() {
   const [aiQuestions,      setAiQuestions]      = useState<string[]>([])
   const [showAiQuestions,  setShowAiQuestions]  = useState(false)
   const [approbationSaved, setApprobationSaved] = useState(false)
+
+  // ── repeated research measurements ───────────────────────────────────────
+  const [researchStage, setResearchStage] = useState<ResearchStage>('T0')
+  const [participantCode, setParticipantCode] = useState('')
+  const [previousPractice, setPreviousPractice] = useState<boolean | null>(null)
+  const [researchAnswers, setResearchAnswers] = useState<ResearchAnswers>(EMPTY_RESEARCH_ANSWERS)
+  const [researchConsent, setResearchConsent] = useState(false)
+  const [researchSaving, setResearchSaving] = useState(false)
+  const [researchError, setResearchError] = useState('')
+  const [researchReceipt, setResearchReceipt] = useState('')
 
   // ── workshops modal ───────────────────────────────────────────────────────
   const [selectedWorkshop, setSelectedWorkshop] = useState<(typeof workshops)[0] | null>(null)
@@ -583,6 +626,46 @@ export default function CabinetPage() {
     setApprobationForm({ school: '', date: '', engagement: '', whatWorked: '', whatNeedsWork: '', recommendations: '' })
     setApprobationSaved(true)
     setTimeout(() => setApprobationSaved(false), 3000)
+  }
+
+  const saveResearchMeasurement = async () => {
+    setResearchError('')
+    setResearchReceipt('')
+    if (!/^[a-zA-Z0-9_-]{3,32}$/.test(participantCode.trim())) {
+      setResearchError('Введите выданный код участника: 3–32 латинских буквы, цифры, дефис или подчёркивание.')
+      return
+    }
+    if (researchStage === 'T0' && previousPractice === null) {
+      setResearchError('Укажите, проходили ли вы ранее практику без этой среды.')
+      return
+    }
+    if (Object.values(researchAnswers).some((value) => value < 1 || value > 5)) {
+      setResearchError('Ответьте на все восемь утверждений по шкале от 1 до 5.')
+      return
+    }
+    if (!researchConsent) {
+      setResearchError('Подтвердите информированное участие перед отправкой.')
+      return
+    }
+
+    setResearchSaving(true)
+    try {
+      const result = await submitResearchMeasurement({
+        participantCode: participantCode.trim(),
+        stage: researchStage,
+        previousPractice: researchStage === 'T0' ? previousPractice ?? undefined : undefined,
+        consentConfirmed: researchConsent,
+        answers: researchAnswers,
+      })
+      setResearchReceipt(`Ответ ${researchStage} сохранён · код записи ${result.participantId.slice(-6).toUpperCase()}`)
+      setResearchAnswers(EMPTY_RESEARCH_ANSWERS)
+      setPreviousPractice(null)
+      setResearchConsent(false)
+    } catch (error) {
+      setResearchError(error instanceof Error ? error.message : 'Не удалось сохранить ответы')
+    } finally {
+      setResearchSaving(false)
+    }
   }
 
   const openTask = (task?: Task) => {
@@ -1353,6 +1436,103 @@ export default function CabinetPage() {
                 </div>
               )}
 
+              {/* ════ RESEARCH T0–T3 ════ */}
+              {activeTab === 'research' && (
+                <div className="space-y-5">
+                  <div className="bg-white rounded-[2.5rem] p-8">
+                    <div className="mb-7">
+                      <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Апробация цифровой среды</span>
+                      <h3 className="text-[1.3rem] font-semibold mt-1 mb-2">Повторное измерение T0–T3</h3>
+                      <p className="text-kv-muted text-sm leading-relaxed max-w-[760px]">
+                        Используйте один и тот же обезличенный код на всех этапах. Не вводите фамилию, имя, номер телефона или другие персональные данные. Индивидуальные ответы не показываются команде.
+                      </p>
+                      {researchStage === 'T0' && (
+                        <p className="text-xs text-kv-blue mt-3 leading-relaxed max-w-[760px]">
+                          T0 заполняется после одинакового для всех краткого знакомства с интерфейсом, но до начала проектной работы. Так участник уже может оценить понятность среды, не имея опыта её применения в проекте.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 max-[720px]:grid-cols-1 mb-7">
+                      {RESEARCH_STAGE_CFG.map((stage) => (
+                        <button key={stage.id} type="button"
+                          className={`p-4 rounded-2xl border text-left cursor-pointer transition-colors ${researchStage === stage.id ? 'bg-[#eef3ff] border-kv-blue' : 'bg-white border-kv-border hover:bg-kv-light'}`}
+                          onClick={() => { setResearchStage(stage.id); setResearchError(''); setResearchReceipt('') }}>
+                          <span className={`text-sm font-semibold ${researchStage === stage.id ? 'text-kv-blue' : 'text-kv-dark'}`}>{stage.id} · {stage.title}</span>
+                          <span className="block text-xs text-kv-muted mt-1 leading-relaxed">{stage.description}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mb-7 max-w-[480px]">
+                      <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Обезличенный код участника</label>
+                      <input className="input-kv" placeholder="Например, ST-014" value={participantCode}
+                        onChange={(e) => setParticipantCode(e.target.value)} />
+                      <p className="text-xs text-kv-muted mt-2">Код выдаёт исследователь. Используйте его повторно на этапах T0, T1, T2 и T3.</p>
+                    </div>
+
+                    {researchStage === 'T0' && (
+                      <fieldset className="mb-7 border-none p-0">
+                        <legend className="font-medium text-[#3f4a6b] text-sm mb-3">Проходили ли вы ранее практику без этой цифровой среды?</legend>
+                        <div className="flex gap-3 flex-wrap">
+                          {[
+                            { value: true, label: 'Да' },
+                            { value: false, label: 'Нет' },
+                          ].map((option) => (
+                            <button key={option.label} type="button"
+                              className={`px-6 py-2.5 rounded-full border text-sm cursor-pointer ${previousPractice === option.value ? 'bg-kv-blue border-kv-blue text-white' : 'bg-white border-kv-border text-kv-dark'}`}
+                              onClick={() => setPreviousPractice(option.value)}>{option.label}</button>
+                          ))}
+                        </div>
+                      </fieldset>
+                    )}
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-4 text-xs text-kv-muted px-1">
+                        <span>Оцените каждое утверждение</span>
+                        <span>1 — не согласен · 5 — полностью согласен</span>
+                      </div>
+                      {RESEARCH_QUESTIONS.map(({ key, label }, index) => (
+                        <div key={key} className="border border-kv-border rounded-[1.5rem] p-5">
+                          <p className="text-sm font-medium leading-relaxed mb-4"><span className="text-kv-muted mr-2">{index + 1}.</span>{label}</p>
+                          <div className="flex gap-2" role="radiogroup" aria-label={label}>
+                            {[1, 2, 3, 4, 5].map((value) => (
+                              <button key={value} type="button" role="radio" aria-checked={researchAnswers[key] === value}
+                                className={`w-10 h-10 rounded-full border text-sm font-semibold cursor-pointer transition-colors ${researchAnswers[key] === value ? 'bg-kv-blue border-kv-blue text-white' : 'bg-white border-kv-border text-kv-text hover:border-kv-blue'}`}
+                                onClick={() => setResearchAnswers((answers) => ({ ...answers, [key]: value }))}>
+                                {value}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <label className="flex items-start gap-3 mt-7 p-5 bg-kv-light rounded-2xl cursor-pointer">
+                      <input type="checkbox" className="mt-1" checked={researchConsent} onChange={(e) => setResearchConsent(e.target.checked)} />
+                      <span className="text-sm text-kv-text leading-relaxed">
+                        Я проинформирован(а) о цели исследования и добровольно соглашаюсь на обезличенное использование этих ответов в обобщённом виде.
+                      </span>
+                    </label>
+
+                    {researchError && (
+                      <div className="mt-5 bg-[#ffebee] text-[#c62828] px-5 py-3 rounded-2xl text-sm flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /> {researchError}
+                      </div>
+                    )}
+                    {researchReceipt && (
+                      <div className="mt-5 bg-[#e8f5e9] text-[#2e7d32] px-5 py-3 rounded-2xl text-sm flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 flex-shrink-0" /> {researchReceipt}
+                      </div>
+                    )}
+
+                    <button type="button" className="btn-blue mt-6" disabled={researchSaving} onClick={saveResearchMeasurement}>
+                      {researchSaving ? <><RefreshCw className="w-4 h-4 animate-spin" /> Сохранение…</> : <><Send className="w-4 h-4" /> Отправить обезличенные ответы</>}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* ════ APPROBATION ════ */}
               {activeTab === 'approbation' && (
                 <div className="space-y-5">
@@ -1621,7 +1801,7 @@ export default function CabinetPage() {
               )}
 
               {/* Publish CTA bar — always visible (except overview, approbation, workshops, sprints) */}
-              {activeTab !== 'overview' && activeTab !== 'approbation' && activeTab !== 'workshops' && activeTab !== 'sprints' && (
+              {activeTab !== 'overview' && activeTab !== 'research' && activeTab !== 'approbation' && activeTab !== 'workshops' && activeTab !== 'sprints' && (
                 <div className="bg-kv-light rounded-[2rem] px-7 py-5 flex items-center justify-between flex-wrap gap-4">
                   <div>
                     <h4 className="font-semibold mb-0.5 text-sm">Отправить куратору</h4>
