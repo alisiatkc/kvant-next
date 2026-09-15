@@ -7,13 +7,15 @@ import {
   LayoutDashboard, ClipboardList, Bell, MessageSquare,
   BookOpen, CheckCircle2, FolderOpen, Send, X, AlertTriangle,
   UserCheck, UserPlus, Inbox, Package, Plus, Edit2, Trash2, BarChart3, TrendingUp,
-  Activity, Calendar, Filter, Layers, RefreshCw,
+  Activity, Calendar, Filter, Layers, RefreshCw, Download,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import {
   type SubmittedProject,
   type CatalogEntry,
+  type ResearchMeasurement,
+  type ResearchAnswers,
   getSubmittedProjects,
   updateProjectStatus,
   getApprovedCatalog,
@@ -21,6 +23,7 @@ import {
   deleteCatalogEntry,
   getCurrentUser,
   clearSession,
+  getResearchMeasurements,
 } from '@/lib/storage'
 
 function detectSubject(text: string): string {
@@ -74,7 +77,20 @@ function buildCatalogEntry(sub: SubmittedProject): CatalogEntry {
 }
 
 type WorkspaceModal = { project: SubmittedProject; feedbackDraft: string }
-type ActiveTab = 'dashboard' | 'inbox' | 'all' | 'catalog'
+type ActiveTab = 'dashboard' | 'inbox' | 'all' | 'research' | 'catalog'
+
+const RESEARCH_LABELS: Array<{ key: keyof ResearchAnswers; short: string }> = [
+  { key: 'processClarity', short: 'Понятность процесса' },
+  { key: 'selfOrganization', short: 'Самоорганизация' },
+  { key: 'teamwork', short: 'Командная работа' },
+  { key: 'communication', short: 'Коммуникация' },
+  { key: 'materialsAccess', short: 'Доступ к материалам' },
+  { key: 'usefulness', short: 'Полезность среды' },
+  { key: 'usability', short: 'Удобство интерфейса' },
+  { key: 'projectResult', short: 'Понимание результата' },
+]
+
+const RESEARCH_STAGES = ['T0', 'T1', 'T2', 'T3'] as const
 
 type CatalogForm = {
   title: string; excerpt: string; fullDesc: string
@@ -92,6 +108,8 @@ export default function CuratorPage() {
   const [expanded,      setExpanded]      = useState<string | null>(null)
   const [activeTab,     setActiveTab]     = useState<ActiveTab>('dashboard')
   const [workspaceModal,setWorkspaceModal]= useState<WorkspaceModal | null>(null)
+  const [measurements,   setMeasurements]   = useState<ResearchMeasurement[]>([])
+  const [researchLoadError, setResearchLoadError] = useState(false)
 
   // ── catalog editor ────────────────────────────────────────────────────────
   const [catalogEntries,     setCatalogEntries]     = useState<CatalogEntry[]>([])
@@ -117,6 +135,12 @@ export default function CuratorPage() {
         setProjects(subs)
         const cat = await getApprovedCatalog()
         setCatalogEntries(cat)
+        try {
+          const research = await getResearchMeasurements()
+          setMeasurements(research)
+        } catch {
+          setResearchLoadError(true)
+        }
       } catch {
         router.push('/cabinet')
       } finally {
@@ -212,6 +236,31 @@ export default function CuratorPage() {
     setCatalogDeleteId(null)
   }
 
+  const exportResearchCsv = () => {
+    const headers = [
+      'teamCode', 'participantId', 'stage', 'previousPractice', 'consentConfirmed', 'instrumentVersion', 'createdAt',
+      ...RESEARCH_LABELS.map(({ key }) => key),
+    ]
+    const escapeCell = (value: string | number | boolean | null) => `"${String(value ?? '').replace(/"/g, '""')}"`
+    const rows = measurements.map((item) => [
+      item.teamCode,
+      item.participantId,
+      item.stage,
+      item.previousPractice,
+      item.consentConfirmed,
+      item.instrumentVersion,
+      item.createdAt,
+      ...RESEARCH_LABELS.map(({ key }) => item.answers[key]),
+    ])
+    const csv = `\uFEFF${[headers, ...rows].map((row) => row.map(escapeCell).join(';')).join('\n')}`
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `research-t0-t3-${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (loading) return (
     <>
       <Header />
@@ -241,6 +290,7 @@ export default function CuratorPage() {
     { id: 'dashboard', label: 'Дашборд',        Icon: LayoutDashboard },
     { id: 'inbox',     label: 'Входящие',        Icon: Inbox,      badge: counts.inbox },
     { id: 'all',       label: 'Все проекты',     Icon: ClipboardList },
+    { id: 'research',  label: 'T0–T3',           Icon: BarChart3, badge: measurements.length },
     { id: 'catalog',   label: 'Каталог КОП',     Icon: Package },
   ]
 
@@ -546,6 +596,107 @@ export default function CuratorPage() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ════ RESEARCH T0–T3 ════ */}
+          {activeTab === 'research' && (
+            <div className="space-y-5">
+              <div className="bg-white rounded-[3rem] p-10">
+                <div className="flex items-start justify-between gap-5 flex-wrap mb-8">
+                  <div>
+                    <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Исследовательская апробация</span>
+                    <h2 className="text-[1.4rem] font-semibold mt-1 mb-2">Сводка повторных измерений T0–T3</h2>
+                    <p className="text-kv-muted text-sm max-w-[700px] leading-relaxed">
+                      Отображаются только агрегированные показатели. В базе и выгрузке используются псевдонимные коды, а не имена студентов.
+                    </p>
+                  </div>
+                  <button className="btn-blue disabled:opacity-40 disabled:cursor-not-allowed" disabled={measurements.length === 0} onClick={exportResearchCsv}>
+                    <Download className="w-4 h-4" /> Выгрузить CSV
+                  </button>
+                </div>
+
+                {researchLoadError && (
+                  <div className="bg-[#fff7ed] text-[#c2410c] px-5 py-4 rounded-2xl text-sm flex items-start gap-2 mb-6">
+                    <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /> Таблица исследования ещё не подключена или временно недоступна.
+                  </div>
+                )}
+
+                {measurements.length === 0 ? (
+                  <div className="text-center py-14 text-kv-muted">
+                    <BarChart3 className="w-10 h-10 mx-auto mb-4 opacity-20" />
+                    <p className="font-medium mb-1">Ответов пока нет</p>
+                    <p className="text-sm">После заполнения студентами формы здесь появится динамика T0–T3.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 min-[900px]:grid-cols-4 gap-4 mb-8">
+                      {RESEARCH_STAGES.map((stage) => {
+                        const stageItems = measurements.filter((item) => item.stage === stage)
+                        const values = stageItems.flatMap((item) => RESEARCH_LABELS.map(({ key }) => item.answers[key]))
+                        const average = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
+                        return (
+                          <div key={stage} className="rounded-[1.75rem] border border-kv-border bg-[#f9fbfe] p-6">
+                            <span className="text-kv-blue font-bold text-xl">{stage}</span>
+                            <div className="text-[1.8rem] font-semibold mt-3">{stageItems.length}</div>
+                            <div className="text-xs text-kv-muted">ответов</div>
+                            <div className="text-sm text-kv-text mt-3">Средняя оценка: <strong>{average === null ? '—' : average.toFixed(2)}</strong></div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <div className="grid min-[760px]:grid-cols-3 gap-4 mb-8">
+                      {(() => {
+                        const stagesByParticipant = new Map<string, Set<string>>()
+                        measurements.forEach((item) => {
+                          const key = `${item.teamCode}:${item.participantId}`
+                          const stages = stagesByParticipant.get(key) || new Set<string>()
+                          stages.add(item.stage)
+                          stagesByParticipant.set(key, stages)
+                        })
+                        const unique = stagesByParticipant.size
+                        const participantStages = Array.from(stagesByParticipant.values())
+                        const repeated = participantStages.filter((stages) => stages.size >= 2).length
+                        const complete = participantStages.filter((stages) => stages.size === 4).length
+                        return [
+                          { label: 'Уникальных участников', value: unique },
+                          { label: 'Есть повторное измерение', value: repeated },
+                          { label: 'Завершили T0–T3', value: complete },
+                        ].map((item) => (
+                          <div key={item.label} className="bg-[#eef3ff] rounded-2xl p-5 text-center">
+                            <div className="text-2xl font-bold text-kv-blue">{item.value}</div>
+                            <div className="text-xs text-kv-text mt-1">{item.label}</div>
+                          </div>
+                        ))
+                      })()}
+                    </div>
+
+                    <div className="overflow-x-auto border border-kv-border rounded-[1.75rem]">
+                      <table className="w-full min-w-[760px] text-sm">
+                        <thead className="bg-kv-light text-kv-text">
+                          <tr>
+                            <th className="text-left px-5 py-4 font-medium">Показатель</th>
+                            {RESEARCH_STAGES.map((stage) => <th key={stage} className="text-center px-4 py-4 font-semibold">{stage}</th>)}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {RESEARCH_LABELS.map(({ key, short }) => (
+                            <tr key={key} className="border-t border-kv-border">
+                              <td className="px-5 py-4 text-kv-text">{short}</td>
+                              {RESEARCH_STAGES.map((stage) => {
+                                const values = measurements.filter((item) => item.stage === stage).map((item) => item.answers[key])
+                                const average = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
+                                return <td key={stage} className="text-center px-4 py-4 font-semibold text-kv-blue">{average === null ? '—' : average.toFixed(2)}</td>
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
 

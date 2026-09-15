@@ -42,9 +42,22 @@ const CORS = {
 
 const CATALOG_TABLE = 'approved_catalog'
 const WORKSPACE_TABLE = 'team_workspaces'
+const RESEARCH_TABLE = 'research_measurements'
 const MAX_WORKSPACE_BYTES = 350000
 const MAX_PROJECT_BYTES = 200000
 const SESSION_TTL_SECONDS = 12 * 60 * 60
+const RESEARCH_STAGES = new Set(['T0', 'T1', 'T2', 'T3'])
+const RESEARCH_INSTRUMENT_VERSION = '1.0'
+const RESEARCH_FIELDS = [
+  'processClarity',
+  'selfOrganization',
+  'teamwork',
+  'communication',
+  'materialsAccess',
+  'usefulness',
+  'usability',
+  'projectResult',
+]
 const CATALOG_SUBJECTS = new Set([
   'math',
   'bio',
@@ -92,6 +105,27 @@ function validateCatalogEntry(entry) {
 
 function validateTeamCode(teamCode) {
   return typeof teamCode === 'string' && /^[a-zA-Z0-9_-]{3,64}$/.test(teamCode)
+}
+
+function validateResearchMeasurement(measurement) {
+  if (!measurement || typeof measurement !== 'object' || Array.isArray(measurement)) {
+    return 'measurement required'
+  }
+  if (typeof measurement.participantCode !== 'string' || !/^[a-zA-Z0-9_-]{3,32}$/.test(measurement.participantCode.trim())) {
+    return 'participantCode is invalid'
+  }
+  if (!RESEARCH_STAGES.has(measurement.stage)) return 'stage is invalid'
+  if (measurement.consentConfirmed !== true) return 'participant consent required'
+  if (!measurement.answers || typeof measurement.answers !== 'object' || Array.isArray(measurement.answers)) {
+    return 'answers required'
+  }
+  if (RESEARCH_FIELDS.some((field) => !Number.isInteger(measurement.answers[field]) || measurement.answers[field] < 1 || measurement.answers[field] > 5)) {
+    return 'all answers must be integers from 1 to 5'
+  }
+  if (measurement.stage === 'T0' && typeof measurement.previousPractice !== 'boolean') {
+    return 'previousPractice required for T0'
+  }
+  return null
 }
 
 function loadAccounts() {
@@ -377,6 +411,56 @@ module.exports.handler = async function (event) {
         Item: { id: teamCode, data, updatedAt },
       }))
       return respond(200, { ok: true, updatedAt })
+    }
+
+    // ── POST ?action=submitMeasurement  (anonymous repeated measurement) ───
+    if (action === 'submitMeasurement' && event.httpMethod === 'POST') {
+      const session = requireRole(event, 'student')
+      if (!session) return respond(401, { error: 'student session required' })
+      const { measurement } = body
+      const validationError = validateResearchMeasurement(measurement)
+      if (validationError) return respond(400, { error: validationError })
+
+      const normalizedCode = measurement.participantCode.trim().toUpperCase()
+      const participantId = crypto
+        .createHmac('sha256', process.env.SESSION_SECRET)
+        .update(`${session.teamCode}:${normalizedCode}`)
+        .digest('hex')
+        .slice(0, 16)
+      const createdAt = new Date().toISOString()
+      const record = {
+        id: `${session.teamCode}:${participantId}:${measurement.stage}`,
+        teamCode: session.teamCode,
+        participantId,
+        stage: measurement.stage,
+        previousPractice: measurement.stage === 'T0' ? measurement.previousPractice : null,
+        consentConfirmed: true,
+        instrumentVersion: RESEARCH_INSTRUMENT_VERSION,
+        answers: Object.fromEntries(RESEARCH_FIELDS.map((field) => [field, measurement.answers[field]])),
+        createdAt,
+      }
+
+      await ddb.send(new PutCommand({
+        TableName: RESEARCH_TABLE,
+        Item: { id: record.id, data: JSON.stringify(record), createdAt },
+      }))
+      return respond(200, { ok: true, participantId, stage: record.stage, savedAt: createdAt })
+    }
+
+    // ── GET ?action=getMeasurements  (curator research export) ─────────────
+    if (action === 'getMeasurements' && event.httpMethod === 'GET') {
+      if (!requireRole(event, 'curator')) return respond(401, { error: 'curator session required' })
+      const result = await ddb.send(new ScanCommand({ TableName: RESEARCH_TABLE }))
+      const measurements = (result.Items || [])
+        .map((item) => {
+          try { return JSON.parse(item.data) }
+          catch (_) {
+            console.warn('[kvant-api] Invalid research measurement', item.id)
+            return null
+          }
+        })
+        .filter(Boolean)
+      return respond(200, { measurements })
     }
 
     // ── POST ?action=updateCatalog  (curator creates / edits catalog entry) ─

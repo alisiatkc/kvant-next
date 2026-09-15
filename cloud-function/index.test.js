@@ -285,3 +285,72 @@ test('student cannot overwrite another team project id', async () => {
   assert.equal(calls.length, 1)
   assert.ok(calls[0] instanceof GetCommand)
 })
+
+test('research measurement stores a pseudonymous repeated response', async () => {
+  const response = await handler(event('submitMeasurement', {
+    measurement: {
+      participantCode: 'ST-014',
+      stage: 'T0',
+      previousPractice: true,
+      consentConfirmed: true,
+      answers: {
+        processClarity: 4,
+        selfOrganization: 3,
+        teamwork: 5,
+        communication: 4,
+        materialsAccess: 3,
+        usefulness: 4,
+        usability: 5,
+        projectResult: 4,
+      },
+    },
+  }, 'POST', teamToken))
+  const body = JSON.parse(response.body)
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(calls.length, 1)
+  assert.ok(calls[0] instanceof PutCommand)
+  assert.equal(calls[0].input.TableName, 'research_measurements')
+  const stored = JSON.parse(calls[0].input.Item.data)
+  assert.equal(stored.teamCode, 'kvant-01')
+  assert.equal(stored.stage, 'T0')
+  assert.equal(stored.previousPractice, true)
+  assert.equal(stored.consentConfirmed, true)
+  assert.equal(stored.instrumentVersion, '1.0')
+  assert.equal(stored.participantCode, undefined)
+  assert.equal(stored.participantId, body.participantId)
+  assert.match(stored.participantId, /^[a-f0-9]{16}$/)
+})
+
+test('research measurement requires complete ratings and consent', async () => {
+  const response = await handler(event('submitMeasurement', {
+    measurement: {
+      participantCode: 'ST-014', stage: 'T1', consentConfirmed: false, answers: {},
+    },
+  }, 'POST', teamToken))
+
+  assert.equal(response.statusCode, 400)
+  assert.equal(calls.length, 0)
+})
+
+test('curator can retrieve research measurements', async () => {
+  const record = {
+    id: 'kvant-01:abc123:T1', teamCode: 'kvant-01', participantId: 'abc123',
+    stage: 'T1', previousPractice: null, answers: { processClarity: 4 }, createdAt: '2026-09-15T10:00:00.000Z',
+  }
+  sendResult = { Items: [{ id: record.id, data: JSON.stringify(record) }] }
+
+  const response = await handler(event('getMeasurements', undefined, 'GET', curatorToken))
+  const body = JSON.parse(response.body)
+
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(body.measurements, [record])
+  assert.equal(calls[0].input.TableName, 'research_measurements')
+})
+
+test('student cannot retrieve the research dataset', async () => {
+  const response = await handler(event('getMeasurements', undefined, 'GET', teamToken))
+
+  assert.equal(response.statusCode, 401)
+  assert.equal(calls.length, 0)
+})
