@@ -19,8 +19,9 @@ import {
   getApprovedCatalog,
   updateCatalogEntry,
   deleteCatalogEntry,
+  getCurrentUser,
+  clearSession,
 } from '@/lib/storage'
-import { CURATOR_ACCOUNTS } from '@/data/accounts'
 
 function detectSubject(text: string): string {
   const t = text.toLowerCase()
@@ -106,13 +107,10 @@ export default function CuratorPage() {
   useEffect(() => {
     ;(async () => {
       try {
-        const loggedIn  = localStorage.getItem('curatorLoggedIn') === 'true'
-        const loginName = localStorage.getItem('curatorLoginName') || ''
-        if (!loggedIn || !loginName) { router.push('/cabinet'); return }
-        const account = CURATOR_ACCOUNTS.find((c) => c.login === loginName)
-        if (!account) { router.push('/cabinet'); return }
-        setCuratorLogin(loginName)
-        setCuratorName(account.name)
+        const account = await getCurrentUser()
+        if (!account || account.role !== 'curator') { router.push('/cabinet'); return }
+        setCuratorLogin(account.login)
+        setCuratorName(account.name || account.login)
         setAuthorized(true)
         // Fetch ALL projects (no filter — curators can see everything)
         const subs = await getSubmittedProjects()
@@ -129,9 +127,7 @@ export default function CuratorPage() {
 
   const logout = () => {
     try {
-      localStorage.removeItem('curatorLoggedIn')
-      localStorage.removeItem('curatorId')
-      localStorage.removeItem('curatorLoginName')
+      clearSession()
     } catch {}
     router.push('/cabinet')
   }

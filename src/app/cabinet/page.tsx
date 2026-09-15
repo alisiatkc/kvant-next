@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import {
   User, UserPlus, Paperclip, Plus, Edit2, Trash2,
   Circle, Clock, CheckCircle2, Upload, File, FileText,
-  Cpu, ArrowLeft, CheckCircle, XCircle, X, LogOut,
+  Cpu, ArrowLeft, ArrowRight, CheckCircle, XCircle, X, LogOut,
   LayoutDashboard, ClipboardList, FolderOpen, MessageSquare, BookOpen,
   Send, Calendar, Lightbulb, Hammer, School, BarChart3, Bell, AlertTriangle,
   KeyRound, RefreshCw, Bot, Eye, AlertOctagon, Video,
@@ -21,8 +21,10 @@ import {
   getSubmittedProjects,
   getTeamWorkspace,
   saveTeamWorkspace,
+  loginUser,
+  getCurrentUser,
+  clearSession,
 } from '@/lib/storage'
-import { TEAM_ACCOUNTS, CURATOR_ACCOUNTS } from '@/data/accounts'
 
 type Task = {
   id: string; title: string; desc: string
@@ -74,7 +76,7 @@ const STATUS_CFG = {
   rejected:           { label: 'Отклонено',                bg: 'bg-[#ffebee]', color: 'text-[#c62828]', Icon: XCircle },
 }
 
-const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }>; onlyApproved?: boolean }[] = [
+const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'overview',    label: 'Обзор',           Icon: LayoutDashboard },
   { id: 'passport',    label: 'Паспорт проекта', Icon: ClipboardList },
   { id: 'tasks',       label: 'Трекер задач',    Icon: CheckCircle2 },
@@ -82,7 +84,7 @@ const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: str
   { id: 'files',       label: 'Рабочие файлы',   Icon: FolderOpen },
   { id: 'ai',          label: 'ИИ-ассистент',    Icon: Bot },
   { id: 'notes',       label: 'Заметки',         Icon: BookOpen },
-  { id: 'approbation', label: 'Апробация',       Icon: School, onlyApproved: true },
+  { id: 'approbation', label: 'Апробация',       Icon: School },
   { id: 'workshops',   label: 'Мастер-классы',  Icon: Video },
 ]
 
@@ -255,6 +257,7 @@ export default function CabinetPage() {
     setFiles(workspace.files || [])
     setSprints(workspace.sprints || [])
     setNotes(workspace.notes || '')
+    setApprobationHistory(workspace.approbationHistory || [])
   }
 
   const loadTeamData = async (code: string) => {
@@ -264,6 +267,9 @@ export default function CabinetPage() {
     const savedSprints = localStorage.getItem(teamKey('cabinet_sprints', code))
     const savedCaptain = localStorage.getItem(teamKey('cabinet_captainName', code)) || ''
     const savedAuthors = localStorage.getItem(teamKey('cabinet_authors', code))
+    const savedProjectId = localStorage.getItem('currentProjectId') || ''
+    const savedApprobation = localStorage.getItem(teamKey('cabinet_approbationHistory', code))
+      || (savedProjectId ? localStorage.getItem(`approbationHistory_${savedProjectId}`) : null)
     const localWorkspace: TeamWorkspace = {
       teamName: localStorage.getItem('cabinet_teamName') || '',
       captainName: savedCaptain,
@@ -279,6 +285,7 @@ export default function CabinetPage() {
       files: savedFiles ? JSON.parse(savedFiles) : [],
       sprints: savedSprints ? JSON.parse(savedSprints) : [],
       notes: localStorage.getItem(teamKey('cabinet_notes', code)) || '',
+      approbationHistory: savedApprobation ? JSON.parse(savedApprobation) : [],
     }
     applyWorkspace(localWorkspace)
 
@@ -312,16 +319,16 @@ export default function CabinetPage() {
   useEffect(() => {
     ;(async () => {
       try {
-        const savedCode  = localStorage.getItem('cabinet_teamCode')
+        const session = await getCurrentUser()
+        if (!session || session.role !== 'student' || !session.teamCode) return
+        const savedCode  = session.teamCode
         const savedTeam  = localStorage.getItem('cabinet_teamName') || ''
-        const savedTrack = localStorage.getItem('cabinet_track') as 'А1' | 'А2' | 'А3' | null
+        const savedTrack = session.track || localStorage.getItem('cabinet_track') as 'А1' | 'А2' | 'А3' | null
         if (savedCode) {
-          const account = TEAM_ACCOUNTS.find((a) => a.code === savedCode)
-          if (!account) return
           setTeamCode(savedCode)
           if (savedTeam) setTeamName(savedTeam)
           if (savedTrack) setTrack(savedTrack)
-          setCuratorLogin(account.curatorLogin)
+          setCuratorLogin(session.curatorLogin || '')
           await loadTeamData(savedCode)
           setLoggedIn(true)
         }
@@ -336,8 +343,6 @@ export default function CabinetPage() {
           setPublished(true)
           setProjectStatus(mine?.status || 'feedback_requested')
           if (mine?.curatorFeedback) setCuratorFeedback(mine.curatorFeedback)
-          const hist = JSON.parse(localStorage.getItem(`approbationHistory_${pid}`) || '[]')
-          setApprobationHistory(hist)
         }
       } catch {}
     })()
@@ -383,6 +388,7 @@ export default function CabinetPage() {
       files,
       sprints,
       notes,
+      approbationHistory,
     }
 
     try {
@@ -397,6 +403,7 @@ export default function CabinetPage() {
       localStorage.setItem(teamKey('cabinet_projectDesc', teamCode), projectDesc)
       localStorage.setItem(teamKey('cabinet_productionFile', teamCode), productionFile)
       localStorage.setItem(teamKey('cabinet_notes', teamCode), notes)
+      localStorage.setItem(teamKey('cabinet_approbationHistory', teamCode), JSON.stringify(approbationHistory))
     } catch {}
 
     setWorkspaceSyncState('saving')
@@ -412,7 +419,7 @@ export default function CabinetPage() {
   }, [
     loggedIn, teamCode, teamName, captainName, track, authors,
     practiceStart, practiceEnd, projectName, projectBlock, projectDesc,
-    productionFile, tasks, files, sprints, notes,
+    productionFile, tasks, files, sprints, notes, approbationHistory,
   ])
 
   useEffect(() => { aiEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [aiMessages])
@@ -425,38 +432,36 @@ export default function CabinetPage() {
         setLoginError('Введите код команды и пароль')
         return
       }
-      const account = TEAM_ACCOUNTS.find(
-        (a) => a.code.toLowerCase() === teamCode.trim().toLowerCase() && a.password === teamPassword.trim(),
-      )
-      if (!account) {
-        setLoginError('Неверный код или пароль. Уточните у куратора.')
+      let account
+      try {
+        account = await loginUser('student', teamCode.trim(), teamPassword)
+      } catch (error) {
+        setLoginError(error instanceof Error ? error.message : 'Не удалось войти. Попробуйте ещё раз.')
         return
       }
+      if (!account.teamCode || !account.track) { setLoginError('Сервер вернул неполные данные команды'); return }
       const id = localStorage.getItem('currentProjectId') || Date.now().toString()
       projectId.current = id
-      const code = account.code
+      const code = account.teamCode
       try {
         localStorage.setItem('cabinet_teamCode',    code)
         localStorage.setItem('cabinet_track',       account.track)
-        localStorage.setItem('cabinet_curatorLogin',account.curatorLogin)
+        localStorage.setItem('cabinet_curatorLogin',account.curatorLogin || '')
         localStorage.setItem('currentProjectId',    id)
       } catch {}
       const savedTeamName = localStorage.getItem('cabinet_teamName') || ''
       if (savedTeamName) setTeamName(savedTeamName)
       setTrack(account.track)
-      setCuratorLogin(account.curatorLogin)
+      setCuratorLogin(account.curatorLogin || '')
       await loadTeamData(code)
       setLoggedIn(true)
     } else {
-      const curator = CURATOR_ACCOUNTS.find(
-        (c) => c.login === curatorLogin.trim() && c.password === curatorPassword,
-      )
-      if (!curator) { setLoginError('Неверный логин или пароль'); return }
       try {
-        localStorage.setItem('curatorLoggedIn',  'true')
-        localStorage.setItem('curatorId',        curator.id)
-        localStorage.setItem('curatorLoginName', curator.login)
-      } catch {}
+        await loginUser('curator', curatorLogin.trim(), curatorPassword)
+      } catch (error) {
+        setLoginError(error instanceof Error ? error.message : 'Не удалось войти. Попробуйте ещё раз.')
+        return
+      }
       router.push('/curator')
     }
   }
@@ -489,6 +494,7 @@ export default function CabinetPage() {
 
   const handleLogout = () => {
     try {
+      clearSession()
       localStorage.removeItem('cabinet_teamCode')
       localStorage.removeItem('cabinet_teamName')
       localStorage.removeItem('cabinet_track')
@@ -521,6 +527,7 @@ export default function CabinetPage() {
 
   const buildSubmission = (id: string, status: SubmittedProject['status']): SubmittedProject => ({
     id,
+    teamCode,
     projectName:    projectName  || 'Без названия',
     projectBlock:   projectBlock || '',
     projectDesc:    projectDesc  || '',
@@ -565,11 +572,14 @@ export default function CabinetPage() {
   }
 
   const saveApprobation = () => {
-    if (!approbationForm.school.trim()) { alert('Укажите название школы'); return }
+    if (!approbationForm.school.trim()) { alert('Укажите площадку и участников'); return }
     const record: ApprobationRecord = { id: Date.now(), ...approbationForm }
     const newHist = [...approbationHistory, record]
     setApprobationHistory(newHist)
-    try { localStorage.setItem(`approbationHistory_${projectId.current}`, JSON.stringify(newHist)) } catch {}
+    try {
+      localStorage.setItem(`approbationHistory_${projectId.current}`, JSON.stringify(newHist))
+      localStorage.setItem(teamKey('cabinet_approbationHistory', teamCode), JSON.stringify(newHist))
+    } catch {}
     setApprobationForm({ school: '', date: '', engagement: '', whatWorked: '', whatNeedsWork: '', recommendations: '' })
     setApprobationSaved(true)
     setTimeout(() => setApprobationSaved(false), 3000)
@@ -673,23 +683,37 @@ export default function CabinetPage() {
   // ── derived ───────────────────────────────────────────────────────────────
   const doneTasks   = tasks.filter((t) => t.status === 'done').length
   const canFeedback = !published || projectStatus === 'rejected'
-  const canPublish  = projectStatus !== 'review' && projectStatus !== 'approved'
+  const hasApprobation = approbationHistory.length > 0
+  const canPublish  = hasApprobation && projectStatus !== 'review' && projectStatus !== 'approved'
   const sc = STATUS_CFG[projectStatus]
 
   let currentStage = 0
   const passportFilled = !!(projectName.trim() && projectDesc.trim())
   if (passportFilled)                  currentStage = 1
-  if (published)                       currentStage = 2
-  if (approbationHistory.length > 0)   currentStage = 3
+  if (hasApprobation)                  currentStage = 2
+  if (published && projectStatus === 'approved') currentStage = 3
 
   const STAGES = [
-    { Icon: Lightbulb, label: 'Идея',      hint: 'Проект начат' },
-    { Icon: Hammer,    label: 'Разработка', hint: 'Паспорт заполнен' },
-    { Icon: School,    label: 'Апробация',  hint: 'Результат проверен' },
-    { Icon: BarChart3, label: 'Рефлексия',  hint: 'Апробация пройдена' },
+    { Icon: Lightbulb, label: 'Замысел',     hint: 'Опишите проект' },
+    { Icon: Hammer,    label: 'Разработка',  hint: 'Создайте результат' },
+    { Icon: School,    label: 'Апробация',   hint: 'Проверьте решение' },
+    { Icon: BarChart3, label: 'КОП',         hint: 'Подготовьте к применению' },
   ]
 
-  const visibleTabs = NAV.filter((t) => !t.onlyApproved || (published && projectStatus === 'approved'))
+  const nextStep: { title: string; text: string; label: string; tab?: Tab; publish?: boolean; href?: string } =
+    !passportFilled
+      ? { title: 'Сформулируйте замысел', text: 'Заполните название и описание проекта — это откроет понятный маршрут разработки.', label: 'Заполнить паспорт', tab: 'passport' }
+      : doneTasks === 0
+        ? { title: 'Получите первый результат', text: tasks.length ? 'Завершите ближайшую задачу и зафиксируйте результат.' : 'Разделите разработку на небольшие задачи и назначьте ответственных.', label: tasks.length ? 'Открыть задачи' : 'Создать задачу', tab: 'tasks' }
+        : !hasApprobation
+          ? { title: 'Подготовьте апробацию', text: 'Опишите площадку, участников, критерии и результаты проверки решения.', label: 'Перейти к апробации', tab: 'approbation' }
+          : projectStatus === 'approved'
+            ? { title: 'КОП готов к применению', text: 'Проект опубликован. Продолжайте фиксировать повторные применения и обратную связь.', label: 'Открыть каталог', href: '/catalog' }
+            : projectStatus === 'review'
+              ? { title: 'Дождитесь решения куратора', text: 'КОП находится на рассмотрении. Пока можно дополнить материалы и результаты апробации.', label: 'Проверить апробацию', tab: 'approbation' }
+              : { title: 'Упакуйте результат в КОП', text: 'Апробация зафиксирована — подготовьте воспроизводимые материалы и отправьте их куратору.', label: 'Подготовить КОП', publish: true }
+
+  const visibleTabs = NAV
 
   // ══════════════════════════════════════════════════════════════════════════
   // LOGIN SCREEN
@@ -955,6 +979,28 @@ export default function CabinetPage() {
                     </div>
                   </div>
 
+                  {/* Recommended next step */}
+                  <div className="rounded-[2rem] bg-[#eef3ff] border border-[#2b3b6b20] px-7 py-6 flex items-center justify-between gap-5 flex-wrap">
+                    <div className="max-w-[620px]">
+                      <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Следующий шаг</span>
+                      <h4 className="text-lg font-semibold mt-1 mb-1">{nextStep.title}</h4>
+                      <p className="text-sm text-kv-text leading-relaxed">{nextStep.text}</p>
+                    </div>
+                    {nextStep.href ? (
+                      <Link href={nextStep.href} className="btn-blue no-underline flex-shrink-0">
+                        {nextStep.label} <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    ) : (
+                      <button className="btn-blue flex-shrink-0" onClick={() => {
+                        if (nextStep.publish) setShowPublishConfirm(true)
+                        else if (nextStep.tab === 'tasks' && tasks.length === 0) { setActiveTab('tasks'); openTask() }
+                        else if (nextStep.tab) setActiveTab(nextStep.tab)
+                      }}>
+                        {nextStep.label} <ArrowRight className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
                   {/* Practice dates */}
                   {(practiceStart || practiceEnd) && (
                     <div className="bg-white rounded-[2rem] px-7 py-5 flex items-center gap-4 border border-kv-border">
@@ -1014,6 +1060,11 @@ export default function CabinetPage() {
                       {canPublish && (
                         <button className="flex items-center gap-2 px-5 py-3 text-sm font-medium rounded-full bg-[#e8f5e9] text-[#2e7d32] border-none cursor-pointer hover:bg-[#c8e6c9] transition-colors" onClick={() => setShowPublishConfirm(true)}>
                           <CheckCircle2 className="w-4 h-4" /> Подготовить КОП к публикации
+                        </button>
+                      )}
+                      {!hasApprobation && passportFilled && (
+                        <button className="flex items-center gap-2 px-5 py-3 text-sm font-medium rounded-full bg-[#fff7ed] text-[#c2410c] border-none cursor-pointer hover:bg-[#ffedd5] transition-colors" onClick={() => setActiveTab('approbation')}>
+                          <School className="w-4 h-4" /> Сначала апробация
                         </button>
                       )}
                     </div>
@@ -1303,10 +1354,11 @@ export default function CabinetPage() {
               )}
 
               {/* ════ APPROBATION ════ */}
-              {activeTab === 'approbation' && published && (
+              {activeTab === 'approbation' && (
                 <div className="space-y-5">
                   <div className="bg-white rounded-[2.5rem] p-8">
-                    <h3 className="text-[1.3rem] font-semibold mb-5">Добавить результат апробации</h3>
+                    <h3 className="text-[1.3rem] font-semibold mb-1">Добавить результат апробации</h3>
+                    <p className="text-kv-muted text-sm mb-5">Сначала проверьте созданное решение, затем используйте результаты для доработки и упаковки в КОП.</p>
                     <div className="mb-5">
                       <button className="btn-ai" onClick={() => {
                         const subject = prompt('Укажите предмет (математика, биология, физика, информатика, экономика, педагогика):', 'математика')?.toLowerCase() || 'математика'
@@ -1328,15 +1380,15 @@ export default function CabinetPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-5 max-[700px]:grid-cols-1">
                       <div>
-                        <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Учреждение и класс</label>
-                        <input className="input-kv" placeholder="ГБОУ Школа №123, 8Б" value={approbationForm.school} onChange={(e) => setApprobationForm((f) => ({ ...f, school: e.target.value }))} />
+                        <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Площадка и участники</label>
+                        <input className="input-kv" placeholder="Группа студентов, 12 человек" value={approbationForm.school} onChange={(e) => setApprobationForm((f) => ({ ...f, school: e.target.value }))} />
                       </div>
                       <div>
                         <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Дата проведения</label>
                         <input className="input-kv" type="date" value={approbationForm.date} onChange={(e) => setApprobationForm((f) => ({ ...f, date: e.target.value }))} />
                       </div>
                       <div>
-                        <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Вовлечённость учеников (1–5)</label>
+                        <label className="block mb-2 font-medium text-[#3f4a6b] text-sm">Вовлечённость участников (1–5)</label>
                         <input className="input-kv" type="number" min="1" max="5" value={approbationForm.engagement} onChange={(e) => setApprobationForm((f) => ({ ...f, engagement: e.target.value }))} />
                       </div>
                       {[{ key: 'whatWorked', label: 'Что прошло хорошо?' }, { key: 'whatNeedsWork', label: 'Что требует доработки?' }, { key: 'recommendations', label: 'Рекомендации автору' }].map(({ key, label }) => (
@@ -1350,6 +1402,9 @@ export default function CabinetPage() {
                     <button className="bg-kv-blue text-white border-none rounded-full px-9 py-3.5 text-base font-medium cursor-pointer hover:bg-kv-dark transition-colors mt-6" onClick={saveApprobation}>
                       Сохранить результаты
                     </button>
+                    {!hasApprobation && (
+                      <p className="text-xs text-kv-muted mt-4">После сохранения первой апробации станет доступна подготовка КОП к публикации.</p>
+                    )}
                   </div>
 
                   {approbationHistory.length > 0 && (
@@ -1581,6 +1636,11 @@ export default function CabinetPage() {
                     {canPublish && (
                       <button className="bg-kv-blue text-white border-none rounded-full px-5 py-2.5 text-sm cursor-pointer hover:bg-kv-dark transition-colors flex items-center gap-2" onClick={() => setShowPublishConfirm(true)}>
                         <CheckCircle2 className="w-4 h-4" /> Подготовить КОП к публикации
+                      </button>
+                    )}
+                    {!hasApprobation && passportFilled && (
+                      <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full bg-[#fff7ed] text-[#c2410c] border-none cursor-pointer hover:bg-[#ffedd5] transition-colors" onClick={() => setActiveTab('approbation')}>
+                        <School className="w-4 h-4" /> Сначала апробация
                       </button>
                     )}
                   </div>

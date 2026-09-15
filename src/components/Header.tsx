@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 
 interface HeaderProps {
-  active?: 'home' | 'cabinet' | 'catalog'
+  active?: 'home' | 'cabinet' | 'catalog' | 'guide'
 }
 
 export default function Header({ active }: HeaderProps) {
@@ -46,6 +46,10 @@ export default function Header({ active }: HeaderProps) {
             className={`no-underline text-sm font-medium transition-colors ${active === 'catalog' ? 'text-kv-blue' : 'text-kv-text hover:text-kv-dark'}`}>
             Проекты
           </Link>
+          <Link href="/guide"
+            className={`no-underline text-sm font-medium transition-colors ${active === 'guide' ? 'text-kv-blue' : 'text-kv-text hover:text-kv-dark'}`}>
+            Как работать
+          </Link>
           <Link href="/cabinet"
             className={`no-underline text-sm font-medium px-5 py-2 rounded-full transition-all ${
               active === 'cabinet'
@@ -76,6 +80,10 @@ export default function Header({ active }: HeaderProps) {
           <Link href="/catalog" onClick={() => setOpen(false)}
             className={`flex items-center px-4 py-3 rounded-2xl text-sm font-medium no-underline transition-colors ${active === 'catalog' ? 'bg-kv-light text-kv-blue' : 'text-kv-text hover:bg-kv-light'}`}>
             Проекты
+          </Link>
+          <Link href="/guide" onClick={() => setOpen(false)}
+            className={`flex items-center px-4 py-3 rounded-2xl text-sm font-medium no-underline transition-colors ${active === 'guide' ? 'bg-kv-light text-kv-blue' : 'text-kv-text hover:bg-kv-light'}`}>
+            Как работать
           </Link>
           <Link href="/cabinet" onClick={() => setOpen(false)}
             className="flex items-center justify-center mt-2 py-3 rounded-full bg-kv-blue text-white text-sm font-medium no-underline">
