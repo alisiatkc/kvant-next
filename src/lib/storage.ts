@@ -1,5 +1,6 @@
 export type SubmittedProject = {
   id: string
+  teamCode: string
   projectName: string
   projectBlock: string
   projectDesc: string
@@ -19,6 +20,16 @@ export type SubmittedProject = {
     notes: string
     sprints?: Array<{ id: string; name: string; goal: string; startDate: string; endDate: string; status: string; retroNotes: string; createdAt: string }>
   }
+}
+
+export type AuthUser = {
+  role: 'student' | 'curator'
+  login: string
+  teamCode?: string
+  track?: 'А1' | 'А2' | 'А3'
+  curatorLogin?: string
+  name?: string
+  id?: string
 }
 
 export type CatalogEntry = {
@@ -69,9 +80,36 @@ export type TeamWorkspace = {
     createdAt: string
   }>
   notes: string
+  approbationHistory: Array<{
+    id: number
+    school: string
+    date: string
+    engagement: string
+    whatWorked: string
+    whatNeedsWork: string
+    recommendations: string
+  }>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+const SESSION_TOKEN_KEY = 'kvant_session_token'
+const SESSION_USER_KEY = 'kvant_session_user'
+
+const DEMO_USERS: Array<AuthUser & { password: string }> = [
+  { role: 'student', login: 'demo-team', password: 'demo', teamCode: 'demo-team', track: 'А1', curatorLogin: 'demo-curator' },
+  { role: 'curator', login: 'demo-curator', password: 'demo', name: 'Демонстрационный куратор', id: 'demo-curator' },
+]
+
+function saveSession(token: string, user: AuthUser) {
+  localStorage.setItem(SESSION_TOKEN_KEY, token)
+  localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user))
+}
+
+export function clearSession() {
+  localStorage.removeItem(SESSION_TOKEN_KEY)
+  localStorage.removeItem(SESSION_USER_KEY)
+}
 
 async function apiCall(
   action: string,
@@ -80,13 +118,66 @@ async function apiCall(
   query?: Record<string, string>,
 ): Promise<Record<string, unknown>> {
   const params = new URLSearchParams({ action, ...query })
+  const token = typeof window !== 'undefined' ? localStorage.getItem(SESSION_TOKEN_KEY) : null
   const res = await fetch(`${API_URL}?${params.toString()}`, {
     method,
-    headers: method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
+    headers: {
+      ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   })
-  if (!res.ok) throw new Error(`API ${action} failed: ${res.status}`)
-  return res.json()
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  if (!res.ok) {
+    if (res.status === 401) clearSession()
+    throw new Error(typeof data.error === 'string' ? data.error : `API ${action} failed: ${res.status}`)
+  }
+  return data
+}
+
+export async function loginUser(role: AuthUser['role'], login: string, password: string): Promise<AuthUser> {
+  if (API_URL) {
+    let data
+    try {
+      data = await apiCall('login', 'POST', { role, login, password })
+    } catch (error) {
+      if (error instanceof Error && error.message === 'invalid credentials') {
+        throw new Error('Неверный логин или пароль')
+      }
+      if (error instanceof Error && error.message === 'authentication is not configured') {
+        throw new Error('Сервер авторизации ещё не настроен')
+      }
+      throw error
+    }
+    if (typeof data.token !== 'string' || !data.user) throw new Error('Некорректный ответ сервера')
+    const user = data.user as AuthUser
+    saveSession(data.token, user)
+    return user
+  }
+  if (!DEMO_MODE) throw new Error('Сервер авторизации ещё не подключён')
+  const user = DEMO_USERS.find((item) => item.role === role && item.login === login && item.password === password)
+  if (!user) throw new Error('Неверный логин или пароль')
+  const { password: _password, ...identity } = user
+  saveSession('demo-session', identity)
+  return identity
+}
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const saved = localStorage.getItem(SESSION_USER_KEY)
+  if (!saved) return null
+  if (!API_URL) {
+    if (!DEMO_MODE) return null
+    try { return JSON.parse(saved) as AuthUser } catch { clearSession(); return null }
+  }
+  try {
+    const data = await apiCall('me', 'GET')
+    const user = data.user as AuthUser
+    localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user))
+    return user
+  } catch {
+    clearSession()
+    return null
+  }
 }
 
 function workspaceStorageKey(teamCode: string): string {

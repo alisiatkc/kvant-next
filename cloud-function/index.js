@@ -8,7 +8,10 @@
 //   YDB_ACCESS_KEY_ID      — Static access key ID
 //   YDB_SECRET_ACCESS_KEY  — Static access key secret
 //   YDB_REGION     — Default: ru-central1
+//   SESSION_SECRET — Random secret of at least 32 characters for signing sessions
+//   AUTH_ACCOUNTS_JSON — JSON array of server-side accounts with scrypt hashes
 
+const crypto = require('node:crypto')
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
 const {
   DynamoDBDocumentClient,
@@ -32,14 +35,16 @@ const ddb = DynamoDBDocumentClient.from(client, {
 })
 
 const CORS = {
-  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Origin':  process.env.ALLOWED_ORIGIN || '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 }
 
 const CATALOG_TABLE = 'approved_catalog'
 const WORKSPACE_TABLE = 'team_workspaces'
 const MAX_WORKSPACE_BYTES = 350000
+const MAX_PROJECT_BYTES = 200000
+const SESSION_TTL_SECONDS = 12 * 60 * 60
 const CATALOG_SUBJECTS = new Set([
   'math',
   'bio',
@@ -89,6 +94,88 @@ function validateTeamCode(teamCode) {
   return typeof teamCode === 'string' && /^[a-zA-Z0-9_-]{3,64}$/.test(teamCode)
 }
 
+function loadAccounts() {
+  try {
+    const accounts = JSON.parse(process.env.AUTH_ACCOUNTS_JSON || '[]')
+    return Array.isArray(accounts) ? accounts : []
+  } catch (_) {
+    console.error('[kvant-api] AUTH_ACCOUNTS_JSON is invalid')
+    return []
+  }
+}
+
+function verifyPassword(password, encodedHash) {
+  if (typeof password !== 'string' || typeof encodedHash !== 'string') return false
+  const [algorithm, salt, expectedHex] = encodedHash.split('$')
+  if (algorithm !== 'scrypt' || !salt || !/^[a-f0-9]{64}$/i.test(expectedHex || '')) return false
+  const actual = crypto.scryptSync(password, salt, 32)
+  const expected = Buffer.from(expectedHex, 'hex')
+  return expected.length === actual.length && crypto.timingSafeEqual(actual, expected)
+}
+
+function encodePart(value) {
+  return Buffer.from(JSON.stringify(value)).toString('base64url')
+}
+
+function signSession(account) {
+  const secret = process.env.SESSION_SECRET || ''
+  if (secret.length < 32) throw new Error('authentication is not configured')
+  const payload = {
+    sub: account.login,
+    role: account.role,
+    teamCode: account.role === 'student' ? account.login : undefined,
+    track: account.track,
+    curatorLogin: account.curatorLogin,
+    name: account.name,
+    id: account.id,
+    exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+  }
+  const encoded = encodePart(payload)
+  const signature = crypto.createHmac('sha256', secret).update(encoded).digest('base64url')
+  return `${encoded}.${signature}`
+}
+
+function readSession(event) {
+  const secret = process.env.SESSION_SECRET || ''
+  if (secret.length < 32) return null
+  const headers = event.headers || {}
+  const authorization = headers.Authorization || headers.authorization || ''
+  const match = /^Bearer\s+(.+)$/i.exec(authorization)
+  if (!match) return null
+  const [encoded, signature] = match[1].split('.')
+  if (!encoded || !signature) return null
+  const expected = crypto.createHmac('sha256', secret).update(encoded).digest()
+  let actual
+  try { actual = Buffer.from(signature, 'base64url') } catch (_) { return null }
+  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) return null
+  try {
+    const payload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'))
+    if (!payload.exp || payload.exp <= Math.floor(Date.now() / 1000)) return null
+    if (!['student', 'curator'].includes(payload.role) || !isNonEmptyString(payload.sub)) return null
+    return payload
+  } catch (_) {
+    return null
+  }
+}
+
+function publicIdentity(session) {
+  return {
+    role: session.role,
+    login: session.sub,
+    ...(session.teamCode ? { teamCode: session.teamCode } : {}),
+    ...(session.track ? { track: session.track } : {}),
+    ...(session.curatorLogin ? { curatorLogin: session.curatorLogin } : {}),
+    ...(session.name ? { name: session.name } : {}),
+    ...(session.id ? { id: session.id } : {}),
+  }
+}
+
+function requireRole(event, role) {
+  const session = readSession(event)
+  if (!session || session.role !== role) return null
+  return session
+}
+
 module.exports.handler = async function (event) {
   // CORS preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -104,20 +191,73 @@ module.exports.handler = async function (event) {
   } catch (_) {}
 
   try {
+    // ── POST ?action=login  (server verifies credentials) ───────────────────
+    if (action === 'login' && event.httpMethod === 'POST') {
+      const { role, login, password } = body
+      if (!['student', 'curator'].includes(role) || !isNonEmptyString(login) || !isNonEmptyString(password)) {
+        return respond(400, { error: 'role, login and password required' })
+      }
+      const account = loadAccounts().find((item) => item.role === role && item.login.toLowerCase() === login.trim().toLowerCase())
+      if (!account || !verifyPassword(password, account.passwordHash)) {
+        return respond(401, { error: 'invalid credentials' })
+      }
+      const token = signSession(account)
+      const session = readSession({ headers: { Authorization: `Bearer ${token}` } })
+      return respond(200, { token, user: publicIdentity(session) })
+    }
+
+    // ── GET ?action=me  (checks an existing session) ───────────────────────
+    if (action === 'me' && event.httpMethod === 'GET') {
+      const session = readSession(event)
+      if (!session) return respond(401, { error: 'unauthorized' })
+      return respond(200, { user: publicIdentity(session) })
+    }
+
     // ── POST ?action=submit  (student publishes project) ──────────────────────
     if (action === 'submit' && event.httpMethod === 'POST') {
+      const session = requireRole(event, 'student')
+      if (!session) return respond(401, { error: 'student session required' })
       const { project } = body
       if (!project || !project.id) return respond(400, { error: 'project.id required' })
+      if (project.teamCode !== session.teamCode) return respond(403, { error: 'project belongs to another team' })
+      if (!['feedback_requested', 'review'].includes(project.status)) {
+        return respond(400, { error: 'student project status is invalid' })
+      }
+
+      const existing = await ddb.send(new GetCommand({
+        TableName: 'submitted_projects',
+        Key: { id: project.id },
+      }))
+      if (existing.Item) {
+        try {
+          const existingProject = JSON.parse(existing.Item.data)
+          if (existingProject.teamCode && existingProject.teamCode !== session.teamCode) {
+            return respond(403, { error: 'project id belongs to another team' })
+          }
+        } catch (_) {
+          return respond(409, { error: 'existing project data is invalid' })
+        }
+      }
+
+      const storedProject = {
+        ...project,
+        teamCode: session.teamCode,
+        curatorLogin: session.curatorLogin || '',
+      }
+      if (Buffer.byteLength(JSON.stringify(storedProject), 'utf8') > MAX_PROJECT_BYTES) {
+        return respond(413, { error: 'project is too large' })
+      }
 
       await ddb.send(new PutCommand({
         TableName: 'submitted_projects',
-        Item: { id: project.id, data: JSON.stringify(project) },
+        Item: { id: project.id, data: JSON.stringify(storedProject) },
       }))
       return respond(200, { ok: true })
     }
 
     // ── GET ?action=getProjects  (curator loads all submissions) ─────────────
     if (action === 'getProjects' && event.httpMethod === 'GET') {
+      if (!requireRole(event, 'curator')) return respond(401, { error: 'curator session required' })
       const result = await ddb.send(new ScanCommand({ TableName: 'submitted_projects' }))
       const projects = (result.Items || []).map((item) => JSON.parse(item.data))
       return respond(200, { projects })
@@ -125,6 +265,7 @@ module.exports.handler = async function (event) {
 
     // ── POST ?action=updateStatus  (curator approves / rejects / leaves feedback) ──
     if (action === 'updateStatus' && event.httpMethod === 'POST') {
+      if (!requireRole(event, 'curator')) return respond(401, { error: 'curator session required' })
       const { id, status, catalogEntry, curatorFeedback } = body
       if (!id || !status) return respond(400, { error: 'id and status required' })
 
@@ -187,10 +328,13 @@ module.exports.handler = async function (event) {
 
     // ── GET ?action=getWorkspace&teamCode=...  (team loads workspace) ───────
     if (action === 'getWorkspace' && event.httpMethod === 'GET') {
+      const session = requireRole(event, 'student')
+      if (!session) return respond(401, { error: 'student session required' })
       const { teamCode } = qs
       if (!validateTeamCode(teamCode)) {
         return respond(400, { error: 'valid teamCode required' })
       }
+      if (teamCode !== session.teamCode) return respond(403, { error: 'workspace belongs to another team' })
 
       const result = await ddb.send(new GetCommand({
         TableName: WORKSPACE_TABLE,
@@ -211,10 +355,13 @@ module.exports.handler = async function (event) {
 
     // ── POST ?action=saveWorkspace  (team saves current workspace) ─────────
     if (action === 'saveWorkspace' && event.httpMethod === 'POST') {
+      const session = requireRole(event, 'student')
+      if (!session) return respond(401, { error: 'student session required' })
       const { teamCode, workspace } = body
       if (!validateTeamCode(teamCode)) {
         return respond(400, { error: 'valid teamCode required' })
       }
+      if (teamCode !== session.teamCode) return respond(403, { error: 'workspace belongs to another team' })
       if (!workspace || typeof workspace !== 'object' || Array.isArray(workspace)) {
         return respond(400, { error: 'workspace required' })
       }
@@ -234,6 +381,7 @@ module.exports.handler = async function (event) {
 
     // ── POST ?action=updateCatalog  (curator creates / edits catalog entry) ─
     if (action === 'updateCatalog' && event.httpMethod === 'POST') {
+      if (!requireRole(event, 'curator')) return respond(401, { error: 'curator session required' })
       const { entry } = body
       const validationError = validateCatalogEntry(entry)
       if (validationError) return respond(400, { error: validationError })
@@ -257,6 +405,7 @@ module.exports.handler = async function (event) {
 
     // ── POST ?action=deleteCatalog  (curator removes catalog entry) ─────────
     if (action === 'deleteCatalog' && event.httpMethod === 'POST') {
+      if (!requireRole(event, 'curator')) return respond(401, { error: 'curator session required' })
       const { id } = body
       if (!Number.isSafeInteger(id) || id <= 0) {
         return respond(400, { error: 'id must be a positive integer' })

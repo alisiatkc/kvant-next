@@ -3,6 +3,22 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 const Module = require('node:module')
+const crypto = require('node:crypto')
+
+const SESSION_SECRET = 'test-session-secret-that-is-longer-than-32-characters'
+const hashPassword = (password, salt) => `scrypt$${salt}$${crypto.scryptSync(password, salt, 32).toString('hex')}`
+
+process.env.SESSION_SECRET = SESSION_SECRET
+process.env.AUTH_ACCOUNTS_JSON = JSON.stringify([
+  {
+    role: 'student', login: 'kvant-01', passwordHash: hashPassword('student-pass', 'team-salt'),
+    track: 'А1', curatorLogin: 'curator',
+  },
+  {
+    role: 'curator', login: 'curator', passwordHash: hashPassword('curator-pass', 'curator-salt'),
+    name: 'Тестовый куратор', id: 'c1',
+  },
+])
 
 const calls = []
 let sendResult = {}
@@ -45,10 +61,24 @@ Module._load = function mockAwsSdk(request, parent, isMain) {
 const { handler } = require('./index')
 Module._load = originalLoad
 
-function event(action, body, method = 'POST') {
+function token(payload) {
+  const encoded = Buffer.from(JSON.stringify({
+    ...payload,
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  })).toString('base64url')
+  const signature = crypto.createHmac('sha256', SESSION_SECRET).update(encoded).digest('base64url')
+  return `${encoded}.${signature}`
+}
+
+const teamToken = token({ sub: 'kvant-01', role: 'student', teamCode: 'kvant-01', track: 'А1' })
+const otherTeamToken = token({ sub: 'kvant-02', role: 'student', teamCode: 'kvant-02', track: 'А2' })
+const curatorToken = token({ sub: 'curator', role: 'curator', name: 'Тестовый куратор', id: 'c1' })
+
+function event(action, body, method = 'POST', authToken) {
   return {
     httpMethod: method,
     queryStringParameters: { action },
+    headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
     body: body === undefined ? undefined : JSON.stringify(body),
   }
 }
@@ -56,6 +86,28 @@ function event(action, body, method = 'POST') {
 test.beforeEach(() => {
   calls.length = 0
   sendResult = {}
+})
+
+test('login verifies a server-side password and returns a signed session', async () => {
+  const response = await handler(event('login', {
+    role: 'student', login: 'kvant-01', password: 'student-pass',
+  }))
+  const body = JSON.parse(response.body)
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(body.user.role, 'student')
+  assert.equal(body.user.teamCode, 'kvant-01')
+  assert.equal(typeof body.token, 'string')
+  assert.equal(body.user.passwordHash, undefined)
+})
+
+test('login rejects an invalid password', async () => {
+  const response = await handler(event('login', {
+    role: 'student', login: 'kvant-01', password: 'wrong-password',
+  }))
+
+  assert.equal(response.statusCode, 401)
+  assert.equal(calls.length, 0)
 })
 
 test('updateCatalog stores a normalized catalog entry', async () => {
@@ -73,7 +125,7 @@ test('updateCatalog stores a normalized catalog entry', async () => {
       contact: '',
       likes: -4,
     },
-  }))
+  }, 'POST', curatorToken))
 
   assert.equal(response.statusCode, 200)
   assert.equal(calls.length, 1)
@@ -90,14 +142,14 @@ test('updateCatalog stores a normalized catalog entry', async () => {
 test('updateCatalog rejects an invalid entry without writing', async () => {
   const response = await handler(event('updateCatalog', {
     entry: { id: 0, title: '', subject: 'unknown', authors: [], files: [], tech: [] },
-  }))
+  }, 'POST', curatorToken))
 
   assert.equal(response.statusCode, 400)
   assert.equal(calls.length, 0)
 })
 
 test('deleteCatalog removes the requested entry', async () => {
-  const response = await handler(event('deleteCatalog', { id: 101 }))
+  const response = await handler(event('deleteCatalog', { id: 101 }, 'POST', curatorToken))
 
   assert.equal(response.statusCode, 200)
   assert.equal(calls.length, 1)
@@ -133,7 +185,7 @@ test('saveWorkspace stores the team workspace', async () => {
   const response = await handler(event('saveWorkspace', {
     teamCode: 'kvant-01',
     workspace,
-  }))
+  }, 'POST', teamToken))
 
   assert.equal(response.statusCode, 200)
   assert.equal(calls.length, 1)
@@ -157,6 +209,7 @@ test('getWorkspace returns the saved workspace', async () => {
   const response = await handler({
     httpMethod: 'GET',
     queryStringParameters: { action: 'getWorkspace', teamCode: 'kvant-01' },
+    headers: { Authorization: `Bearer ${teamToken}` },
   })
   const body = JSON.parse(response.body)
 
@@ -169,8 +222,66 @@ test('workspace actions reject an invalid team code', async () => {
   const response = await handler(event('saveWorkspace', {
     teamCode: '../other-team',
     workspace: {},
-  }))
+  }, 'POST', teamToken))
 
   assert.equal(response.statusCode, 400)
   assert.equal(calls.length, 0)
+})
+
+test('workspace rejects a request without a session', async () => {
+  const response = await handler(event('saveWorkspace', {
+    teamCode: 'kvant-01', workspace: {},
+  }))
+
+  assert.equal(response.statusCode, 401)
+  assert.equal(calls.length, 0)
+})
+
+test('student cannot open another team workspace', async () => {
+  const response = await handler({
+    httpMethod: 'GET',
+    queryStringParameters: { action: 'getWorkspace', teamCode: 'kvant-01' },
+    headers: { Authorization: `Bearer ${otherTeamToken}` },
+  })
+
+  assert.equal(response.statusCode, 403)
+  assert.equal(calls.length, 0)
+})
+
+test('student cannot edit the curator catalog', async () => {
+  const response = await handler(event('deleteCatalog', { id: 101 }, 'POST', teamToken))
+
+  assert.equal(response.statusCode, 401)
+  assert.equal(calls.length, 0)
+})
+
+test('student submission is bound to the authenticated team', async () => {
+  sendResult = (command) => command instanceof GetCommand ? {} : {}
+  const response = await handler(event('submit', {
+    project: {
+      id: 'project-1', teamCode: 'kvant-01', status: 'review',
+      projectName: 'Проект', curatorLogin: 'forged-curator',
+    },
+  }, 'POST', teamToken))
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(calls.length, 2)
+  assert.ok(calls[0] instanceof GetCommand)
+  assert.ok(calls[1] instanceof PutCommand)
+  const stored = JSON.parse(calls[1].input.Item.data)
+  assert.equal(stored.teamCode, 'kvant-01')
+  assert.equal(stored.curatorLogin, '')
+})
+
+test('student cannot overwrite another team project id', async () => {
+  sendResult = (command) => command instanceof GetCommand
+    ? { Item: { id: 'project-1', data: JSON.stringify({ teamCode: 'kvant-02' }) } }
+    : {}
+  const response = await handler(event('submit', {
+    project: { id: 'project-1', teamCode: 'kvant-01', status: 'review' },
+  }, 'POST', teamToken))
+
+  assert.equal(response.statusCode, 403)
+  assert.equal(calls.length, 1)
+  assert.ok(calls[0] instanceof GetCommand)
 })
