@@ -37,7 +37,9 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          # Публичная версия временно работает как безопасный стенд для показа.
+          # Все изменения хранятся только в localStorage текущего браузера.
+          NEXT_PUBLIC_DEMO_MODE: 'true'
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -160,6 +160,8 @@ function teamKey(key: string, team: string) {
   return `${key}_${team.replace(/\s+/g, '_')}`
 }
 
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+
 const WORKSHOP_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap, Box, PenLine, Hexagon, Code, Wrench,
 }
@@ -823,6 +825,34 @@ export default function CabinetPage() {
                 </button>
               ))}
             </div>
+
+            {DEMO_MODE && (
+              <div className="mb-6 rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-4">
+                <p className="text-sm font-semibold text-kv-dark mb-1">Демонстрационный доступ</p>
+                <p className="text-xs leading-relaxed text-kv-muted mb-3">
+                  {userType === 'student'
+                    ? 'Студент: demo-team / demo'
+                    : 'Куратор: demo-curator / demo'}
+                  . Данные сохраняются только в этом браузере.
+                </p>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-kv-blue bg-transparent border-none p-0 cursor-pointer hover:underline"
+                  onClick={() => {
+                    setLoginError('')
+                    if (userType === 'student') {
+                      setTeamCode('demo-team')
+                      setTeamPassword('demo')
+                    } else {
+                      setCuratorLogin('demo-curator')
+                      setCuratorPassword('demo')
+                    }
+                  }}
+                >
+                  Подставить данные для входа
+                </button>
+              </div>
+            )}
 
             {userType === 'student' ? (
               <>
