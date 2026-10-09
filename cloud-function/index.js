@@ -178,7 +178,6 @@ const TEAM_PROFILE_COLORS = new Set(['#2563eb', '#7c3aed', '#0f766e', '#c2410c',
 function publicTeamProfile(profile) {
   if (!profile || typeof profile !== 'object' || Array.isArray(profile)) return undefined
   return {
-    motto: isNonEmptyString(profile.motto) ? profile.motto.trim().slice(0, 80) : '',
     mission: isNonEmptyString(profile.mission) ? profile.mission.trim().slice(0, 240) : '',
     themeColor: TEAM_PROFILE_COLORS.has(profile.themeColor) ? profile.themeColor : '#2563eb',
     emblem: isNonEmptyString(profile.emblem) ? profile.emblem.trim().slice(0, 2) : '◎',
