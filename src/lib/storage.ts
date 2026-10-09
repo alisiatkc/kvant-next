@@ -525,7 +525,7 @@ export async function getCommunityProjects(): Promise<CommunityProject[]> {
   if (!DEMO_MODE) return []
   const submitted: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
   const combined = [...submitted.map(normalizeCommunityProject), ...DEMO_COMMUNITY_PROJECTS]
-  return [...new Map(combined.map((project) => [project.id, project])).values()]
+  return Array.from(new Map(combined.map((project) => [project.id, project])).values())
 }
 
 export async function getPeerReviews(projectId?: string): Promise<PeerReview[]> {
