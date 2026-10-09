@@ -85,7 +85,6 @@ export type CommunityProject = {
 }
 
 export type TeamProfile = {
-  motto: string
   mission: string
   themeColor: string
   emblem: string
@@ -445,7 +444,6 @@ const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
     isArchive: false,
     openToQuestions: true,
     teamProfile: {
-      motto: 'Исследовательская команда',
       mission: 'Сделать учебное исследование воды понятным и воспроизводимым для школьных команд.',
       themeColor: '#2563eb',
       emblem: '◎',
@@ -470,7 +468,6 @@ const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
     isArchive: true,
     openToQuestions: true,
     teamProfile: {
-      motto: 'Команда методических решений',
       mission: 'Помочь учебным группам проводить содержательную и безопасную рефлексию.',
       themeColor: '#7c3aed',
       emblem: '◇',
@@ -531,7 +528,6 @@ function progressOf(project: SubmittedProject): { percent: number; stage: string
 function publicTeamProfile(profile?: TeamProfile): TeamProfile | undefined {
   if (!profile) return undefined
   return {
-    motto: (profile.motto || '').slice(0, 80),
     mission: (profile.mission || '').slice(0, 240),
     themeColor: profile.themeColor || '#2563eb',
     emblem: (profile.emblem || '◎').slice(0, 2),

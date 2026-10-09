@@ -86,18 +86,6 @@ export default function TeamProfileEditor({ teamName, authors, value, onChange }
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-kv-dark mb-2">Коротко о команде</label>
-              <input
-                className="input-kv"
-                maxLength={80}
-                value={value.motto}
-                onChange={(event) => onChange({ ...value, motto: event.target.value })}
-                placeholder="Например: Исследовательская команда"
-              />
-              <p className="text-xs text-kv-muted mt-1">{value.motto.length}/80</p>
-            </div>
-
-            <div>
               <label className="block text-sm font-semibold text-kv-dark mb-2">Миссия команды</label>
               <textarea
                 className="textarea-kv w-full min-h-[110px]"
@@ -122,7 +110,6 @@ export default function TeamProfileEditor({ teamName, authors, value, onChange }
                   <h4 className="font-semibold text-lg">{teamName || 'Название команды'}</h4>
                 </div>
               </div>
-              <p className="font-medium mb-2">{value.motto || 'Короткое описание команды появится здесь'}</p>
               <p className="text-sm text-kv-muted leading-relaxed">{value.mission || 'Кратко сформулируйте миссию команды.'}</p>
               <div className="mt-5 pt-5 border-t border-kv-border flex items-start gap-2 text-xs text-kv-muted">
                 <Eye className="w-4 h-4 flex-shrink-0" /> Так профиль увидят другие команды.

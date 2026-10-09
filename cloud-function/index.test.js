@@ -371,7 +371,6 @@ test('community project feed exposes progress but not private project materials'
         status: 'review',
         submittedAt: '2026-10-01T10:00:00.000Z',
         teamProfile: {
-          motto: 'Создаём полезные решения',
           mission: 'Проверить способ наблюдения за ростом растений.',
           themeColor: '#0f766e',
           emblem: '△',
@@ -401,7 +400,7 @@ test('community project feed exposes progress but not private project materials'
   assert.equal(body.projects[0].progressPercent, 50)
   assert.equal(body.projects[0].projectDesc, undefined)
   assert.equal(body.projects[0].files, undefined)
-  assert.equal(body.projects[0].teamProfile.motto, 'Создаём полезные решения')
+  assert.equal(body.projects[0].teamProfile.mission, 'Проверить способ наблюдения за ростом растений.')
   assert.equal(body.projects[0].teamProfile.memberRoles[0].member, '')
   assert.equal(JSON.stringify(body.projects[0]).includes('Иванов Иван'), false)
   assert.match(body.projects[0].publicSummary, /исходные файлы не опубликованы/)
