@@ -8,11 +8,12 @@ import {
   LayoutDashboard, ClipboardList, FolderOpen, MessageSquare, BookOpen,
   Send, Calendar, Lightbulb, Hammer, School, BarChart3, Bell, AlertTriangle,
   KeyRound, RefreshCw, Bot, Eye, AlertOctagon, Video,
-  Zap, Box, PenLine, Hexagon, Code, Wrench,
+  Zap, Box, PenLine, Hexagon, Code, Wrench, UsersRound,
 } from 'lucide-react'
 import { workshops } from '@/data'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import PeerReviewSection from '@/components/PeerReviewSection'
 import Link from 'next/link'
 import {
   type SubmittedProject,
@@ -44,7 +45,7 @@ type ApprobationRecord = {
   whatWorked: string; whatNeedsWork: string; recommendations: string
 }
 type AiMessage = { id: string; role: 'user' | 'assistant'; text: string; time: string }
-type Tab = 'overview' | 'passport' | 'tasks' | 'sprints' | 'files' | 'ai' | 'notes' | 'research' | 'approbation' | 'workshops'
+type Tab = 'overview' | 'passport' | 'tasks' | 'sprints' | 'files' | 'ai' | 'notes' | 'community' | 'research' | 'approbation' | 'workshops'
 
 type Sprint = {
   id: string
@@ -116,6 +117,7 @@ const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: str
   { id: 'files',       label: 'Рабочие файлы',   Icon: FolderOpen },
   { id: 'ai',          label: 'ИИ-ассистент',    Icon: Bot },
   { id: 'notes',       label: 'Заметки',         Icon: BookOpen },
+  { id: 'community',   label: 'Сообщество',      Icon: UsersRound },
   { id: 'research',    label: 'Исследование',    Icon: BarChart3 },
   { id: 'approbation', label: 'Апробация',       Icon: School },
   { id: 'workshops',   label: 'Мастер-классы',  Icon: Video },
@@ -1786,6 +1788,15 @@ export default function CabinetPage() {
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* ── COMMUNITY / PEER REVIEW ─────────────────────────────────── */}
+              {activeTab === 'community' && (
+                <PeerReviewSection
+                  mode="student"
+                  currentTeamCode={teamCode}
+                  currentTeamName={teamName || teamCode}
+                />
               )}
 
               {/* ── WORKSHOPS ─────────────────────────────────────────────── */}
