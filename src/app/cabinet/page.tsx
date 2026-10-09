@@ -9,17 +9,20 @@ import {
   Send, Calendar, Lightbulb, Hammer, School, BarChart3, Bell, AlertTriangle,
   KeyRound, RefreshCw, Bot, Eye, AlertOctagon, Video,
   Zap, Box, PenLine, Hexagon, Code, Wrench, UsersRound,
+  Palette,
 } from 'lucide-react'
 import { workshops } from '@/data'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import PeerReviewSection from '@/components/PeerReviewSection'
+import TeamProfileEditor from '@/components/TeamProfileEditor'
 import Link from 'next/link'
 import {
   type SubmittedProject,
   type TeamWorkspace,
   type ResearchStage,
   type ResearchAnswers,
+  type TeamProfile,
   submitProject,
   getSubmittedProjects,
   getTeamWorkspace,
@@ -45,7 +48,7 @@ type ApprobationRecord = {
   whatWorked: string; whatNeedsWork: string; recommendations: string
 }
 type AiMessage = { id: string; role: 'user' | 'assistant'; text: string; time: string }
-type Tab = 'overview' | 'passport' | 'tasks' | 'sprints' | 'files' | 'ai' | 'notes' | 'community' | 'research' | 'approbation' | 'workshops'
+type Tab = 'overview' | 'team-profile' | 'passport' | 'tasks' | 'sprints' | 'files' | 'ai' | 'notes' | 'community' | 'research' | 'approbation' | 'workshops'
 
 type Sprint = {
   id: string
@@ -96,6 +99,16 @@ const EMPTY_RESEARCH_ANSWERS: ResearchAnswers = {
   projectResult: 0,
 }
 
+const EMPTY_TEAM_PROFILE: TeamProfile = {
+  motto: '',
+  mission: '',
+  themeColor: '#2563eb',
+  emblem: '◎',
+  competencies: [],
+  helpRequest: '',
+  memberRoles: [],
+}
+
 const PRIORITY_CFG = {
   low:    { label: 'Низкий',  color: 'text-[#16a34a]', bg: 'bg-[#f0fdf4]', border: 'border-[#86efac]' },
   medium: { label: 'Средний', color: 'text-[#d97706]', bg: 'bg-[#fffbeb]', border: 'border-[#fcd34d]' },
@@ -111,6 +124,7 @@ const STATUS_CFG = {
 
 const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'overview',    label: 'Обзор',           Icon: LayoutDashboard },
+  { id: 'team-profile', label: 'Профиль команды', Icon: Palette },
   { id: 'passport',    label: 'Паспорт проекта', Icon: ClipboardList },
   { id: 'tasks',       label: 'Трекер задач',    Icon: CheckCircle2 },
   { id: 'sprints',     label: 'Спринты',         Icon: RefreshCw },
@@ -185,6 +199,7 @@ export default function CabinetPage() {
   const [teamName,    setTeamName]    = useState('')
   const [track,       setTrack]       = useState<'А1' | 'А2' | 'А3'>('А1')
   const [authors,     setAuthors]     = useState<string[]>([])
+  const [teamProfile, setTeamProfile] = useState<TeamProfile>(EMPTY_TEAM_PROFILE)
 
   // ── practice dates ────────────────────────────────────────────────────────
   const [practiceStart, setPracticeStart] = useState('')
@@ -305,6 +320,7 @@ export default function CabinetPage() {
     setSprints(workspace.sprints || [])
     setNotes(workspace.notes || '')
     setApprobationHistory(workspace.approbationHistory || [])
+    setTeamProfile({ ...EMPTY_TEAM_PROFILE, ...(workspace.teamProfile || {}) })
   }
 
   const loadTeamData = async (code: string) => {
@@ -333,6 +349,7 @@ export default function CabinetPage() {
       sprints: savedSprints ? JSON.parse(savedSprints) : [],
       notes: localStorage.getItem(teamKey('cabinet_notes', code)) || '',
       approbationHistory: savedApprobation ? JSON.parse(savedApprobation) : [],
+      teamProfile: JSON.parse(localStorage.getItem(teamKey('cabinet_teamProfile', code)) || 'null') || EMPTY_TEAM_PROFILE,
     }
     applyWorkspace(localWorkspace)
 
@@ -436,6 +453,7 @@ export default function CabinetPage() {
       sprints,
       notes,
       approbationHistory,
+      teamProfile,
     }
 
     try {
@@ -451,6 +469,7 @@ export default function CabinetPage() {
       localStorage.setItem(teamKey('cabinet_productionFile', teamCode), productionFile)
       localStorage.setItem(teamKey('cabinet_notes', teamCode), notes)
       localStorage.setItem(teamKey('cabinet_approbationHistory', teamCode), JSON.stringify(approbationHistory))
+      localStorage.setItem(teamKey('cabinet_teamProfile', teamCode), JSON.stringify(teamProfile))
     } catch {}
 
     setWorkspaceSyncState('saving')
@@ -466,7 +485,7 @@ export default function CabinetPage() {
   }, [
     loggedIn, teamCode, teamName, captainName, track, authors,
     practiceStart, practiceEnd, projectName, projectBlock, projectDesc,
-    productionFile, tasks, files, sprints, notes, approbationHistory,
+    productionFile, tasks, files, sprints, notes, approbationHistory, teamProfile,
   ])
 
   useEffect(() => { aiEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [aiMessages])
@@ -588,6 +607,7 @@ export default function CabinetPage() {
     submittedAt:     new Date().toISOString(),
     curatorLogin,
     curatorFeedback: curatorFeedback || undefined,
+    teamProfile,
     workspaceSnapshot: { tasks, notes, sprints },
   })
 
@@ -1185,6 +1205,16 @@ export default function CabinetPage() {
                     </div>
                   </div>
                 </>
+              )}
+
+              {/* ════ TEAM PROFILE ════ */}
+              {activeTab === 'team-profile' && (
+                <TeamProfileEditor
+                  teamName={teamName}
+                  authors={authors}
+                  value={teamProfile}
+                  onChange={setTeamProfile}
+                />
               )}
 
               {/* ════ PASSPORT ════ */}
