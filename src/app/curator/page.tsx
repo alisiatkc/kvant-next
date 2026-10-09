@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import PeerReviewSection from '@/components/PeerReviewSection'
 import {
   type SubmittedProject,
   type CatalogEntry,
@@ -77,7 +78,7 @@ function buildCatalogEntry(sub: SubmittedProject): CatalogEntry {
 }
 
 type WorkspaceModal = { project: SubmittedProject; feedbackDraft: string }
-type ActiveTab = 'dashboard' | 'inbox' | 'all' | 'research' | 'catalog'
+type ActiveTab = 'dashboard' | 'inbox' | 'all' | 'peers' | 'research' | 'catalog'
 
 const RESEARCH_LABELS: Array<{ key: keyof ResearchAnswers; short: string }> = [
   { key: 'processClarity', short: 'Понятность процесса' },
@@ -290,6 +291,7 @@ export default function CuratorPage() {
     { id: 'dashboard', label: 'Дашборд',        Icon: LayoutDashboard },
     { id: 'inbox',     label: 'Входящие',        Icon: Inbox,      badge: counts.inbox },
     { id: 'all',       label: 'Все проекты',     Icon: ClipboardList },
+    { id: 'peers',     label: 'Взаимооценивание', Icon: MessageSquare },
     { id: 'research',  label: 'T0–T3',           Icon: BarChart3, badge: measurements.length },
     { id: 'catalog',   label: 'Каталог КОП',     Icon: Package },
   ]
@@ -597,6 +599,11 @@ export default function CuratorPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ════ PEER REVIEW ════ */}
+          {activeTab === 'peers' && (
+            <PeerReviewSection mode="curator" />
           )}
 
           {/* ════ RESEARCH T0–T3 ════ */}

@@ -354,3 +354,101 @@ test('student cannot retrieve the research dataset', async () => {
   assert.equal(response.statusCode, 401)
   assert.equal(calls.length, 0)
 })
+
+test('community project feed exposes progress but not private project materials', async () => {
+  sendResult = {
+    Items: [{
+      id: 'project-2',
+      data: JSON.stringify({
+        id: 'project-2',
+        teamCode: 'kvant-02',
+        teamName: 'Команда 2',
+        projectName: 'Умная теплица',
+        projectBlock: 'Исследовательский проект',
+        projectDesc: 'Подробное техническое описание',
+        files: [{ name: 'secret.dxf' }],
+        track: 'А2',
+        status: 'review',
+        submittedAt: '2026-10-01T10:00:00.000Z',
+        workspaceSnapshot: {
+          tasks: [
+            { id: '1', status: 'done' },
+            { id: '2', status: 'inprogress' },
+          ],
+        },
+      }),
+    }],
+  }
+
+  const response = await handler({
+    httpMethod: 'GET',
+    queryStringParameters: { action: 'getCommunityProjects' },
+    headers: { Authorization: `Bearer ${teamToken}` },
+  })
+  const body = JSON.parse(response.body)
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(body.projects.length, 1)
+  assert.equal(body.projects[0].progressPercent, 50)
+  assert.equal(body.projects[0].projectDesc, undefined)
+  assert.equal(body.projects[0].files, undefined)
+  assert.match(body.projects[0].publicSummary, /исходные файлы не опубликованы/)
+})
+
+test('student can submit one structured peer review for another team project', async () => {
+  sendResult = (command) => command instanceof GetCommand
+    ? { Item: { id: 'project-2', data: JSON.stringify({ id: 'project-2', teamCode: 'kvant-02', status: 'review' }) } }
+    : {}
+
+  const response = await handler(event('submitPeerReview', {
+    review: {
+      projectId: 'project-2',
+      scores: { problemClarity: 4, resultQuality: 3, applicability: 5, presentation: 4 },
+      comment: 'Понятен текущий этап. Советуем уточнить критерий успешной апробации.',
+    },
+  }, 'POST', teamToken))
+  const body = JSON.parse(response.body)
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(body.review.reviewerTeamCode, 'kvant-01')
+  assert.equal(calls.length, 2)
+  assert.ok(calls[1] instanceof PutCommand)
+  assert.equal(calls[1].input.TableName, 'peer_reviews')
+})
+
+test('student cannot review the project of their own team', async () => {
+  sendResult = (command) => command instanceof GetCommand
+    ? { Item: { id: 'project-1', data: JSON.stringify({ id: 'project-1', teamCode: 'kvant-01', status: 'review' }) } }
+    : {}
+
+  const response = await handler(event('submitPeerReview', {
+    review: {
+      projectId: 'project-1',
+      scores: { problemClarity: 4, resultQuality: 4, applicability: 4, presentation: 4 },
+      comment: 'Комментарий достаточной длины для проверки ограничения.',
+    },
+  }, 'POST', teamToken))
+
+  assert.equal(response.statusCode, 403)
+  assert.equal(calls.length, 1)
+})
+
+test('student can ask a previous team a structured question', async () => {
+  sendResult = (command) => command instanceof GetCommand
+    ? { Item: { id: 'archive-1', data: JSON.stringify({ id: 'archive-1', teamCode: 'kvant-old', openToQuestions: true }) } }
+    : {}
+
+  const response = await handler(event('submitCommunityMessage', {
+    message: {
+      projectId: 'archive-1',
+      text: 'Как вы организовали первую апробацию результата?',
+    },
+  }, 'POST', teamToken))
+  const body = JSON.parse(response.body)
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(body.message.authorTeamCode, 'kvant-01')
+  assert.equal(calls.length, 2)
+  assert.ok(calls[1] instanceof PutCommand)
+  assert.equal(calls[1].input.TableName, 'community_messages')
+})

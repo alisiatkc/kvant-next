@@ -43,6 +43,8 @@ const CORS = {
 const CATALOG_TABLE = 'approved_catalog'
 const WORKSPACE_TABLE = 'team_workspaces'
 const RESEARCH_TABLE = 'research_measurements'
+const PEER_REVIEW_TABLE = 'peer_reviews'
+const COMMUNITY_MESSAGE_TABLE = 'community_messages'
 const MAX_WORKSPACE_BYTES = 350000
 const MAX_PROJECT_BYTES = 200000
 const SESSION_TTL_SECONDS = 12 * 60 * 60
@@ -124,6 +126,80 @@ function validateResearchMeasurement(measurement) {
   }
   if (measurement.stage === 'T0' && typeof measurement.previousPractice !== 'boolean') {
     return 'previousPractice required for T0'
+  }
+  return null
+}
+
+const PEER_REVIEW_FIELDS = [
+  'problemClarity',
+  'resultQuality',
+  'applicability',
+  'presentation',
+]
+
+function validatePeerReview(review) {
+  if (!review || typeof review !== 'object' || Array.isArray(review)) {
+    return 'review required'
+  }
+  if (!isNonEmptyString(review.projectId) || review.projectId.length > 128) {
+    return 'projectId is invalid'
+  }
+  if (!review.scores || typeof review.scores !== 'object' || Array.isArray(review.scores)) {
+    return 'scores required'
+  }
+  if (PEER_REVIEW_FIELDS.some((field) => !Number.isInteger(review.scores[field]) || review.scores[field] < 1 || review.scores[field] > 5)) {
+    return 'all peer review scores must be integers from 1 to 5'
+  }
+  if (!isNonEmptyString(review.comment) || review.comment.trim().length < 20 || review.comment.trim().length > 1200) {
+    return 'comment must contain from 20 to 1200 characters'
+  }
+  return null
+}
+
+function projectProgress(project) {
+  const tasks = project.workspaceSnapshot && Array.isArray(project.workspaceSnapshot.tasks)
+    ? project.workspaceSnapshot.tasks
+    : []
+  if (tasks.length > 0) {
+    const done = tasks.filter((task) => task.status === 'done').length
+    const percent = Math.round((done / tasks.length) * 100)
+    if (percent >= 100) return { percent: 100, stage: 'Результат подготовлен' }
+    if (percent >= 70) return { percent, stage: 'Апробация и доработка' }
+    if (percent >= 35) return { percent, stage: 'Разработка прототипа' }
+    return { percent, stage: 'Проектирование решения' }
+  }
+  if (project.status === 'approved') return { percent: 100, stage: 'Завершён и опубликован' }
+  if (project.status === 'review') return { percent: 75, stage: 'Экспертная проверка' }
+  return { percent: 50, stage: 'Разработка решения' }
+}
+
+function communityProject(project) {
+  const progress = projectProgress(project)
+  return {
+    id: project.id,
+    teamCode: project.teamCode,
+    teamName: project.teamName || project.teamCode,
+    projectName: project.projectName || 'Проект без названия',
+    projectBlock: project.projectBlock || 'Проект',
+    publicSummary: isNonEmptyString(project.communitySummary)
+      ? project.communitySummary.trim().slice(0, 500)
+      : `Команда работает над проектом направления «${project.projectBlock || 'проектная деятельность'}». Подробные материалы и исходные файлы не опубликованы.`,
+    track: project.track || '—',
+    status: project.status,
+    submittedAt: project.submittedAt,
+    progressPercent: progress.percent,
+    progressStage: progress.stage,
+    cohort: isNonEmptyString(project.communityCohort) ? project.communityCohort : '2026/27',
+    isArchive: project.communityArchive === true,
+    openToQuestions: project.openToQuestions !== false,
+  }
+}
+
+function validateCommunityMessage(message) {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) return 'message required'
+  if (!isNonEmptyString(message.projectId) || message.projectId.length > 128) return 'projectId is invalid'
+  if (!isNonEmptyString(message.text) || message.text.trim().length < 10 || message.text.trim().length > 800) {
+    return 'message text must contain from 10 to 800 characters'
   }
   return null
 }
@@ -461,6 +537,137 @@ module.exports.handler = async function (event) {
         })
         .filter(Boolean)
       return respond(200, { measurements })
+    }
+
+    // ── GET ?action=getCommunityProjects  (authenticated project exchange) ──
+    if (action === 'getCommunityProjects' && event.httpMethod === 'GET') {
+      const session = readSession(event)
+      if (!session) return respond(401, { error: 'authenticated session required' })
+      const result = await ddb.send(new ScanCommand({ TableName: 'submitted_projects' }))
+      const projects = (result.Items || [])
+        .map((item) => {
+          try { return JSON.parse(item.data) }
+          catch (_) {
+            console.warn('[kvant-api] Invalid submitted project', item.id)
+            return null
+          }
+        })
+        .filter((project) => project && project.status !== 'rejected')
+        .map(communityProject)
+      return respond(200, { projects })
+    }
+
+    // ── GET ?action=getPeerReviews[&projectId=...]  (student/curator) ───────
+    if (action === 'getPeerReviews' && event.httpMethod === 'GET') {
+      const session = readSession(event)
+      if (!session) return respond(401, { error: 'authenticated session required' })
+      const result = await ddb.send(new ScanCommand({ TableName: PEER_REVIEW_TABLE }))
+      const reviews = (result.Items || [])
+        .map((item) => {
+          try { return JSON.parse(item.data) }
+          catch (_) {
+            console.warn('[kvant-api] Invalid peer review', item.id)
+            return null
+          }
+        })
+        .filter((review) => review && (!qs.projectId || review.projectId === qs.projectId))
+      return respond(200, { reviews })
+    }
+
+    // ── POST ?action=submitPeerReview  (one review per team and project) ────
+    if (action === 'submitPeerReview' && event.httpMethod === 'POST') {
+      const session = requireRole(event, 'student')
+      if (!session) return respond(401, { error: 'student session required' })
+      const { review } = body
+      const validationError = validatePeerReview(review)
+      if (validationError) return respond(400, { error: validationError })
+
+      const projectResult = await ddb.send(new GetCommand({
+        TableName: 'submitted_projects',
+        Key: { id: review.projectId },
+      }))
+      if (!projectResult.Item) return respond(404, { error: 'project not found' })
+
+      let project
+      try { project = JSON.parse(projectResult.Item.data) }
+      catch (_) { return respond(500, { error: 'stored project is invalid' }) }
+      if (project.teamCode === session.teamCode) {
+        return respond(403, { error: 'a team cannot review its own project' })
+      }
+      if (project.status === 'rejected') {
+        return respond(409, { error: 'project is not open for peer review' })
+      }
+
+      const createdAt = new Date().toISOString()
+      const storedReview = {
+        id: `${review.projectId}:${session.teamCode}`,
+        projectId: review.projectId,
+        projectTeamCode: project.teamCode,
+        reviewerTeamCode: session.teamCode,
+        reviewerTeamName: session.teamCode,
+        scores: Object.fromEntries(PEER_REVIEW_FIELDS.map((field) => [field, review.scores[field]])),
+        comment: review.comment.trim(),
+        createdAt,
+      }
+      await ddb.send(new PutCommand({
+        TableName: PEER_REVIEW_TABLE,
+        Item: { id: storedReview.id, data: JSON.stringify(storedReview), createdAt },
+      }))
+      return respond(200, { ok: true, review: storedReview })
+    }
+
+    // ── GET ?action=getCommunityMessages[&projectId=...] ──────────────────
+    if (action === 'getCommunityMessages' && event.httpMethod === 'GET') {
+      const session = readSession(event)
+      if (!session) return respond(401, { error: 'authenticated session required' })
+      const result = await ddb.send(new ScanCommand({ TableName: COMMUNITY_MESSAGE_TABLE }))
+      const messages = (result.Items || [])
+        .map((item) => {
+          try { return JSON.parse(item.data) }
+          catch (_) {
+            console.warn('[kvant-api] Invalid community message', item.id)
+            return null
+          }
+        })
+        .filter((message) => message && (!qs.projectId || message.projectId === qs.projectId))
+      return respond(200, { messages })
+    }
+
+    // ── POST ?action=submitCommunityMessage  (cross-cohort discussion) ──────
+    if (action === 'submitCommunityMessage' && event.httpMethod === 'POST') {
+      const session = requireRole(event, 'student')
+      if (!session) return respond(401, { error: 'student session required' })
+      const { message } = body
+      const validationError = validateCommunityMessage(message)
+      if (validationError) return respond(400, { error: validationError })
+
+      const projectResult = await ddb.send(new GetCommand({
+        TableName: 'submitted_projects',
+        Key: { id: message.projectId },
+      }))
+      if (!projectResult.Item) return respond(404, { error: 'project not found' })
+
+      let project
+      try { project = JSON.parse(projectResult.Item.data) }
+      catch (_) { return respond(500, { error: 'stored project is invalid' }) }
+      if (project.openToQuestions === false) {
+        return respond(403, { error: 'project discussion is closed' })
+      }
+
+      const createdAt = new Date().toISOString()
+      const storedMessage = {
+        id: `${message.projectId}:${session.teamCode}:${Date.now()}`,
+        projectId: message.projectId,
+        authorTeamCode: session.teamCode,
+        authorTeamName: session.teamCode,
+        text: message.text.trim(),
+        createdAt,
+      }
+      await ddb.send(new PutCommand({
+        TableName: COMMUNITY_MESSAGE_TABLE,
+        Item: { id: storedMessage.id, data: JSON.stringify(storedMessage), createdAt },
+      }))
+      return respond(200, { ok: true, message: storedMessage })
     }
 
     // ── POST ?action=updateCatalog  (curator creates / edits catalog entry) ─

@@ -65,6 +65,56 @@ export type ResearchMeasurement = {
   createdAt: string
 }
 
+export type CommunityProject = {
+  id: string
+  teamCode: string
+  teamName: string
+  projectName: string
+  projectBlock: string
+  publicSummary: string
+  track: string
+  status: SubmittedProject['status']
+  submittedAt: string
+  progressPercent: number
+  progressStage: string
+  cohort: string
+  isArchive: boolean
+  openToQuestions: boolean
+}
+
+export type PeerReviewScores = {
+  problemClarity: number
+  resultQuality: number
+  applicability: number
+  presentation: number
+}
+
+export type PeerReviewInput = {
+  projectId: string
+  scores: PeerReviewScores
+  comment: string
+}
+
+export type PeerReview = PeerReviewInput & {
+  id: string
+  projectTeamCode: string
+  reviewerTeamCode: string
+  reviewerTeamName: string
+  createdAt: string
+}
+
+export type CommunityMessageInput = {
+  projectId: string
+  text: string
+}
+
+export type CommunityMessage = CommunityMessageInput & {
+  id: string
+  authorTeamCode: string
+  authorTeamName: string
+  createdAt: string
+}
+
 export type CatalogEntry = {
   id: number
   title: string
@@ -363,4 +413,207 @@ export async function getResearchMeasurements(): Promise<ResearchMeasurement[]> 
   }
   if (!DEMO_MODE) return []
   return JSON.parse(localStorage.getItem('researchMeasurements') || '[]')
+}
+
+const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
+  {
+    id: 'demo-project-lab',
+    teamCode: 'demo-lab',
+    teamName: 'Команда «Лаборатория идей»',
+    projectName: 'Набор для исследования качества воды',
+    projectBlock: 'Исследовательский проект',
+    publicSummary: 'Команда проверяет сценарий учебного исследования и собирает обратную связь о понятности этапов.',
+    track: 'А1',
+    status: 'review',
+    submittedAt: '2026-09-20T10:00:00.000Z',
+    progressPercent: 68,
+    progressStage: 'Апробация прототипа',
+    cohort: '2026/27',
+    isArchive: false,
+    openToQuestions: true,
+  },
+  {
+    id: 'demo-project-dialog',
+    teamCode: 'demo-dialog',
+    teamName: 'Команда «Диалог»',
+    projectName: 'Карточки для групповой рефлексии',
+    projectBlock: 'Методический проект',
+    publicSummary: 'Завершённый проект прошлого потока. Команда готова рассказать, как организовала апробацию и переработала материалы после обратной связи.',
+    track: 'А2',
+    status: 'approved',
+    submittedAt: '2025-05-25T12:00:00.000Z',
+    progressPercent: 100,
+    progressStage: 'Завершён и передан в архив',
+    cohort: '2025/26',
+    isArchive: true,
+    openToQuestions: true,
+  },
+]
+
+const DEMO_PEER_REVIEWS: PeerReview[] = [
+  {
+    id: 'demo-project-lab:demo-experts',
+    projectId: 'demo-project-lab',
+    projectTeamCode: 'demo-lab',
+    reviewerTeamCode: 'demo-experts',
+    reviewerTeamName: 'Команда «Эксперты»',
+    scores: { problemClarity: 4, resultQuality: 4, applicability: 5, presentation: 4 },
+    comment: 'Понятна проблема и предполагаемый результат. Советуем заранее сформулировать критерии наблюдения и показать логику апробации.',
+    createdAt: '2026-09-23T09:30:00.000Z',
+  },
+]
+
+const DEMO_COMMUNITY_MESSAGES: CommunityMessage[] = [
+  {
+    id: 'demo-project-dialog:question-1',
+    projectId: 'demo-project-dialog',
+    authorTeamCode: 'demo-start',
+    authorTeamName: 'Команда «Старт»',
+    text: 'Как вы определяли, какие вопросы оставить в итоговой версии после первой апробации?',
+    createdAt: '2026-09-24T10:00:00.000Z',
+  },
+  {
+    id: 'demo-project-dialog:reply-1',
+    projectId: 'demo-project-dialog',
+    authorTeamCode: 'demo-dialog',
+    authorTeamName: 'Команда «Диалог»',
+    text: 'Мы оставили вопросы, которые помогали участникам назвать конкретное действие команды, а слишком общие формулировки убрали после наблюдения.',
+    createdAt: '2026-09-24T14:20:00.000Z',
+  },
+]
+
+function progressOf(project: SubmittedProject): { percent: number; stage: string } {
+  const tasks = project.workspaceSnapshot?.tasks || []
+  if (tasks.length > 0) {
+    const done = tasks.filter((task) => task.status === 'done').length
+    const percent = Math.round((done / tasks.length) * 100)
+    if (percent >= 100) return { percent: 100, stage: 'Результат подготовлен' }
+    if (percent >= 70) return { percent, stage: 'Апробация и доработка' }
+    if (percent >= 35) return { percent, stage: 'Разработка прототипа' }
+    return { percent, stage: 'Проектирование решения' }
+  }
+  if (project.status === 'approved') return { percent: 100, stage: 'Завершён и опубликован' }
+  if (project.status === 'review') return { percent: 75, stage: 'Экспертная проверка' }
+  return { percent: 50, stage: 'Разработка решения' }
+}
+
+function normalizeCommunityProject(project: SubmittedProject): CommunityProject {
+  const progress = progressOf(project)
+  return {
+    id: project.id,
+    teamCode: project.teamCode,
+    teamName: project.teamName || project.teamCode,
+    projectName: project.projectName || 'Проект без названия',
+    projectBlock: project.projectBlock || 'Проект',
+    publicSummary: `Команда работает над проектом направления «${project.projectBlock || 'проектная деятельность'}». Подробные материалы и исходные файлы не опубликованы.`,
+    track: project.track || '—',
+    status: project.status,
+    submittedAt: project.submittedAt,
+    progressPercent: progress.percent,
+    progressStage: progress.stage,
+    cohort: '2026/27',
+    isArchive: false,
+    openToQuestions: true,
+  }
+}
+
+export async function getCommunityProjects(): Promise<CommunityProject[]> {
+  if (API_URL) {
+    const data = await apiCall('getCommunityProjects', 'GET')
+    return (data.projects as CommunityProject[]) ?? []
+  }
+  if (!DEMO_MODE) return []
+  const submitted: SubmittedProject[] = JSON.parse(localStorage.getItem('submittedProjects') || '[]')
+  const combined = [...submitted.map(normalizeCommunityProject), ...DEMO_COMMUNITY_PROJECTS]
+  return Array.from(new Map(combined.map((project) => [project.id, project])).values())
+}
+
+export async function getPeerReviews(projectId?: string): Promise<PeerReview[]> {
+  if (API_URL) {
+    const data = await apiCall('getPeerReviews', 'GET', undefined, projectId ? { projectId } : undefined)
+    return (data.reviews as PeerReview[]) ?? []
+  }
+  if (!DEMO_MODE) return []
+  const saved: PeerReview[] = JSON.parse(localStorage.getItem('peerReviews') || '[]')
+  const combined = [...saved, ...DEMO_PEER_REVIEWS.filter((seed) => !saved.some((item) => item.id === seed.id))]
+  return projectId ? combined.filter((review) => review.projectId === projectId) : combined
+}
+
+export async function savePeerReview(input: PeerReviewInput): Promise<PeerReview> {
+  if (API_URL) {
+    const data = await apiCall('submitPeerReview', 'POST', { review: input })
+    return data.review as PeerReview
+  }
+  if (!DEMO_MODE) throw new Error('Сервер взаимооценивания ещё не подключён')
+  const user = await getCurrentUser()
+  if (!user?.teamCode || user.role !== 'student') throw new Error('Требуется вход команды')
+  const projects = await getCommunityProjects()
+  const project = projects.find((item) => item.id === input.projectId)
+  if (!project) throw new Error('Проект не найден')
+  if (project.isArchive) throw new Error('Завершённым командам задают вопросы вместо выставления рейтинга')
+  if (project.teamCode === user.teamCode) throw new Error('Нельзя оценивать проект своей команды')
+  const values = Object.values(input.scores)
+  if (values.length !== 4 || values.some((value) => !Number.isInteger(value) || value < 1 || value > 5)) {
+    throw new Error('Поставьте оценку от 1 до 5 по каждому критерию')
+  }
+  const comment = input.comment.trim()
+  if (comment.length < 20 || comment.length > 1200) {
+    throw new Error('Комментарий должен содержать от 20 до 1200 символов')
+  }
+  const review: PeerReview = {
+    id: `${project.id}:${user.teamCode}`,
+    projectId: project.id,
+    projectTeamCode: project.teamCode,
+    reviewerTeamCode: user.teamCode,
+    reviewerTeamName: localStorage.getItem('cabinet_teamName') || user.teamCode,
+    scores: input.scores,
+    comment,
+    createdAt: new Date().toISOString(),
+  }
+  const existing: PeerReview[] = JSON.parse(localStorage.getItem('peerReviews') || '[]')
+  localStorage.setItem('peerReviews', JSON.stringify([
+    ...existing.filter((item) => item.id !== review.id),
+    review,
+  ]))
+  return review
+}
+
+export async function getCommunityMessages(projectId?: string): Promise<CommunityMessage[]> {
+  if (API_URL) {
+    const data = await apiCall('getCommunityMessages', 'GET', undefined, projectId ? { projectId } : undefined)
+    return (data.messages as CommunityMessage[]) ?? []
+  }
+  if (!DEMO_MODE) return []
+  const saved: CommunityMessage[] = JSON.parse(localStorage.getItem('communityMessages') || '[]')
+  const combined = [...saved, ...DEMO_COMMUNITY_MESSAGES.filter((seed) => !saved.some((item) => item.id === seed.id))]
+  return projectId ? combined.filter((message) => message.projectId === projectId) : combined
+}
+
+export async function saveCommunityMessage(input: CommunityMessageInput): Promise<CommunityMessage> {
+  if (API_URL) {
+    const data = await apiCall('submitCommunityMessage', 'POST', { message: input })
+    return data.message as CommunityMessage
+  }
+  if (!DEMO_MODE) throw new Error('Сервер проектного сообщества ещё не подключён')
+  const user = await getCurrentUser()
+  if (!user?.teamCode || user.role !== 'student') throw new Error('Требуется вход команды')
+  const projects = await getCommunityProjects()
+  const project = projects.find((item) => item.id === input.projectId)
+  if (!project) throw new Error('Проект не найден')
+  if (!project.openToQuestions) throw new Error('Команда не открыла обсуждение проекта')
+  const text = input.text.trim()
+  if (text.length < 10 || text.length > 800) {
+    throw new Error('Сообщение должно содержать от 10 до 800 символов')
+  }
+  const message: CommunityMessage = {
+    id: `${project.id}:${user.teamCode}:${Date.now()}`,
+    projectId: project.id,
+    authorTeamCode: user.teamCode,
+    authorTeamName: localStorage.getItem('cabinet_teamName') || user.teamCode,
+    text,
+    createdAt: new Date().toISOString(),
+  }
+  const existing: CommunityMessage[] = JSON.parse(localStorage.getItem('communityMessages') || '[]')
+  localStorage.setItem('communityMessages', JSON.stringify([...existing, message]))
+  return message
 }
