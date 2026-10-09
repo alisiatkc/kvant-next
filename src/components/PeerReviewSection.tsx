@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   CheckCircle2,
+  LockKeyhole,
   MessageCircle,
   RefreshCw,
   Send,
@@ -10,11 +11,14 @@ import {
   UsersRound,
 } from 'lucide-react'
 import {
+  type CommunityMessage,
   type CommunityProject,
   type PeerReview,
   type PeerReviewScores,
+  getCommunityMessages,
   getCommunityProjects,
   getPeerReviews,
+  saveCommunityMessage,
   savePeerReview,
 } from '@/lib/storage'
 
@@ -26,9 +30,9 @@ type Props = {
 
 const CRITERIA: Array<{ key: keyof PeerReviewScores; label: string; hint: string }> = [
   { key: 'problemClarity', label: 'Ясность проблемы', hint: 'Понятно, какую задачу решает проект' },
-  { key: 'resultQuality', label: 'Качество результата', hint: 'Результат соответствует заявленному замыслу' },
-  { key: 'applicability', label: 'Применимость', hint: 'Решение можно использовать или воспроизвести' },
-  { key: 'presentation', label: 'Представление проекта', hint: 'Материалы и логика проекта понятны другой команде' },
+  { key: 'resultQuality', label: 'Качество промежуточного результата', hint: 'Результат соответствует текущему этапу работы' },
+  { key: 'applicability', label: 'Потенциал применения', hint: 'Понятно, где решение может быть полезно' },
+  { key: 'presentation', label: 'Понятность представления', hint: 'Карточка прогресса понятна другой команде' },
 ]
 
 const EMPTY_SCORES: PeerReviewScores = {
@@ -58,9 +62,11 @@ function formatDate(value: string): string {
 export default function PeerReviewSection({ mode, currentTeamCode = '', currentTeamName = '' }: Props) {
   const [projects, setProjects] = useState<CommunityProject[]>([])
   const [reviews, setReviews] = useState<PeerReview[]>([])
+  const [messages, setMessages] = useState<CommunityMessage[]>([])
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [scores, setScores] = useState<PeerReviewScores>(EMPTY_SCORES)
   const [comment, setComment] = useState('')
+  const [messageText, setMessageText] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState('')
@@ -70,19 +76,21 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
     setLoading(true)
     setError('')
     try {
-      const [projectData, reviewData] = await Promise.all([
+      const [projectData, reviewData, messageData] = await Promise.all([
         getCommunityProjects(),
         getPeerReviews(),
+        getCommunityMessages(),
       ])
       setProjects(projectData)
       setReviews(reviewData)
+      setMessages(messageData)
       setSelectedProjectId((current) =>
         current && projectData.some((project) => project.id === current)
           ? current
           : projectData.find((project) => project.teamCode !== currentTeamCode)?.id || projectData[0]?.id || '',
       )
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить проекты сообщества')
+      setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить проектное сообщество')
     } finally {
       setLoading(false)
     }
@@ -103,6 +111,13 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
     [reviews, selectedProjectId],
   )
 
+  const selectedMessages = useMemo(
+    () => messages
+      .filter((message) => message.projectId === selectedProjectId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    [messages, selectedProjectId],
+  )
+
   useEffect(() => {
     if (mode !== 'student' || !selectedProjectId) return
     const existing = reviews.find(
@@ -110,11 +125,12 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
     )
     setScores(existing?.scores || EMPTY_SCORES)
     setComment(existing?.comment || '')
+    setMessageText('')
     setNotice('')
     setError('')
   }, [currentTeamCode, mode, reviews, selectedProjectId])
 
-  const submit = async () => {
+  const submitReview = async () => {
     if (!selectedProject) return
     setSaving(true)
     setNotice('')
@@ -122,9 +138,26 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
     try {
       const saved = await savePeerReview({ projectId: selectedProject.id, scores, comment })
       setReviews((items) => [...items.filter((item) => item.id !== saved.id), saved])
-      setNotice('Взаимооценивание сохранено. Команда проекта и куратор увидят обратную связь.')
+      setNotice('Взаимооценивание сохранено. Команда проекта и куратор увидят рекомендацию.')
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Не удалось сохранить взаимооценивание')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const submitMessage = async () => {
+    if (!selectedProject) return
+    setSaving(true)
+    setNotice('')
+    setError('')
+    try {
+      const saved = await saveCommunityMessage({ projectId: selectedProject.id, text: messageText })
+      setMessages((items) => [...items, saved])
+      setMessageText('')
+      setNotice('Вопрос добавлен в межпоточное обсуждение.')
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Не удалось отправить вопрос')
     } finally {
       setSaving(false)
     }
@@ -133,7 +166,7 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
   if (loading) {
     return (
       <div className="bg-white rounded-[2.5rem] p-8 flex items-center gap-3 text-kv-muted">
-        <RefreshCw className="w-5 h-5 animate-spin" /> Загружаем проекты сообщества…
+        <RefreshCw className="w-5 h-5 animate-spin" /> Загружаем проектное сообщество…
       </div>
     )
   }
@@ -145,12 +178,12 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
           <div>
             <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Горизонтальное взаимодействие</span>
             <h3 className="text-[1.3rem] font-semibold mt-1 mb-2">
-              {mode === 'student' ? 'Взаимная экспертиза проектов' : 'Взаимооценивание команд'}
+              {mode === 'student' ? 'Проектное сообщество' : 'Взаимодействие команд'}
             </h3>
-            <p className="text-kv-muted text-sm leading-relaxed max-w-[760px]">
+            <p className="text-kv-muted text-sm leading-relaxed max-w-[780px]">
               {mode === 'student'
-                ? 'Изучите решение другой команды, оцените его по единым критериям и оставьте конкретную рекомендацию. Оценивается проектное решение, а не личные качества участников.'
-                : 'Здесь собрана горизонтальная обратная связь между командами. Она дополняет экспертную оценку куратора, но не заменяет её.'}
+                ? 'В текущих проектах виден только прогресс и безопасное описание. Рабочие файлы, чертежи и исходные материалы закрыты. Завершённым командам прошлых потоков можно задать вопрос об их опыте.'
+                : 'Среда показывает движение проектов, взаимную экспертизу текущих команд и вопросы к командам прошлых потоков. Рейтинг относится к проектному решению, а не к личности студента.'}
             </p>
           </div>
           <button className="btn-secondary flex items-center gap-2" onClick={load}>
@@ -158,21 +191,31 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
           </button>
         </div>
 
-        {error && (
-          <div className="mb-5 rounded-2xl bg-[#ffebee] px-5 py-4 text-sm text-[#c62828]">
-            {error}
+        <div className="rounded-2xl bg-[#f8fafc] border border-[#cbd5e1] px-5 py-4 mb-6 flex items-start gap-3">
+          <LockKeyhole className="w-5 h-5 text-kv-blue mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-kv-dark">Защита проектных материалов</p>
+            <p className="text-xs text-kv-muted leading-relaxed mt-1">
+              В сообществе не публикуются файлы, чертежи, состав комплектов и подробные технические решения. Доступ к ним возможен только после согласия команды или публикации итогового КОП.
+            </p>
           </div>
+        </div>
+
+        {error && (
+          <div className="mb-5 rounded-2xl bg-[#ffebee] px-5 py-4 text-sm text-[#c62828]">{error}</div>
         )}
 
         {projects.length === 0 ? (
           <div className="rounded-[1.75rem] bg-kv-light py-14 text-center text-kv-muted">
             <UsersRound className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            Пока нет проектов, открытых для взаимной экспертизы.
+            Пока нет проектов, открытых для сообщества.
           </div>
         ) : (
           <div className="grid grid-cols-1 min-[760px]:grid-cols-2 gap-4">
             {projects.map((project) => {
-              const count = reviews.filter((review) => review.projectId === project.id).length
+              const count = project.isArchive
+                ? messages.filter((message) => message.projectId === project.id).length
+                : reviews.filter((review) => review.projectId === project.id).length
               const rating = projectAverage(project.id, reviews)
               const own = project.teamCode === currentTeamCode
               const selected = project.id === selectedProjectId
@@ -185,18 +228,31 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
                   onClick={() => setSelectedProjectId(project.id)}
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <span className="text-xs font-semibold text-kv-blue">{project.projectBlock || 'Проект'}</span>
+                    <span className="text-xs font-semibold text-kv-blue">
+                      {project.isArchive ? `Архив · поток ${project.cohort}` : project.projectBlock || 'Проект'}
+                    </span>
                     {own && <span className="text-[10px] uppercase tracking-wide text-kv-muted">Ваш проект</span>}
                   </div>
                   <h4 className="font-semibold text-kv-dark mb-1">{project.projectName}</h4>
                   <p className="text-xs text-kv-muted mb-3">{project.teamName} · трек {project.track}</p>
-                  <p className="text-sm text-kv-text leading-relaxed line-clamp-3">{project.projectDesc}</p>
+                  <p className="text-sm text-kv-text leading-relaxed line-clamp-3">{project.publicSummary}</p>
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="text-kv-muted">{project.progressStage}</span>
+                      <span className="font-semibold text-kv-blue">{project.progressPercent}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-kv-light overflow-hidden">
+                      <div className="h-full rounded-full bg-kv-blue" style={{ width: `${project.progressPercent}%` }} />
+                    </div>
+                  </div>
                   <div className="flex items-center gap-4 mt-4 text-xs text-kv-muted">
                     <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {count}</span>
-                    <span className="flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5" />
-                      {rating === null ? 'Нет оценки' : rating.toFixed(1)}
-                    </span>
+                    {!project.isArchive && (
+                      <span className="flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5" />
+                        {rating === null ? 'Нет оценки' : rating.toFixed(1)}
+                      </span>
+                    )}
                   </div>
                 </button>
               )
@@ -208,15 +264,52 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
       {selectedProject && (
         <div className="grid grid-cols-1 min-[920px]:grid-cols-[1.05fr_0.95fr] gap-5">
           <div className="bg-white rounded-[2.5rem] p-8">
-            <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Выбранный проект</span>
+            <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">
+              {selectedProject.isArchive ? 'Команда прошлого потока' : 'Карточка прогресса'}
+            </span>
             <h3 className="text-[1.3rem] font-semibold mt-1 mb-2">{selectedProject.projectName}</h3>
-            <p className="text-kv-muted text-sm mb-5">{selectedProject.teamName}</p>
-            <p className="text-kv-text text-sm leading-relaxed mb-7">{selectedProject.projectDesc}</p>
+            <p className="text-kv-muted text-sm mb-5">
+              {selectedProject.teamName} · поток {selectedProject.cohort}
+            </p>
+            <p className="text-kv-text text-sm leading-relaxed mb-5">{selectedProject.publicSummary}</p>
+            <div className="rounded-2xl bg-kv-light px-5 py-4 text-sm mb-7">
+              <span className="font-semibold text-kv-dark">{selectedProject.progressStage}</span>
+              <span className="text-kv-muted"> · {selectedProject.progressPercent}% выполнения</span>
+            </div>
 
             {mode === 'student' && selectedProject.teamCode === currentTeamCode ? (
               <div className="rounded-2xl bg-kv-light px-5 py-4 text-sm text-kv-muted">
-                Свою работу оценивать нельзя. Выберите проект другой команды.
+                Для своей команды здесь отображается только публичная карточка. Оценивать собственный проект нельзя.
               </div>
+            ) : selectedProject.isArchive ? (
+              mode === 'student' ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-kv-dark mb-2">Вопрос команде прошлого потока</label>
+                    <textarea
+                      className="textarea-kv w-full min-h-[130px]"
+                      value={messageText}
+                      onChange={(event) => setMessageText(event.target.value)}
+                      maxLength={800}
+                      placeholder="Спросите о принятом решении, организации работы, апробации или трудности, с которой столкнулась команда."
+                    />
+                    <p className="text-xs text-kv-muted mt-1">{messageText.length}/800 · минимум 10 символов</p>
+                  </div>
+                  {notice && (
+                    <div className="rounded-2xl bg-[#e8f5e9] px-5 py-4 text-sm text-[#2e7d32] flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" /> {notice}
+                    </div>
+                  )}
+                  <button className="btn-blue flex items-center gap-2" onClick={submitMessage} disabled={saving}>
+                    {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    Отправить вопрос
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-kv-light px-5 py-4 text-sm text-kv-muted">
+                  Команда прошлого потока добровольно оставила проект в архиве и открыла обсуждение для новых участников.
+                </div>
+              )
             ) : mode === 'student' ? (
               <div className="space-y-5">
                 {CRITERIA.map((criterion) => (
@@ -247,15 +340,13 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
                 ))}
 
                 <div>
-                  <label className="block text-sm font-semibold text-kv-dark mb-2">
-                    Содержательный комментарий
-                  </label>
+                  <label className="block text-sm font-semibold text-kv-dark mb-2">Рекомендация другой команде</label>
                   <textarea
                     className="textarea-kv w-full min-h-[130px]"
                     value={comment}
                     onChange={(event) => setComment(event.target.value)}
                     maxLength={1200}
-                    placeholder="Что особенно удалось? Что стоит уточнить или доработать? Предложите конкретный следующий шаг."
+                    placeholder="Что понятно уже сейчас? Что стоит уточнить? Предложите один конкретный следующий шаг."
                   />
                   <p className="text-xs text-kv-muted mt-1">{comment.length}/1200 · минимум 20 символов</p>
                 </div>
@@ -266,7 +357,7 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
                   </div>
                 )}
 
-                <button className="btn-blue flex items-center gap-2" onClick={submit} disabled={saving}>
+                <button className="btn-blue flex items-center gap-2" onClick={submitReview} disabled={saving}>
                   {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   Сохранить взаимооценивание
                 </button>
@@ -276,7 +367,7 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
               </div>
             ) : (
               <div className="rounded-2xl bg-kv-light px-5 py-4 text-sm text-kv-muted">
-                Средняя оценка: {projectAverage(selectedProject.id, reviews)?.toFixed(1) || '—'} из 5.
+                Средняя оценка текущего проектного решения: {projectAverage(selectedProject.id, reviews)?.toFixed(1) || '—'} из 5.
               </div>
             )}
           </div>
@@ -284,9 +375,42 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
           <div className="bg-white rounded-[2.5rem] p-8">
             <div className="flex items-center gap-2 mb-6">
               <MessageCircle className="w-5 h-5 text-kv-blue" />
-              <h3 className="text-[1.15rem] font-semibold">Комментарии команд ({selectedReviews.length})</h3>
+              <h3 className="text-[1.15rem] font-semibold">
+                {selectedProject.isArchive
+                  ? `Межпоточное обсуждение (${selectedMessages.length})`
+                  : `Рекомендации команд (${selectedReviews.length})`}
+              </h3>
             </div>
-            {selectedReviews.length === 0 ? (
+
+            {selectedProject.isArchive ? (
+              selectedMessages.length === 0 ? (
+                <div className="py-12 text-center text-kv-muted text-sm">Пока нет вопросов к этой команде.</div>
+              ) : (
+                <div className="space-y-4">
+                  {selectedMessages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`rounded-[1.5rem] border p-5 ${
+                        message.authorTeamCode === selectedProject.teamCode
+                          ? 'border-[#c7d2fe] bg-[#f6f8ff]'
+                          : 'border-kv-border'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <p className="font-semibold text-sm text-kv-dark">
+                          {message.authorTeamName}
+                          {message.authorTeamCode === selectedProject.teamCode && (
+                            <span className="ml-2 text-[10px] uppercase tracking-wide text-kv-blue">авторы проекта</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-kv-muted">{formatDate(message.createdAt)}</p>
+                      </div>
+                      <p className="text-sm text-kv-text leading-relaxed">{message.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : selectedReviews.length === 0 ? (
               <div className="py-12 text-center text-kv-muted text-sm">Пока нет взаимных оценок.</div>
             ) : (
               <div className="space-y-4">
