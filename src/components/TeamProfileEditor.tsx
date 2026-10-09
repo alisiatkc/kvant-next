@@ -192,7 +192,7 @@ export default function TeamProfileEditor({ teamName, authors, value, onChange }
       <div className="rounded-[2rem] bg-[#eef3ff] border border-[#2b3b6b20] px-6 py-5 flex items-start gap-3">
         <ShieldCheck className="w-5 h-5 text-kv-blue mt-0.5 flex-shrink-0" />
         <p className="text-sm text-kv-text leading-relaxed">
-          Профиль сохраняется автоматически. Для публичной карточки используются только миссия, девиз, роли без ФИО, компетенции и запрос о помощи.
+          Профиль сохраняется автоматически. Для публичной карточки используются только миссия, роли без ФИО, компетенции и запрос о помощи.
         </p>
       </div>
     </div>
