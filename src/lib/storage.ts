@@ -15,6 +15,7 @@ export type SubmittedProject = {
   feedbackRequestedAt?: string
   curatorLogin: string
   curatorFeedback?: string
+  teamProfile?: TeamProfile
   workspaceSnapshot?: {
     tasks: Array<{ id: string; title: string; desc: string; status: string; priority: string; dueDate: string }>
     notes: string
@@ -80,6 +81,17 @@ export type CommunityProject = {
   cohort: string
   isArchive: boolean
   openToQuestions: boolean
+  teamProfile?: TeamProfile
+}
+
+export type TeamProfile = {
+  motto: string
+  mission: string
+  themeColor: string
+  emblem: string
+  competencies: string[]
+  helpRequest: string
+  memberRoles: Array<{ member: string; role: string }>
 }
 
 export type PeerReviewScores = {
@@ -172,6 +184,7 @@ export type TeamWorkspace = {
     whatNeedsWork: string
     recommendations: string
   }>
+  teamProfile: TeamProfile
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
@@ -431,6 +444,15 @@ const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
     cohort: '2026/27',
     isArchive: false,
     openToQuestions: true,
+    teamProfile: {
+      motto: 'Исследуем, проверяем, объясняем',
+      mission: 'Сделать учебное исследование воды понятным и воспроизводимым для школьных команд.',
+      themeColor: '#2563eb',
+      emblem: '◎',
+      competencies: ['Проведение исследования', 'Разработка анкеты'],
+      helpRequest: 'Ищем команду для взаимной проверки критериев наблюдения.',
+      memberRoles: [{ member: '', role: 'Исследователь' }, { member: '', role: 'Аналитик' }],
+    },
   },
   {
     id: 'demo-project-dialog',
@@ -447,6 +469,15 @@ const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
     cohort: '2025/26',
     isArchive: true,
     openToQuestions: true,
+    teamProfile: {
+      motto: 'Диалог превращаем в действие',
+      mission: 'Помочь учебным группам проводить содержательную и безопасную рефлексию.',
+      themeColor: '#7c3aed',
+      emblem: '◇',
+      competencies: ['Фасилитация обсуждения', 'Апробация методики'],
+      helpRequest: '',
+      memberRoles: [{ member: '', role: 'Методист' }, { member: '', role: 'Модератор' }],
+    },
   },
 ]
 
@@ -497,6 +528,22 @@ function progressOf(project: SubmittedProject): { percent: number; stage: string
   return { percent: 50, stage: 'Разработка решения' }
 }
 
+function publicTeamProfile(profile?: TeamProfile): TeamProfile | undefined {
+  if (!profile) return undefined
+  return {
+    motto: (profile.motto || '').slice(0, 80),
+    mission: (profile.mission || '').slice(0, 240),
+    themeColor: profile.themeColor || '#2563eb',
+    emblem: (profile.emblem || '◎').slice(0, 2),
+    competencies: (profile.competencies || []).slice(0, 4).map((item) => item.slice(0, 80)),
+    helpRequest: (profile.helpRequest || '').slice(0, 180),
+    memberRoles: (profile.memberRoles || [])
+      .filter((item) => item.role?.trim())
+      .slice(0, 12)
+      .map((item) => ({ member: '', role: item.role.slice(0, 60) })),
+  }
+}
+
 function normalizeCommunityProject(project: SubmittedProject): CommunityProject {
   const progress = progressOf(project)
   return {
@@ -514,6 +561,7 @@ function normalizeCommunityProject(project: SubmittedProject): CommunityProject 
     cohort: '2026/27',
     isArchive: false,
     openToQuestions: true,
+    teamProfile: publicTeamProfile(project.teamProfile),
   }
 }
 

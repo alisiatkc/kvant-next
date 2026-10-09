@@ -227,6 +227,19 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
                   }`}
                   onClick={() => setSelectedProjectId(project.id)}
                 >
+                  {project.teamProfile && (
+                    <div className="flex items-center gap-3 mb-4">
+                      <span
+                        className="w-10 h-10 rounded-xl text-white text-lg flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: project.teamProfile.themeColor }}
+                      >
+                        {project.teamProfile.emblem}
+                      </span>
+                      <span className="text-xs font-medium text-kv-dark line-clamp-2">
+                        {project.teamProfile.motto || project.teamName}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <span className="text-xs font-semibold text-kv-blue">
                       {project.isArchive ? `Архив · поток ${project.cohort}` : project.projectBlock || 'Проект'}
@@ -236,6 +249,11 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
                   <h4 className="font-semibold text-kv-dark mb-1">{project.projectName}</h4>
                   <p className="text-xs text-kv-muted mb-3">{project.teamName} · трек {project.track}</p>
                   <p className="text-sm text-kv-text leading-relaxed line-clamp-3">{project.publicSummary}</p>
+                  {project.teamProfile?.helpRequest && (
+                    <div className="mt-3 rounded-xl bg-[#fff7ed] px-3 py-2 text-xs text-[#9a3412]">
+                      <span className="font-semibold">Ищем помощь:</span> {project.teamProfile.helpRequest}
+                    </div>
+                  )}
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <span className="text-kv-muted">{project.progressStage}</span>
@@ -272,6 +290,55 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
               {selectedProject.teamName} · поток {selectedProject.cohort}
             </p>
             <p className="text-kv-text text-sm leading-relaxed mb-5">{selectedProject.publicSummary}</p>
+            {selectedProject.teamProfile && (
+              <div className="rounded-2xl border border-kv-border overflow-hidden mb-5">
+                <div className="h-2" style={{ backgroundColor: selectedProject.teamProfile.themeColor }} />
+                <div className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span
+                      className="w-11 h-11 rounded-xl text-white text-xl flex items-center justify-center"
+                      style={{ backgroundColor: selectedProject.teamProfile.themeColor }}
+                    >
+                      {selectedProject.teamProfile.emblem}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-kv-dark">{selectedProject.teamProfile.motto || selectedProject.teamName}</p>
+                      <p className="text-xs text-kv-muted">Визитная карточка команды</p>
+                    </div>
+                  </div>
+                  {selectedProject.teamProfile.mission && (
+                    <p className="text-sm text-kv-text leading-relaxed mb-4">{selectedProject.teamProfile.mission}</p>
+                  )}
+                  {selectedProject.teamProfile.memberRoles.some((item) => item.role.trim()) && (
+                    <div className="mb-4">
+                      <p className="text-xs font-semibold text-kv-muted uppercase tracking-wide mb-2">Роли в команде</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProject.teamProfile.memberRoles.filter((item) => item.role.trim()).map((item, index) => (
+                          <span key={`${item.role}-${index}`} className="px-3 py-1.5 rounded-full bg-kv-light text-xs text-kv-dark">{item.role}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedProject.teamProfile.competencies.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-semibold text-kv-muted uppercase tracking-wide mb-2">Можем помочь</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProject.teamProfile.competencies.map((competency) => (
+                          <span key={competency} className="px-3 py-1.5 rounded-full text-xs text-white" style={{ backgroundColor: selectedProject.teamProfile?.themeColor }}>
+                            {competency}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedProject.teamProfile.helpRequest && (
+                    <div className="rounded-xl bg-[#fff7ed] px-4 py-3 text-sm text-[#9a3412]">
+                      <span className="font-semibold">Запрос о помощи:</span> {selectedProject.teamProfile.helpRequest}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="rounded-2xl bg-kv-light px-5 py-4 text-sm mb-7">
               <span className="font-semibold text-kv-dark">{selectedProject.progressStage}</span>
               <span className="text-kv-muted"> · {selectedProject.progressPercent}% выполнения</span>

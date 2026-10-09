@@ -173,6 +173,28 @@ function projectProgress(project) {
   return { percent: 50, stage: 'Разработка решения' }
 }
 
+const TEAM_PROFILE_COLORS = new Set(['#2563eb', '#7c3aed', '#0f766e', '#c2410c', '#be185d', '#334155'])
+
+function publicTeamProfile(profile) {
+  if (!profile || typeof profile !== 'object' || Array.isArray(profile)) return undefined
+  return {
+    motto: isNonEmptyString(profile.motto) ? profile.motto.trim().slice(0, 80) : '',
+    mission: isNonEmptyString(profile.mission) ? profile.mission.trim().slice(0, 240) : '',
+    themeColor: TEAM_PROFILE_COLORS.has(profile.themeColor) ? profile.themeColor : '#2563eb',
+    emblem: isNonEmptyString(profile.emblem) ? profile.emblem.trim().slice(0, 2) : '◎',
+    competencies: Array.isArray(profile.competencies)
+      ? profile.competencies.filter(isNonEmptyString).slice(0, 4).map((item) => item.trim().slice(0, 80))
+      : [],
+    helpRequest: isNonEmptyString(profile.helpRequest) ? profile.helpRequest.trim().slice(0, 180) : '',
+    memberRoles: Array.isArray(profile.memberRoles)
+      ? profile.memberRoles
+        .filter((item) => item && isNonEmptyString(item.role))
+        .slice(0, 12)
+        .map((item) => ({ member: '', role: item.role.trim().slice(0, 60) }))
+      : [],
+  }
+}
+
 function communityProject(project) {
   const progress = projectProgress(project)
   return {
@@ -192,6 +214,7 @@ function communityProject(project) {
     cohort: isNonEmptyString(project.communityCohort) ? project.communityCohort : '2026/27',
     isArchive: project.communityArchive === true,
     openToQuestions: project.openToQuestions !== false,
+    teamProfile: publicTeamProfile(project.teamProfile),
   }
 }
 
