@@ -235,9 +235,7 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
                       >
                         {project.teamProfile.emblem}
                       </span>
-                      <span className="text-xs font-medium text-kv-dark line-clamp-2">
-                        {project.teamProfile.motto || project.teamName}
-                      </span>
+                      <span className="text-xs font-medium text-kv-dark line-clamp-2">{project.teamName}</span>
                     </div>
                   )}
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -302,7 +300,7 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
                       {selectedProject.teamProfile.emblem}
                     </span>
                     <div>
-                      <p className="font-semibold text-kv-dark">{selectedProject.teamProfile.motto || selectedProject.teamName}</p>
+                      <p className="font-semibold text-kv-dark">{selectedProject.teamName}</p>
                       <p className="text-xs text-kv-muted">Визитная карточка команды</p>
                     </div>
                   </div>
