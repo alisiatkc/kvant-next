@@ -445,7 +445,7 @@ const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
     isArchive: false,
     openToQuestions: true,
     teamProfile: {
-      motto: 'Исследуем, проверяем, объясняем',
+      motto: 'Исследовательская команда',
       mission: 'Сделать учебное исследование воды понятным и воспроизводимым для школьных команд.',
       themeColor: '#2563eb',
       emblem: '◎',
@@ -470,7 +470,7 @@ const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
     isArchive: true,
     openToQuestions: true,
     teamProfile: {
-      motto: 'Диалог превращаем в действие',
+      motto: 'Команда методических решений',
       mission: 'Помочь учебным группам проводить содержательную и безопасную рефлексию.',
       themeColor: '#7c3aed',
       emblem: '◇',
