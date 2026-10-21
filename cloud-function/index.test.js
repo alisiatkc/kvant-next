@@ -292,17 +292,28 @@ test('research measurement stores a pseudonymous repeated response', async () =>
       participantCode: 'ST-014',
       stage: 'T0',
       previousPractice: true,
+      projectExperience: 'some',
+      digitalConfidence: 4,
       consentConfirmed: true,
       answers: {
         processClarity: 4,
+        goalClarity: 4,
+        feedbackUse: 3,
         selfOrganization: 3,
+        reflection: 4,
+        responsibility: 5,
         teamwork: 5,
         communication: 4,
+        coordination: 4,
+        psychologicalSafety: 5,
         materialsAccess: 3,
         usefulness: 4,
         usability: 5,
         projectResult: 4,
+        autonomySupport: 4,
+        intentionToUse: 5,
       },
+      qualitative: { support: 'План работы', barrier: 'Сроки', suggestion: 'Больше примеров' },
     },
   }, 'POST', teamToken))
   const body = JSON.parse(response.body)
@@ -316,7 +327,10 @@ test('research measurement stores a pseudonymous repeated response', async () =>
   assert.equal(stored.stage, 'T0')
   assert.equal(stored.previousPractice, true)
   assert.equal(stored.consentConfirmed, true)
-  assert.equal(stored.instrumentVersion, '1.0')
+  assert.equal(stored.instrumentVersion, '2.0')
+  assert.equal(stored.projectExperience, 'some')
+  assert.equal(stored.digitalConfidence, 4)
+  assert.equal(stored.qualitative.barrier, 'Сроки')
   assert.equal(stored.participantCode, undefined)
   assert.equal(stored.participantId, body.participantId)
   assert.match(stored.participantId, /^[a-f0-9]{16}$/)
