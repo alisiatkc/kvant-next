@@ -85,9 +85,8 @@ export type CommunityProject = {
 }
 
 export type TeamProfile = {
-  mission: string
   themeColor: string
-  emblem: string
+  icon: string
   competencies: string[]
   helpRequest: string
   memberRoles: Array<{ member: string; role: string }>
@@ -444,9 +443,8 @@ const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
     isArchive: false,
     openToQuestions: true,
     teamProfile: {
-      mission: 'Сделать учебное исследование воды понятным и воспроизводимым для школьных команд.',
       themeColor: '#2563eb',
-      emblem: '◎',
+      icon: 'research',
       competencies: ['Проведение исследования', 'Разработка анкеты'],
       helpRequest: 'Ищем команду для взаимной проверки критериев наблюдения.',
       memberRoles: [{ member: '', role: 'Исследователь' }, { member: '', role: 'Аналитик' }],
@@ -468,9 +466,8 @@ const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
     isArchive: true,
     openToQuestions: true,
     teamProfile: {
-      mission: 'Помочь учебным группам проводить содержательную и безопасную рефлексию.',
       themeColor: '#7c3aed',
-      emblem: '◇',
+      icon: 'method',
       competencies: ['Фасилитация обсуждения', 'Апробация методики'],
       helpRequest: '',
       memberRoles: [{ member: '', role: 'Методист' }, { member: '', role: 'Модератор' }],
@@ -528,9 +525,8 @@ function progressOf(project: SubmittedProject): { percent: number; stage: string
 function publicTeamProfile(profile?: TeamProfile): TeamProfile | undefined {
   if (!profile) return undefined
   return {
-    mission: (profile.mission || '').slice(0, 240),
     themeColor: profile.themeColor || '#2563eb',
-    emblem: (profile.emblem || '◎').slice(0, 2),
+    icon: profile.icon || 'idea',
     competencies: (profile.competencies || []).slice(0, 4).map((item) => item.slice(0, 80)),
     helpRequest: (profile.helpRequest || '').slice(0, 180),
     memberRoles: (profile.memberRoles || [])
