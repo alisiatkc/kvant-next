@@ -37,21 +37,40 @@ export type ResearchStage = 'T0' | 'T1' | 'T2' | 'T3'
 
 export type ResearchAnswers = {
   processClarity: number
+  goalClarity: number
+  feedbackUse: number
   selfOrganization: number
+  reflection: number
+  responsibility: number
   teamwork: number
   communication: number
+  coordination: number
+  psychologicalSafety: number
   materialsAccess: number
   usefulness: number
   usability: number
   projectResult: number
+  autonomySupport: number
+  intentionToUse: number
+}
+
+export type ResearchProjectExperience = 'none' | 'some' | 'extensive'
+
+export type ResearchQualitativeAnswers = {
+  support: string
+  barrier: string
+  suggestion: string
 }
 
 export type ResearchMeasurementInput = {
   participantCode: string
   stage: ResearchStage
   previousPractice?: boolean
+  projectExperience?: ResearchProjectExperience
+  digitalConfidence?: number
   consentConfirmed: boolean
   answers: ResearchAnswers
+  qualitative: ResearchQualitativeAnswers
 }
 
 export type ResearchMeasurement = {
@@ -60,9 +79,12 @@ export type ResearchMeasurement = {
   participantId: string
   stage: ResearchStage
   previousPractice: boolean | null
+  projectExperience: ResearchProjectExperience | null
+  digitalConfidence: number | null
   consentConfirmed: boolean
   instrumentVersion: string
   answers: ResearchAnswers
+  qualitative: ResearchQualitativeAnswers
   createdAt: string
 }
 
@@ -404,9 +426,12 @@ export async function submitResearchMeasurement(measurement: ResearchMeasurement
     participantId,
     stage: measurement.stage,
     previousPractice: measurement.stage === 'T0' ? measurement.previousPractice ?? false : null,
+    projectExperience: measurement.stage === 'T0' ? measurement.projectExperience ?? 'none' : null,
+    digitalConfidence: measurement.stage === 'T0' ? measurement.digitalConfidence ?? 1 : null,
     consentConfirmed: true,
-    instrumentVersion: '1.0-demo',
+    instrumentVersion: '2.0-demo',
     answers: measurement.answers,
+    qualitative: measurement.qualitative,
     createdAt: new Date().toISOString(),
   }
   const existing: ResearchMeasurement[] = JSON.parse(localStorage.getItem('researchMeasurements') || '[]')

@@ -22,6 +22,8 @@ import {
   type TeamWorkspace,
   type ResearchStage,
   type ResearchAnswers,
+  type ResearchProjectExperience,
+  type ResearchQualitativeAnswers,
   type TeamProfile,
   submitProject,
   getSubmittedProjects,
@@ -77,26 +79,100 @@ const RESEARCH_STAGE_CFG: Array<{ id: ResearchStage; title: string; description:
   { id: 'T3', title: 'После интенсива', description: 'Итоговое измерение после полного проектного цикла' },
 ]
 
-const RESEARCH_QUESTIONS: Array<{ key: keyof ResearchAnswers; label: string }> = [
-  { key: 'processClarity', label: 'Мне понятны этапы и последовательность работы над проектом' },
-  { key: 'selfOrganization', label: 'Мне удаётся самостоятельно планировать и контролировать свою работу' },
-  { key: 'teamwork', label: 'В команде понятно распределены роли и ответственность' },
-  { key: 'communication', label: 'Мне удобно взаимодействовать с командой и куратором' },
-  { key: 'materialsAccess', label: 'Мне легко находить необходимые материалы и результаты работы' },
-  { key: 'usefulness', label: 'Среда помогает мне продвигаться в работе над проектом' },
-  { key: 'usability', label: 'Интерфейс среды понятен и удобен' },
-  { key: 'projectResult', label: 'Я понимаю, каким должен быть итоговый результат проекта' },
+const RESEARCH_SCALES: Array<{
+  id: string
+  title: string
+  description: string
+  questions: Array<{ key: keyof ResearchAnswers; label: string }>
+}> = [
+  {
+    id: 'navigation',
+    title: 'Организация проектного процесса',
+    description: 'Понятность маршрута, целей, результата и обратной связи.',
+    questions: [
+      { key: 'processClarity', label: 'Мне понятны этапы и последовательность работы над проектом' },
+      { key: 'goalClarity', label: 'Я понимаю текущую цель команды и критерии её достижения' },
+      { key: 'projectResult', label: 'Я понимаю, каким должен быть итоговый результат проекта' },
+      { key: 'feedbackUse', label: 'Полученная обратная связь помогает нам принимать решения о дальнейшей работе' },
+    ],
+  },
+  {
+    id: 'agency',
+    title: 'Самоорганизация и субъектность',
+    description: 'Планирование, ответственность и осмысление собственного продвижения.',
+    questions: [
+      { key: 'selfOrganization', label: 'Мне удаётся самостоятельно планировать и контролировать свою работу' },
+      { key: 'responsibility', label: 'Я понимаю свою ответственность за общий результат команды' },
+      { key: 'reflection', label: 'Я могу оценить, что уже получилось и что необходимо изменить' },
+      { key: 'autonomySupport', label: 'Среда помогает мне действовать самостоятельно, а не только выполнять указания' },
+    ],
+  },
+  {
+    id: 'team',
+    title: 'Командное взаимодействие',
+    description: 'Координация, коммуникация и безопасное обсуждение затруднений.',
+    questions: [
+      { key: 'teamwork', label: 'В команде понятно распределены роли и ответственность' },
+      { key: 'communication', label: 'Мне удобно взаимодействовать с командой и куратором' },
+      { key: 'coordination', label: 'Мы видим вклад друг друга и согласуем совместные действия' },
+      { key: 'psychologicalSafety', label: 'Я могу открыто сообщить команде о затруднении или ошибке' },
+    ],
+  },
+  {
+    id: 'environment',
+    title: 'Принятие цифровой среды',
+    description: 'Доступность материалов, удобство, полезность и намерение продолжать работу.',
+    questions: [
+      { key: 'materialsAccess', label: 'Мне легко находить необходимые материалы и результаты работы' },
+      { key: 'usability', label: 'Интерфейс среды понятен и удобен' },
+      { key: 'usefulness', label: 'Среда помогает мне продвигаться в работе над проектом' },
+      { key: 'intentionToUse', label: 'Я хотел(а) бы использовать такую среду в следующих проектах' },
+    ],
+  },
 ]
 
 const EMPTY_RESEARCH_ANSWERS: ResearchAnswers = {
   processClarity: 0,
+  goalClarity: 0,
+  feedbackUse: 0,
   selfOrganization: 0,
+  reflection: 0,
+  responsibility: 0,
   teamwork: 0,
   communication: 0,
+  coordination: 0,
+  psychologicalSafety: 0,
   materialsAccess: 0,
   usefulness: 0,
   usability: 0,
   projectResult: 0,
+  autonomySupport: 0,
+  intentionToUse: 0,
+}
+
+const EMPTY_RESEARCH_QUALITATIVE: ResearchQualitativeAnswers = { support: '', barrier: '', suggestion: '' }
+
+const RESEARCH_QUALITATIVE_PROMPTS: Record<ResearchStage, ResearchQualitativeAnswers> = {
+  T0: {
+    support: 'Что, по вашему ожиданию, больше всего поможет в работе над проектом?',
+    barrier: 'Что сейчас кажется наиболее сложным или непонятным?',
+    suggestion: 'Какой поддержки вы ожидаете от цифровой среды?',
+  },
+  T1: {
+    support: 'Что в среде уже помогло вашей проектной работе?',
+    barrier: 'Какое затруднение сильнее всего мешало продвижению?',
+    suggestion: 'Что следует изменить перед следующим циклом работы?',
+  },
+  T2: {
+    support: 'Какой инструмент или способ работы оказался наиболее полезным?',
+    barrier: 'Где команда теряет время или информацию?',
+    suggestion: 'Какая поддержка особенно нужна перед интенсивом?',
+  },
+  T3: {
+    support: 'Что в среде внесло наибольший вклад в итоговый результат?',
+    barrier: 'Что осталось неудобным или недостаточно полезным?',
+    suggestion: 'Что обязательно нужно улучшить для следующего потока студентов?',
+  },
 }
 
 const EMPTY_TEAM_PROFILE: TeamProfile = {
@@ -298,7 +374,10 @@ export default function CabinetPage() {
   const [researchStage, setResearchStage] = useState<ResearchStage>('T0')
   const [participantCode, setParticipantCode] = useState('')
   const [previousPractice, setPreviousPractice] = useState<boolean | null>(null)
+  const [projectExperience, setProjectExperience] = useState<ResearchProjectExperience | null>(null)
+  const [digitalConfidence, setDigitalConfidence] = useState(0)
   const [researchAnswers, setResearchAnswers] = useState<ResearchAnswers>(EMPTY_RESEARCH_ANSWERS)
+  const [researchQualitative, setResearchQualitative] = useState<ResearchQualitativeAnswers>(EMPTY_RESEARCH_QUALITATIVE)
   const [researchConsent, setResearchConsent] = useState(false)
   const [researchSaving, setResearchSaving] = useState(false)
   const [researchError, setResearchError] = useState('')
@@ -692,8 +771,12 @@ export default function CabinetPage() {
       setResearchError('Укажите, проходили ли вы ранее практику без этой среды.')
       return
     }
+    if (researchStage === 'T0' && (!projectExperience || digitalConfidence < 1 || digitalConfidence > 5)) {
+      setResearchError('Заполните исходный опыт проектной работы и уверенность в использовании цифровых инструментов.')
+      return
+    }
     if (Object.values(researchAnswers).some((value) => value < 1 || value > 5)) {
-      setResearchError('Ответьте на все восемь утверждений по шкале от 1 до 5.')
+      setResearchError('Ответьте на все утверждения по шкале от 1 до 5.')
       return
     }
     if (!researchConsent) {
@@ -707,12 +790,18 @@ export default function CabinetPage() {
         participantCode: participantCode.trim(),
         stage: researchStage,
         previousPractice: researchStage === 'T0' ? previousPractice ?? undefined : undefined,
+        projectExperience: researchStage === 'T0' ? projectExperience ?? undefined : undefined,
+        digitalConfidence: researchStage === 'T0' ? digitalConfidence : undefined,
         consentConfirmed: researchConsent,
         answers: researchAnswers,
+        qualitative: researchQualitative,
       })
       setResearchReceipt(`Ответ ${researchStage} сохранён · код записи ${result.participantId.slice(-6).toUpperCase()}`)
       setResearchAnswers(EMPTY_RESEARCH_ANSWERS)
+      setResearchQualitative(EMPTY_RESEARCH_QUALITATIVE)
       setPreviousPractice(null)
+      setProjectExperience(null)
+      setDigitalConfidence(0)
       setResearchConsent(false)
     } catch (error) {
       setResearchError(error instanceof Error ? error.message : 'Не удалось сохранить ответы')
@@ -1572,15 +1661,28 @@ export default function CabinetPage() {
                   <div className="bg-white rounded-[2.5rem] p-8">
                     <div className="mb-7">
                       <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Апробация цифровой среды</span>
-                      <h3 className="text-[1.3rem] font-semibold mt-1 mb-2">Повторное измерение T0–T3</h3>
+                      <h3 className="text-[1.3rem] font-semibold mt-1 mb-2">Исследование опыта проектной работы T0–T3</h3>
                       <p className="text-kv-muted text-sm leading-relaxed max-w-[760px]">
-                        Используйте один и тот же обезличенный код на всех этапах. Не вводите фамилию, имя, номер телефона или другие персональные данные. Индивидуальные ответы не показываются команде.
+                        Анкета занимает 5–7 минут. На каждом этапе используются одинаковые шкалы, поэтому можно увидеть изменение опыта проектной работы, а не только разовое впечатление. Используйте один и тот же обезличенный код и не вводите персональные данные.
                       </p>
                       {researchStage === 'T0' && (
                         <p className="text-xs text-kv-blue mt-3 leading-relaxed max-w-[760px]">
                           T0 заполняется после одинакового для всех краткого знакомства с интерфейсом, но до начала проектной работы. Так участник уже может оценить понятность среды, не имея опыта её применения в проекте.
                         </p>
                       )}
+                    </div>
+
+                    <div className="grid min-[760px]:grid-cols-3 gap-3 mb-7">
+                      {[
+                        { title: 'Что измеряется', text: 'Организация процесса, субъектность, командное взаимодействие и принятие среды.' },
+                        { title: 'Как сравнивается', text: 'Один код связывает T0–T3 без фамилии и позволяет анализировать индивидуальную динамику.' },
+                        { title: 'Как используются данные', text: 'Только в обобщённом виде для улучшения среды и материалов диссертационного исследования.' },
+                      ].map((item) => (
+                        <div key={item.title} className="rounded-2xl bg-kv-light p-5">
+                          <h4 className="text-sm font-semibold mb-1.5">{item.title}</h4>
+                          <p className="text-xs text-kv-muted leading-relaxed">{item.text}</p>
+                        </div>
+                      ))}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 max-[720px]:grid-cols-1 mb-7">
@@ -1602,40 +1704,89 @@ export default function CabinetPage() {
                     </div>
 
                     {researchStage === 'T0' && (
-                      <fieldset className="mb-7 border-none p-0">
-                        <legend className="font-medium text-[#3f4a6b] text-sm mb-3">Проходили ли вы ранее практику без этой цифровой среды?</legend>
-                        <div className="flex gap-3 flex-wrap">
-                          {[
-                            { value: true, label: 'Да' },
-                            { value: false, label: 'Нет' },
-                          ].map((option) => (
-                            <button key={option.label} type="button"
-                              className={`px-6 py-2.5 rounded-full border text-sm cursor-pointer ${previousPractice === option.value ? 'bg-kv-blue border-kv-blue text-white' : 'bg-white border-kv-border text-kv-dark'}`}
-                              onClick={() => setPreviousPractice(option.value)}>{option.label}</button>
-                          ))}
+                      <div className="mb-8 rounded-[1.75rem] border border-kv-border p-6 space-y-6">
+                        <div>
+                          <h4 className="font-semibold text-sm">Исходные условия</h4>
+                          <p className="text-xs text-kv-muted mt-1">Заполняются только на T0 и используются для корректного описания выборки.</p>
                         </div>
-                      </fieldset>
-                    )}
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between gap-4 text-xs text-kv-muted px-1">
-                        <span>Оцените каждое утверждение</span>
-                        <span>1 — не согласен · 5 — полностью согласен</span>
-                      </div>
-                      {RESEARCH_QUESTIONS.map(({ key, label }, index) => (
-                        <div key={key} className="border border-kv-border rounded-[1.5rem] p-5">
-                          <p className="text-sm font-medium leading-relaxed mb-4"><span className="text-kv-muted mr-2">{index + 1}.</span>{label}</p>
-                          <div className="flex gap-2" role="radiogroup" aria-label={label}>
-                            {[1, 2, 3, 4, 5].map((value) => (
-                              <button key={value} type="button" role="radio" aria-checked={researchAnswers[key] === value}
-                                className={`w-10 h-10 rounded-full border text-sm font-semibold cursor-pointer transition-colors ${researchAnswers[key] === value ? 'bg-kv-blue border-kv-blue text-white' : 'bg-white border-kv-border text-kv-text hover:border-kv-blue'}`}
-                                onClick={() => setResearchAnswers((answers) => ({ ...answers, [key]: value }))}>
-                                {value}
-                              </button>
+                        <fieldset className="border-none p-0">
+                          <legend className="font-medium text-[#3f4a6b] text-sm mb-3">Проходили ли вы ранее практику без этой цифровой среды?</legend>
+                          <div className="flex gap-3 flex-wrap">
+                            {[{ value: true, label: 'Да' }, { value: false, label: 'Нет' }].map((option) => (
+                              <button key={option.label} type="button"
+                                className={`px-6 py-2.5 rounded-full border text-sm cursor-pointer ${previousPractice === option.value ? 'bg-kv-blue border-kv-blue text-white' : 'bg-white border-kv-border text-kv-dark'}`}
+                                onClick={() => setPreviousPractice(option.value)}>{option.label}</button>
                             ))}
                           </div>
-                        </div>
+                        </fieldset>
+                        <fieldset className="border-none p-0">
+                          <legend className="font-medium text-[#3f4a6b] text-sm mb-3">Опыт проектной работы до начала практики</legend>
+                          <div className="flex gap-3 flex-wrap">
+                            {[
+                              { value: 'none' as const, label: 'Не было' },
+                              { value: 'some' as const, label: 'Был 1–2 раза' },
+                              { value: 'extensive' as const, label: 'Регулярный опыт' },
+                            ].map((option) => (
+                              <button key={option.value} type="button"
+                                className={`px-5 py-2.5 rounded-full border text-sm cursor-pointer ${projectExperience === option.value ? 'bg-kv-blue border-kv-blue text-white' : 'bg-white border-kv-border text-kv-dark'}`}
+                                onClick={() => setProjectExperience(option.value)}>{option.label}</button>
+                            ))}
+                          </div>
+                        </fieldset>
+                        <fieldset className="border-none p-0">
+                          <legend className="font-medium text-[#3f4a6b] text-sm mb-3">Насколько уверенно вы используете цифровые инструменты для учёбы?</legend>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {[1, 2, 3, 4, 5].map((value) => (
+                              <button key={value} type="button" className={`w-10 h-10 rounded-full border text-sm font-semibold cursor-pointer ${digitalConfidence === value ? 'bg-kv-blue border-kv-blue text-white' : 'bg-white border-kv-border text-kv-text'}`}
+                                onClick={() => setDigitalConfidence(value)}>{value}</button>
+                            ))}
+                            <span className="text-xs text-kv-muted ml-2">1 — неуверенно · 5 — очень уверенно</span>
+                          </div>
+                        </fieldset>
+                      </div>
+                    )}
+
+                    <div className="space-y-7">
+                      <div className="flex items-center justify-between gap-4 text-xs text-kv-muted px-1">
+                        <span>Основная анкета · 16 утверждений</span>
+                        <span>1 — не согласен · 5 — полностью согласен</span>
+                      </div>
+                      {RESEARCH_SCALES.map((scale, scaleIndex) => (
+                        <section key={scale.id} className="rounded-[1.75rem] border border-kv-border overflow-hidden">
+                          <div className="bg-kv-light px-6 py-4">
+                            <h4 className="text-sm font-semibold">{scaleIndex + 1}. {scale.title}</h4>
+                            <p className="text-xs text-kv-muted mt-1">{scale.description}</p>
+                          </div>
+                          <div className="divide-y divide-kv-border">
+                            {scale.questions.map(({ key, label }, questionIndex) => (
+                              <div key={key} className="p-5">
+                                <p className="text-sm font-medium leading-relaxed mb-4"><span className="text-kv-muted mr-2">{scaleIndex * 4 + questionIndex + 1}.</span>{label}</p>
+                                <div className="flex gap-2" role="radiogroup" aria-label={label}>
+                                  {[1, 2, 3, 4, 5].map((value) => (
+                                    <button key={value} type="button" role="radio" aria-checked={researchAnswers[key] === value}
+                                      className={`w-10 h-10 rounded-full border text-sm font-semibold cursor-pointer transition-colors ${researchAnswers[key] === value ? 'bg-kv-blue border-kv-blue text-white' : 'bg-white border-kv-border text-kv-text hover:border-kv-blue'}`}
+                                      onClick={() => setResearchAnswers((answers) => ({ ...answers, [key]: value }))}>{value}</button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
                       ))}
+                    </div>
+
+                    <div className="mt-8 rounded-[1.75rem] border border-kv-border p-6">
+                      <h4 className="font-semibold text-sm mb-1">Короткая рефлексия</h4>
+                      <p className="text-xs text-kv-muted mb-5">Не указывайте имена и другие персональные сведения. Эти ответы помогут объяснить числовую динамику.</p>
+                      <div className="space-y-4">
+                        {(Object.keys(RESEARCH_QUALITATIVE_PROMPTS[researchStage]) as Array<keyof ResearchQualitativeAnswers>).map((key) => (
+                          <label key={key} className="block text-sm font-medium text-[#3f4a6b]">
+                            {RESEARCH_QUALITATIVE_PROMPTS[researchStage][key]}
+                            <textarea className="textarea-kv mt-2" rows={2} maxLength={600} value={researchQualitative[key]}
+                              onChange={(e) => setResearchQualitative((current) => ({ ...current, [key]: e.target.value }))} />
+                          </label>
+                        ))}
+                      </div>
                     </div>
 
                     <label className="flex items-start gap-3 mt-7 p-5 bg-kv-light rounded-2xl cursor-pointer">

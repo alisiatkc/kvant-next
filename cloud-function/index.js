@@ -49,17 +49,27 @@ const MAX_WORKSPACE_BYTES = 350000
 const MAX_PROJECT_BYTES = 200000
 const SESSION_TTL_SECONDS = 12 * 60 * 60
 const RESEARCH_STAGES = new Set(['T0', 'T1', 'T2', 'T3'])
-const RESEARCH_INSTRUMENT_VERSION = '1.0'
+const RESEARCH_INSTRUMENT_VERSION = '2.0'
 const RESEARCH_FIELDS = [
   'processClarity',
+  'goalClarity',
+  'feedbackUse',
   'selfOrganization',
+  'reflection',
+  'responsibility',
   'teamwork',
   'communication',
+  'coordination',
+  'psychologicalSafety',
   'materialsAccess',
   'usefulness',
   'usability',
   'projectResult',
+  'autonomySupport',
+  'intentionToUse',
 ]
+const RESEARCH_EXPERIENCE = new Set(['none', 'some', 'extensive'])
+const RESEARCH_QUALITATIVE_FIELDS = ['support', 'barrier', 'suggestion']
 const CATALOG_SUBJECTS = new Set([
   'math',
   'bio',
@@ -126,6 +136,18 @@ function validateResearchMeasurement(measurement) {
   }
   if (measurement.stage === 'T0' && typeof measurement.previousPractice !== 'boolean') {
     return 'previousPractice required for T0'
+  }
+  if (measurement.stage === 'T0' && !RESEARCH_EXPERIENCE.has(measurement.projectExperience)) {
+    return 'projectExperience required for T0'
+  }
+  if (measurement.stage === 'T0' && (!Number.isInteger(measurement.digitalConfidence) || measurement.digitalConfidence < 1 || measurement.digitalConfidence > 5)) {
+    return 'digitalConfidence must be an integer from 1 to 5 for T0'
+  }
+  if (!measurement.qualitative || typeof measurement.qualitative !== 'object' || Array.isArray(measurement.qualitative)) {
+    return 'qualitative answers required'
+  }
+  if (RESEARCH_QUALITATIVE_FIELDS.some((field) => typeof measurement.qualitative[field] !== 'string' || measurement.qualitative[field].length > 600)) {
+    return 'qualitative answers must be strings up to 600 characters'
   }
   return null
 }
@@ -532,9 +554,12 @@ module.exports.handler = async function (event) {
         participantId,
         stage: measurement.stage,
         previousPractice: measurement.stage === 'T0' ? measurement.previousPractice : null,
+        projectExperience: measurement.stage === 'T0' ? measurement.projectExperience : null,
+        digitalConfidence: measurement.stage === 'T0' ? measurement.digitalConfidence : null,
         consentConfirmed: true,
         instrumentVersion: RESEARCH_INSTRUMENT_VERSION,
         answers: Object.fromEntries(RESEARCH_FIELDS.map((field) => [field, measurement.answers[field]])),
+        qualitative: Object.fromEntries(RESEARCH_QUALITATIVE_FIELDS.map((field) => [field, measurement.qualitative[field].trim()])),
         createdAt,
       }
 
