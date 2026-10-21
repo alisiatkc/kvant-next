@@ -82,13 +82,28 @@ type ActiveTab = 'dashboard' | 'inbox' | 'all' | 'peers' | 'research' | 'catalog
 
 const RESEARCH_LABELS: Array<{ key: keyof ResearchAnswers; short: string }> = [
   { key: 'processClarity', short: 'Понятность процесса' },
+  { key: 'goalClarity', short: 'Понятность текущих целей' },
+  { key: 'projectResult', short: 'Понимание результата' },
+  { key: 'feedbackUse', short: 'Использование обратной связи' },
   { key: 'selfOrganization', short: 'Самоорганизация' },
+  { key: 'responsibility', short: 'Ответственность' },
+  { key: 'reflection', short: 'Рефлексия продвижения' },
+  { key: 'autonomySupport', short: 'Поддержка самостоятельности' },
   { key: 'teamwork', short: 'Командная работа' },
   { key: 'communication', short: 'Коммуникация' },
+  { key: 'coordination', short: 'Координация действий' },
+  { key: 'psychologicalSafety', short: 'Безопасность обсуждения' },
   { key: 'materialsAccess', short: 'Доступ к материалам' },
-  { key: 'usefulness', short: 'Полезность среды' },
   { key: 'usability', short: 'Удобство интерфейса' },
-  { key: 'projectResult', short: 'Понимание результата' },
+  { key: 'usefulness', short: 'Полезность среды' },
+  { key: 'intentionToUse', short: 'Намерение использовать' },
+]
+
+const RESEARCH_SCALES: Array<{ label: string; keys: Array<keyof ResearchAnswers> }> = [
+  { label: 'Организация процесса', keys: ['processClarity', 'goalClarity', 'projectResult', 'feedbackUse'] },
+  { label: 'Самоорганизация и субъектность', keys: ['selfOrganization', 'responsibility', 'reflection', 'autonomySupport'] },
+  { label: 'Командное взаимодействие', keys: ['teamwork', 'communication', 'coordination', 'psychologicalSafety'] },
+  { label: 'Принятие цифровой среды', keys: ['materialsAccess', 'usability', 'usefulness', 'intentionToUse'] },
 ]
 
 const RESEARCH_STAGES = ['T0', 'T1', 'T2', 'T3'] as const
@@ -239,8 +254,10 @@ export default function CuratorPage() {
 
   const exportResearchCsv = () => {
     const headers = [
-      'teamCode', 'participantId', 'stage', 'previousPractice', 'consentConfirmed', 'instrumentVersion', 'createdAt',
+      'teamCode', 'participantId', 'stage', 'previousPractice', 'projectExperience', 'digitalConfidence',
+      'consentConfirmed', 'instrumentVersion', 'createdAt',
       ...RESEARCH_LABELS.map(({ key }) => key),
+      'qualitativeSupport', 'qualitativeBarrier', 'qualitativeSuggestion',
     ]
     const escapeCell = (value: string | number | boolean | null) => `"${String(value ?? '').replace(/"/g, '""')}"`
     const rows = measurements.map((item) => [
@@ -248,10 +265,15 @@ export default function CuratorPage() {
       item.participantId,
       item.stage,
       item.previousPractice,
+      item.projectExperience,
+      item.digitalConfidence,
       item.consentConfirmed,
       item.instrumentVersion,
       item.createdAt,
-      ...RESEARCH_LABELS.map(({ key }) => item.answers[key]),
+      ...RESEARCH_LABELS.map(({ key }) => item.answers[key] ?? ''),
+      item.qualitative?.support ?? '',
+      item.qualitative?.barrier ?? '',
+      item.qualitative?.suggestion ?? '',
     ])
     const csv = `\uFEFF${[headers, ...rows].map((row) => row.map(escapeCell).join(';')).join('\n')}`
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
@@ -615,12 +637,21 @@ export default function CuratorPage() {
                     <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Исследовательская апробация</span>
                     <h2 className="text-[1.4rem] font-semibold mt-1 mb-2">Сводка повторных измерений T0–T3</h2>
                     <p className="text-kv-muted text-sm max-w-[700px] leading-relaxed">
-                      Отображаются только агрегированные показатели. В базе и выгрузке используются псевдонимные коды, а не имена студентов.
+                      Лонгитюдный дизайн с единым ядром из 16 утверждений. Отображаются агрегированные показатели, а псевдонимный код позволяет сопоставлять этапы одного участника без хранения имени.
                     </p>
                   </div>
                   <button className="btn-blue disabled:opacity-40 disabled:cursor-not-allowed" disabled={measurements.length === 0} onClick={exportResearchCsv}>
                     <Download className="w-4 h-4" /> Выгрузить CSV
                   </button>
+                </div>
+
+                <div className="grid min-[760px]:grid-cols-4 gap-3 mb-8">
+                  {RESEARCH_SCALES.map((scale) => (
+                    <div key={scale.label} className="rounded-2xl bg-kv-light p-5">
+                      <div className="text-xs font-semibold text-kv-dark leading-snug">{scale.label}</div>
+                      <div className="text-[0.68rem] text-kv-muted mt-2">4 показателя · шкала 1–5</div>
+                    </div>
+                  ))}
                 </div>
 
                 {researchLoadError && (
@@ -640,7 +671,9 @@ export default function CuratorPage() {
                     <div className="grid grid-cols-2 min-[900px]:grid-cols-4 gap-4 mb-8">
                       {RESEARCH_STAGES.map((stage) => {
                         const stageItems = measurements.filter((item) => item.stage === stage)
-                        const values = stageItems.flatMap((item) => RESEARCH_LABELS.map(({ key }) => item.answers[key]))
+                        const values = stageItems
+                          .flatMap((item) => RESEARCH_LABELS.map(({ key }) => item.answers[key]))
+                          .filter((value): value is number => typeof value === 'number')
                         const average = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
                         return (
                           <div key={stage} className="rounded-[1.75rem] border border-kv-border bg-[#f9fbfe] p-6">
@@ -679,6 +712,68 @@ export default function CuratorPage() {
                       })()}
                     </div>
 
+                    <div className="mb-8">
+                      <div className="flex items-end justify-between gap-4 mb-3 flex-wrap">
+                        <div>
+                          <h3 className="font-semibold">Динамика по исследовательским шкалам</h3>
+                          <p className="text-xs text-kv-muted mt-1">Δ T0–T3 рассчитывается только по участникам, имеющим оба измерения.</p>
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto border border-kv-border rounded-[1.75rem]">
+                        <table className="w-full min-w-[760px] text-sm">
+                          <thead className="bg-kv-light text-kv-text">
+                            <tr>
+                              <th className="text-left px-5 py-4 font-medium">Шкала</th>
+                              {RESEARCH_STAGES.map((stage) => <th key={stage} className="text-center px-4 py-4 font-semibold">{stage}</th>)}
+                              <th className="text-center px-4 py-4 font-semibold">Парная Δ</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {RESEARCH_SCALES.map((scale) => {
+                              const stageAverage = (stage: (typeof RESEARCH_STAGES)[number]) => {
+                                const values = measurements
+                                  .filter((item) => item.stage === stage)
+                                  .flatMap((item) => scale.keys.map((key) => item.answers[key]))
+                                  .filter((value): value is number => typeof value === 'number')
+                                return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
+                              }
+                              const byParticipant = new Map<string, Partial<Record<(typeof RESEARCH_STAGES)[number], (typeof measurements)[number]>>>()
+                              measurements.forEach((item) => {
+                                const id = `${item.teamCode}:${item.participantId}`
+                                const stages = byParticipant.get(id) || {}
+                                stages[item.stage] = item
+                                byParticipant.set(id, stages)
+                              })
+                              const pairedDeltas = Array.from(byParticipant.values()).flatMap((stages) => {
+                                if (!stages.T0 || !stages.T3) return []
+                                const mean = (item: (typeof measurements)[number]) => {
+                                  const values = scale.keys.map((key) => item.answers[key]).filter((value): value is number => typeof value === 'number')
+                                  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
+                                }
+                                const t0 = mean(stages.T0)
+                                const t3 = mean(stages.T3)
+                                return t0 === null || t3 === null ? [] : [t3 - t0]
+                              })
+                              const pairedDelta = pairedDeltas.length ? pairedDeltas.reduce((sum, value) => sum + value, 0) / pairedDeltas.length : null
+                              return (
+                                <tr key={scale.label} className="border-t border-kv-border">
+                                  <td className="px-5 py-4 text-kv-text font-medium">{scale.label}</td>
+                                  {RESEARCH_STAGES.map((stage) => {
+                                    const value = stageAverage(stage)
+                                    return <td key={stage} className="text-center px-4 py-4 font-semibold text-kv-blue">{value === null ? '—' : value.toFixed(2)}</td>
+                                  })}
+                                  <td className={`text-center px-4 py-4 font-bold ${pairedDelta !== null && pairedDelta > 0 ? 'text-[#16a34a]' : 'text-kv-text'}`}>
+                                    {pairedDelta === null ? '—' : `${pairedDelta > 0 ? '+' : ''}${pairedDelta.toFixed(2)}`} {pairedDeltas.length ? <span className="block text-[0.65rem] font-normal text-kv-muted">n={pairedDeltas.length}</span> : null}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <h3 className="font-semibold mb-3">Средние значения отдельных показателей</h3>
                     <div className="overflow-x-auto border border-kv-border rounded-[1.75rem]">
                       <table className="w-full min-w-[760px] text-sm">
                         <thead className="bg-kv-light text-kv-text">
@@ -692,7 +787,10 @@ export default function CuratorPage() {
                             <tr key={key} className="border-t border-kv-border">
                               <td className="px-5 py-4 text-kv-text">{short}</td>
                               {RESEARCH_STAGES.map((stage) => {
-                                const values = measurements.filter((item) => item.stage === stage).map((item) => item.answers[key])
+                                const values = measurements
+                                  .filter((item) => item.stage === stage)
+                                  .map((item) => item.answers[key])
+                                  .filter((value): value is number => typeof value === 'number')
                                 const average = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
                                 return <td key={stage} className="text-center px-4 py-4 font-semibold text-kv-blue">{average === null ? '—' : average.toFixed(2)}</td>
                               })}
