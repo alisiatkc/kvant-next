@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Eye, HandHeart, ShieldCheck, UsersRound } from 'lucide-react'
 import type { TeamProfile } from '@/lib/storage'
+import TeamProfileIcon, { TEAM_ICON_OPTIONS } from '@/components/TeamProfileIcon'
 
 type Props = {
   teamName: string
@@ -11,7 +12,6 @@ type Props = {
 }
 
 const COLORS = ['#2563eb', '#7c3aed', '#0f766e', '#c2410c', '#be185d', '#334155']
-const EMBLEMS = ['◎', '◇', '△', '✦', '⬡', '○']
 const COMPETENCIES = [
   'Проектирование',
   'Проведение исследования',
@@ -69,32 +69,22 @@ export default function TeamProfileEditor({ teamName, authors, value, onChange }
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-kv-dark mb-2">Эмблема</label>
+              <label className="block text-sm font-semibold text-kv-dark mb-2">Иконка команды</label>
               <div className="flex gap-2 flex-wrap">
-                {EMBLEMS.map((emblem) => (
+                {TEAM_ICON_OPTIONS.map(({ id, label }) => (
                   <button
-                    key={emblem}
+                    key={id}
                     type="button"
-                    className={`w-11 h-11 rounded-xl text-xl cursor-pointer transition-all ${value.emblem === emblem ? 'text-white shadow-sm' : 'bg-kv-light text-kv-dark border border-kv-border'}`}
-                    style={value.emblem === emblem ? { backgroundColor: value.themeColor } : undefined}
-                    onClick={() => onChange({ ...value, emblem })}
+                    aria-label={label}
+                    title={label}
+                    className={`w-12 h-12 rounded-xl cursor-pointer transition-all flex items-center justify-center ${value.icon === id ? 'text-white shadow-sm' : 'bg-kv-light text-kv-dark border border-kv-border'}`}
+                    style={value.icon === id ? { backgroundColor: value.themeColor } : undefined}
+                    onClick={() => onChange({ ...value, icon: id })}
                   >
-                    {emblem}
+                    <TeamProfileIcon icon={id} className="w-5 h-5" />
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-kv-dark mb-2">Миссия команды</label>
-              <textarea
-                className="textarea-kv w-full min-h-[110px]"
-                maxLength={240}
-                value={value.mission}
-                onChange={(event) => onChange({ ...value, mission: event.target.value })}
-                placeholder="Какую полезную для образования задачу решает команда?"
-              />
-              <p className="text-xs text-kv-muted mt-1">{value.mission.length}/240</p>
             </div>
           </div>
 
@@ -103,14 +93,13 @@ export default function TeamProfileEditor({ teamName, authors, value, onChange }
             <div className="p-6">
               <div className="flex items-center gap-4 mb-5">
                 <div className="w-14 h-14 rounded-2xl text-white text-2xl flex items-center justify-center" style={{ backgroundColor: value.themeColor }}>
-                  {value.emblem}
+                  <TeamProfileIcon icon={value.icon} className="w-6 h-6" />
                 </div>
                 <div>
                   <p className="text-xs text-kv-muted uppercase tracking-wide">Публичная карточка</p>
                   <h4 className="font-semibold text-lg">{teamName || 'Название команды'}</h4>
                 </div>
               </div>
-              <p className="text-sm text-kv-muted leading-relaxed">{value.mission || 'Кратко сформулируйте миссию команды.'}</p>
               <div className="mt-5 pt-5 border-t border-kv-border flex items-start gap-2 text-xs text-kv-muted">
                 <Eye className="w-4 h-4 flex-shrink-0" /> Так профиль увидят другие команды.
               </div>
@@ -192,7 +181,7 @@ export default function TeamProfileEditor({ teamName, authors, value, onChange }
       <div className="rounded-[2rem] bg-[#eef3ff] border border-[#2b3b6b20] px-6 py-5 flex items-start gap-3">
         <ShieldCheck className="w-5 h-5 text-kv-blue mt-0.5 flex-shrink-0" />
         <p className="text-sm text-kv-text leading-relaxed">
-          Профиль сохраняется автоматически. Для публичной карточки используются только миссия, роли без ФИО, компетенции и запрос о помощи.
+          Профиль сохраняется автоматически. Для публичной карточки используются только цвет, иконка, роли без ФИО, компетенции и запрос о помощи.
         </p>
       </div>
     </div>

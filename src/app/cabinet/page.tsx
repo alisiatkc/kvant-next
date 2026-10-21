@@ -100,9 +100,8 @@ const EMPTY_RESEARCH_ANSWERS: ResearchAnswers = {
 }
 
 const EMPTY_TEAM_PROFILE: TeamProfile = {
-  mission: '',
   themeColor: '#2563eb',
-  emblem: '◎',
+  icon: 'idea',
   competencies: [],
   helpRequest: '',
   memberRoles: [],

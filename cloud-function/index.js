@@ -174,13 +174,13 @@ function projectProgress(project) {
 }
 
 const TEAM_PROFILE_COLORS = new Set(['#2563eb', '#7c3aed', '#0f766e', '#c2410c', '#be185d', '#334155'])
+const TEAM_PROFILE_ICONS = new Set(['idea', 'research', 'digital', 'design', 'method', 'team'])
 
 function publicTeamProfile(profile) {
   if (!profile || typeof profile !== 'object' || Array.isArray(profile)) return undefined
   return {
-    mission: isNonEmptyString(profile.mission) ? profile.mission.trim().slice(0, 240) : '',
     themeColor: TEAM_PROFILE_COLORS.has(profile.themeColor) ? profile.themeColor : '#2563eb',
-    emblem: isNonEmptyString(profile.emblem) ? profile.emblem.trim().slice(0, 2) : '◎',
+    icon: TEAM_PROFILE_ICONS.has(profile.icon) ? profile.icon : 'idea',
     competencies: Array.isArray(profile.competencies)
       ? profile.competencies.filter(isNonEmptyString).slice(0, 4).map((item) => item.trim().slice(0, 80))
       : [],
