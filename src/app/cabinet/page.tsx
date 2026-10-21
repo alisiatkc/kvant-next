@@ -9,7 +9,7 @@ import {
   Send, Calendar, Lightbulb, Hammer, School, BarChart3, Bell, AlertTriangle,
   KeyRound, RefreshCw, Bot, Eye, AlertOctagon, Video,
   Zap, Box, PenLine, Hexagon, Code, Wrench, UsersRound,
-  Palette,
+  Palette, ChevronDown,
 } from 'lucide-react'
 import { workshops } from '@/data'
 import Header from '@/components/Header'
@@ -120,19 +120,44 @@ const STATUS_CFG = {
   rejected:           { label: 'Отклонено',                bg: 'bg-[#ffebee]', color: 'text-[#c62828]', Icon: XCircle },
 }
 
-const NAV: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: 'overview',    label: 'Обзор',           Icon: LayoutDashboard },
-  { id: 'team-profile', label: 'Профиль команды', Icon: Palette },
-  { id: 'passport',    label: 'Паспорт проекта', Icon: ClipboardList },
-  { id: 'tasks',       label: 'Трекер задач',    Icon: CheckCircle2 },
-  { id: 'sprints',     label: 'Спринты',         Icon: RefreshCw },
-  { id: 'files',       label: 'Рабочие файлы',   Icon: FolderOpen },
-  { id: 'ai',          label: 'ИИ-ассистент',    Icon: Bot },
-  { id: 'notes',       label: 'Заметки',         Icon: BookOpen },
-  { id: 'community',   label: 'Сообщество',      Icon: UsersRound },
-  { id: 'research',    label: 'Исследование',    Icon: BarChart3 },
-  { id: 'approbation', label: 'Апробация',       Icon: School },
-  { id: 'workshops',   label: 'Мастер-классы',  Icon: Video },
+type NavGroupId = 'project' | 'team' | 'materials'
+
+const NAV_GROUPS: Array<{
+  id: NavGroupId
+  label: string
+  Icon: React.ComponentType<{ className?: string }>
+  items: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }>
+}> = [
+  {
+    id: 'project',
+    label: 'Проект',
+    Icon: ClipboardList,
+    items: [
+      { id: 'passport', label: 'Паспорт', Icon: ClipboardList },
+      { id: 'tasks', label: 'Задачи', Icon: CheckCircle2 },
+      { id: 'sprints', label: 'Спринты', Icon: RefreshCw },
+      { id: 'files', label: 'Файлы', Icon: FolderOpen },
+      { id: 'approbation', label: 'Апробация', Icon: School },
+    ],
+  },
+  {
+    id: 'team',
+    label: 'Команда',
+    Icon: UsersRound,
+    items: [
+      { id: 'team-profile', label: 'Профиль', Icon: Palette },
+      { id: 'community', label: 'Сообщество', Icon: UsersRound },
+    ],
+  },
+  {
+    id: 'materials',
+    label: 'Материалы',
+    Icon: BookOpen,
+    items: [
+      { id: 'notes', label: 'Заметки', Icon: BookOpen },
+      { id: 'workshops', label: 'Мастер-классы', Icon: Video },
+    ],
+  },
 ]
 
 type KanbanCol = {
@@ -213,6 +238,7 @@ export default function CabinetPage() {
 
   // ── navigation ────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [openNavGroup, setOpenNavGroup] = useState<NavGroupId | null>('project')
 
   // ── passport ─────────────────────────────────────────────────────────────
   const [projectName,    setProjectName]    = useState('')
@@ -487,6 +513,11 @@ export default function CabinetPage() {
   ])
 
   useEffect(() => { aiEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [aiMessages])
+
+  useEffect(() => {
+    const group = NAV_GROUPS.find((item) => item.items.some((tab) => tab.id === activeTab))
+    if (group) setOpenNavGroup(group.id)
+  }, [activeTab])
 
   // ── handlers ──────────────────────────────────────────────────────────────
   const handleLogin = async () => {
@@ -818,8 +849,6 @@ export default function CabinetPage() {
               ? { title: 'Дождитесь решения куратора', text: 'КОП находится на рассмотрении. Пока можно дополнить материалы и результаты апробации.', label: 'Проверить апробацию', tab: 'approbation' }
               : { title: 'Упакуйте результат в КОП', text: 'Апробация зафиксирована — подготовьте воспроизводимые материалы и отправьте их куратору.', label: 'Подготовить КОП', publish: true }
 
-  const visibleTabs = NAV
-
   // ══════════════════════════════════════════════════════════════════════════
   // LOGIN SCREEN
   // ══════════════════════════════════════════════════════════════════════════
@@ -1073,15 +1102,57 @@ export default function CabinetPage() {
 
           <div className="flex gap-6 items-start max-[920px]:flex-col">
             {/* Sidebar */}
-            <nav className="w-[200px] flex-shrink-0 space-y-1 max-[920px]:w-full max-[920px]:flex max-[920px]:flex-wrap max-[920px]:gap-2 max-[920px]:space-y-0">
-              {visibleTabs.map(({ id, label, Icon }) => (
-                <button key={id}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-left text-[0.88rem] cursor-pointer border-none transition-all max-[920px]:w-auto max-[920px]:flex-1 ${activeTab === id ? 'bg-kv-blue text-white font-medium' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
-                  onClick={() => setActiveTab(id)}
+            <nav className="w-[220px] flex-shrink-0 max-[920px]:w-full">
+              <div className="bg-white rounded-[2rem] p-2 space-y-1">
+                <button
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-left text-[0.88rem] cursor-pointer border-none transition-all ${activeTab === 'overview' ? 'bg-kv-blue text-white font-medium' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
+                  onClick={() => setActiveTab('overview')}
                 >
-                  <Icon className="w-4 h-4 flex-shrink-0" /> <span>{label}</span>
+                  <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> <span>Обзор</span>
                 </button>
-              ))}
+
+                {NAV_GROUPS.map(({ id, label, Icon, items }) => {
+                  const expanded = openNavGroup === id
+                  const groupActive = items.some((item) => item.id === activeTab)
+                  return (
+                    <div key={id}>
+                      <button
+                        className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-left text-[0.88rem] cursor-pointer border-none transition-all ${groupActive ? 'text-kv-blue bg-[#f3f6ff] font-medium' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
+                        onClick={() => setOpenNavGroup(expanded ? null : id)}
+                        aria-expanded={expanded}
+                      >
+                        <Icon className="w-4 h-4 flex-shrink-0" />
+                        <span className="flex-1">{label}</span>
+                        <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                      </button>
+                      {expanded && (
+                        <div className="ml-5 pl-3 border-l border-kv-border mt-1 mb-2 space-y-1">
+                          {items.map(({ id: itemId, label: itemLabel, Icon: ItemIcon }) => (
+                            <button
+                              key={itemId}
+                              className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-left text-[0.82rem] cursor-pointer border-none transition-all ${activeTab === itemId ? 'bg-kv-blue text-white font-medium' : 'bg-transparent text-kv-muted hover:bg-kv-light hover:text-kv-dark'}`}
+                              onClick={() => setActiveTab(itemId)}
+                            >
+                              <ItemIcon className="w-3.5 h-3.5 flex-shrink-0" /> {itemLabel}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              <button
+                className={`mt-3 w-full rounded-[1.5rem] border px-4 py-3 text-left cursor-pointer transition-all flex items-start gap-3 ${activeTab === 'research' ? 'bg-[#eef3ff] border-kv-blue text-kv-blue' : 'bg-transparent border-kv-border text-kv-muted hover:bg-white'}`}
+                onClick={() => setActiveTab('research')}
+              >
+                <BarChart3 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>
+                  <span className="block text-xs font-semibold">Исследование среды</span>
+                  <span className="block text-[0.68rem] mt-0.5 opacity-80">Опросы T0–T3</span>
+                </span>
+              </button>
             </nav>
 
             {/* Content */}
@@ -1184,7 +1255,6 @@ export default function CabinetPage() {
                     <div className="flex flex-wrap gap-3">
                       <button className="btn-blue text-sm" onClick={() => setActiveTab('passport')}><ClipboardList className="w-4 h-4" /> Паспорт</button>
                       <button className="btn-blue text-sm" onClick={() => { openTask(); setActiveTab('tasks') }}><Plus className="w-4 h-4" /> Новая задача</button>
-                      <button className="btn-blue text-sm" onClick={() => setActiveTab('ai')}><Bot className="w-4 h-4" /> ИИ-ассистент</button>
                       {canFeedback && (
                         <button className="flex items-center gap-2 px-5 py-3 text-sm font-medium rounded-full bg-[#e3f2fd] text-[#1565c0] border-none cursor-pointer hover:bg-[#bbdefb] transition-colors" onClick={handleFeedbackRequest}>
                           <Bell className="w-4 h-4" /> Сообщить куратору
@@ -1904,6 +1974,20 @@ export default function CabinetPage() {
             </div>
           </div>
         </div>
+
+        <button
+          className={`fixed right-5 bottom-5 min-[720px]:right-8 min-[720px]:bottom-8 z-40 border-none cursor-pointer flex items-center gap-3 rounded-full pr-5 pl-2 py-2 shadow-[0_12px_35px_rgba(43,59,107,0.28)] transition-all hover:-translate-y-1 ${activeTab === 'ai' ? 'bg-kv-dark text-white' : 'bg-kv-blue text-white'}`}
+          onClick={() => setActiveTab('ai')}
+          aria-label="Открыть ИИ-помощника"
+        >
+          <span className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center">
+            <Bot className="w-6 h-6" />
+          </span>
+          <span className="text-left">
+            <span className="block text-xs font-semibold">Помощник</span>
+            <span className="block text-[0.68rem] opacity-80">Задать вопрос</span>
+          </span>
+        </button>
       </main>
       <Footer />
 
