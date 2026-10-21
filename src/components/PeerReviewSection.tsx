@@ -21,6 +21,7 @@ import {
   saveCommunityMessage,
   savePeerReview,
 } from '@/lib/storage'
+import TeamProfileIcon from '@/components/TeamProfileIcon'
 
 type Props = {
   mode: 'student' | 'curator'
@@ -233,7 +234,7 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
                         className="w-10 h-10 rounded-xl text-white text-lg flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: project.teamProfile.themeColor }}
                       >
-                        {project.teamProfile.emblem}
+                        <TeamProfileIcon icon={project.teamProfile.icon} className="w-5 h-5" />
                       </span>
                       <span className="text-xs font-medium text-kv-dark line-clamp-2">{project.teamName}</span>
                     </div>
@@ -297,16 +298,13 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
                       className="w-11 h-11 rounded-xl text-white text-xl flex items-center justify-center"
                       style={{ backgroundColor: selectedProject.teamProfile.themeColor }}
                     >
-                      {selectedProject.teamProfile.emblem}
+                      <TeamProfileIcon icon={selectedProject.teamProfile.icon} className="w-5 h-5" />
                     </span>
                     <div>
                       <p className="font-semibold text-kv-dark">{selectedProject.teamName}</p>
                       <p className="text-xs text-kv-muted">Визитная карточка команды</p>
                     </div>
                   </div>
-                  {selectedProject.teamProfile.mission && (
-                    <p className="text-sm text-kv-text leading-relaxed mb-4">{selectedProject.teamProfile.mission}</p>
-                  )}
                   {selectedProject.teamProfile.memberRoles.some((item) => item.role.trim()) && (
                     <div className="mb-4">
                       <p className="text-xs font-semibold text-kv-muted uppercase tracking-wide mb-2">Роли в команде</p>
