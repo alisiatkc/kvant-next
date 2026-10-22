@@ -17,6 +17,7 @@ import {
   type CatalogEntry,
   type ResearchMeasurement,
   type ResearchAnswers,
+  type ResearchEvent,
   getSubmittedProjects,
   updateProjectStatus,
   getApprovedCatalog,
@@ -25,6 +26,7 @@ import {
   getCurrentUser,
   clearSession,
   getResearchMeasurements,
+  getResearchEvents,
 } from '@/lib/storage'
 
 function detectSubject(text: string): string {
@@ -125,6 +127,7 @@ export default function CuratorPage() {
   const [activeTab,     setActiveTab]     = useState<ActiveTab>('dashboard')
   const [workspaceModal,setWorkspaceModal]= useState<WorkspaceModal | null>(null)
   const [measurements,   setMeasurements]   = useState<ResearchMeasurement[]>([])
+  const [researchEvents, setResearchEvents] = useState<ResearchEvent[]>([])
   const [researchLoadError, setResearchLoadError] = useState(false)
 
   // ── catalog editor ────────────────────────────────────────────────────────
@@ -152,8 +155,9 @@ export default function CuratorPage() {
         const cat = await getApprovedCatalog()
         setCatalogEntries(cat)
         try {
-          const research = await getResearchMeasurements()
+          const [research, events] = await Promise.all([getResearchMeasurements(), getResearchEvents()])
           setMeasurements(research)
+          setResearchEvents(events)
         } catch {
           setResearchLoadError(true)
         }
@@ -280,6 +284,26 @@ export default function CuratorPage() {
     const link = document.createElement('a')
     link.href = url
     link.download = `research-t0-t3-${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportResearchEventsCsv = () => {
+    const metadataKeys = Array.from(new Set(researchEvents.flatMap((event) => Object.keys(event.metadata)))).sort()
+    const headers = ['teamCode', 'eventType', 'entityId', 'createdAt', ...metadataKeys]
+    const escapeCell = (value: string | number | boolean | null | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`
+    const rows = researchEvents.map((event) => [
+      event.teamCode,
+      event.type,
+      event.entityId,
+      event.createdAt,
+      ...metadataKeys.map((key) => event.metadata[key]),
+    ])
+    const csv = `\uFEFF${[headers, ...rows].map((row) => row.map(escapeCell).join(';')).join('\n')}`
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `research-events-${new Date().toISOString().slice(0, 10)}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -547,6 +571,54 @@ export default function CuratorPage() {
                       onUnassign={() => unassign(p.id)} />)}
                   </div>
                 )}
+
+                <div className="mt-10 pt-8 border-t border-kv-border">
+                  <div className="mb-5">
+                    <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Объективные показатели</span>
+                    <h3 className="text-[1.15rem] font-semibold mt-1">Цифровой след проектной деятельности</h3>
+                    <p className="text-xs text-kv-muted mt-2 max-w-[760px] leading-relaxed">
+                      Журнал хранит тип действия, время, код команды и технические признаки результата. Тексты проектов, комментариев и личные данные в исследовательский журнал не копируются.
+                    </p>
+                  </div>
+                  {researchEvents.length === 0 ? (
+                    <div className="rounded-2xl bg-kv-light px-5 py-6 text-sm text-kv-muted">
+                      События появятся после работы команд с задачами, спринтами, взаимооцениванием и обратной связью.
+                    </div>
+                  ) : (() => {
+                    const teams = new Set(researchEvents.map((event) => event.teamCode))
+                    const activeWeeks = new Set(researchEvents.map((event) => {
+                      const date = new Date(event.createdAt)
+                      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+                      const week = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + yearStart.getUTCDay() + 1) / 7)
+                      return `${date.getUTCFullYear()}-${week}`
+                    }))
+                    const count = (type: ResearchEvent['type']) => researchEvents.filter((event) => event.type === type).length
+                    const completed = researchEvents.filter((event) => event.type === 'task_status_changed' && event.metadata.to === 'done')
+                    const onTime = completed.filter((event) => event.metadata.completedOnTime === true).length
+                    const interactionTeams = new Set(researchEvents
+                      .filter((event) => event.type === 'peer_review_submitted' || event.type === 'community_question_sent')
+                      .map((event) => event.teamCode))
+                    const metrics = [
+                      { label: 'Команд в журнале', value: teams.size, note: 'охват цифрового следа' },
+                      { label: 'Активных недель', value: activeWeeks.size, note: 'регулярность работы' },
+                      { label: 'Завершено задач', value: completed.length, note: completed.length ? `в срок: ${onTime}` : 'пока нет' },
+                      { label: 'Взаимооценок', value: count('peer_review_submitted'), note: 'между командами' },
+                      { label: 'Вопросов командам', value: count('community_question_sent'), note: 'включая прошлые потоки' },
+                      { label: 'Команд во взаимодействии', value: interactionTeams.size, note: teams.size ? `${Math.round(interactionTeams.size / teams.size * 100)}% от активных` : '—' },
+                    ]
+                    return (
+                      <div className="grid grid-cols-2 min-[900px]:grid-cols-3 gap-3">
+                        {metrics.map((metric) => (
+                          <div key={metric.label} className="rounded-2xl border border-kv-border p-5">
+                            <div className="text-2xl font-bold text-kv-blue">{metric.value}</div>
+                            <div className="text-xs font-semibold text-kv-dark mt-1">{metric.label}</div>
+                            <div className="text-[0.68rem] text-kv-muted mt-1">{metric.note}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                </div>
               </div>
 
               {/* Available (unassigned) */}
@@ -640,9 +712,14 @@ export default function CuratorPage() {
                       Лонгитюдный дизайн с единым ядром из 16 утверждений. Отображаются агрегированные показатели, а псевдонимный код позволяет сопоставлять этапы одного участника без хранения имени.
                     </p>
                   </div>
-                  <button className="btn-blue disabled:opacity-40 disabled:cursor-not-allowed" disabled={measurements.length === 0} onClick={exportResearchCsv}>
-                    <Download className="w-4 h-4" /> Выгрузить CSV
-                  </button>
+                  <div className="flex gap-2 flex-wrap">
+                    <button className="btn-blue disabled:opacity-40 disabled:cursor-not-allowed" disabled={measurements.length === 0} onClick={exportResearchCsv}>
+                      <Download className="w-4 h-4" /> Анкеты CSV
+                    </button>
+                    <button className="btn-blue disabled:opacity-40 disabled:cursor-not-allowed" disabled={researchEvents.length === 0} onClick={exportResearchEventsCsv}>
+                      <Activity className="w-4 h-4" /> События CSV
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid min-[760px]:grid-cols-4 gap-3 mb-8">

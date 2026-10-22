@@ -369,6 +369,43 @@ test('student cannot retrieve the research dataset', async () => {
   assert.equal(calls.length, 0)
 })
 
+test('student can record a privacy-safe research event', async () => {
+  const response = await handler(event('trackResearchEvent', {
+    event: {
+      type: 'task_status_changed',
+      entityId: 'task-7',
+      metadata: { from: 'inprogress', to: 'done', dueDate: '2026-11-10' },
+    },
+  }, 'POST', teamToken))
+  const body = JSON.parse(response.body)
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(calls.length, 1)
+  assert.ok(calls[0] instanceof PutCommand)
+  assert.equal(calls[0].input.TableName, 'research_events')
+  const stored = JSON.parse(calls[0].input.Item.data)
+  assert.equal(stored.teamCode, 'kvant-01')
+  assert.equal(stored.type, 'task_status_changed')
+  assert.equal(stored.metadata.to, 'done')
+  assert.equal(body.ok, true)
+})
+
+test('curator can retrieve research events and students cannot', async () => {
+  const record = {
+    id: 'kvant-01:event-1', teamCode: 'kvant-01', type: 'peer_review_submitted',
+    entityId: 'project-2', metadata: { targetTeamCode: 'kvant-02' }, createdAt: '2026-10-22T08:00:00.000Z',
+  }
+  sendResult = { Items: [{ id: record.id, data: JSON.stringify(record) }] }
+  const curatorResponse = await handler(event('getResearchEvents', undefined, 'GET', curatorToken))
+  assert.equal(curatorResponse.statusCode, 200)
+  assert.deepEqual(JSON.parse(curatorResponse.body).events, [record])
+
+  calls.length = 0
+  const studentResponse = await handler(event('getResearchEvents', undefined, 'GET', teamToken))
+  assert.equal(studentResponse.statusCode, 401)
+  assert.equal(calls.length, 0)
+})
+
 test('community project feed exposes progress but not private project materials', async () => {
   sendResult = {
     Items: [{

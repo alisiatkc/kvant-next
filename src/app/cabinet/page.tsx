@@ -33,6 +33,7 @@ import {
   getCurrentUser,
   clearSession,
   submitResearchMeasurement,
+  trackResearchEvent,
 } from '@/lib/storage'
 
 type Task = {
@@ -724,6 +725,7 @@ export default function CabinetPage() {
     projectId.current = id
     try {
       await submitProject(buildSubmission(id, 'feedback_requested'))
+      void trackResearchEvent('feedback_requested', id, { projectStatus: 'feedback_requested' }).catch(() => {})
       localStorage.setItem('projectPublished', 'true')
       localStorage.setItem('currentProjectId', id)
     } catch {}
@@ -737,6 +739,7 @@ export default function CabinetPage() {
     projectId.current = id
     try {
       await submitProject(buildSubmission(id, 'review'))
+      void trackResearchEvent('project_submitted', id, { projectStatus: 'review' }).catch(() => {})
       localStorage.setItem('projectPublished', 'true')
       localStorage.setItem('currentProjectId', id)
     } catch {}
@@ -749,6 +752,10 @@ export default function CabinetPage() {
   const saveApprobation = () => {
     if (!approbationForm.school.trim()) { alert('Укажите площадку и участников'); return }
     const record: ApprobationRecord = { id: Date.now(), ...approbationForm }
+    void trackResearchEvent('approbation_added', String(record.id), {
+      date: record.date || null,
+      engagement: Number(record.engagement) || 0,
+    }).catch(() => {})
     const newHist = [...approbationHistory, record]
     setApprobationHistory(newHist)
     try {
@@ -796,6 +803,7 @@ export default function CabinetPage() {
         answers: researchAnswers,
         qualitative: researchQualitative,
       })
+      void trackResearchEvent('measurement_submitted', researchStage, { stage: researchStage }).catch(() => {})
       setResearchReceipt(`Ответ ${researchStage} сохранён · код записи ${result.participantId.slice(-6).toUpperCase()}`)
       setResearchAnswers(EMPTY_RESEARCH_ANSWERS)
       setResearchQualitative(EMPTY_RESEARCH_QUALITATIVE)
@@ -830,12 +838,18 @@ export default function CabinetPage() {
             blocked: taskBlocked, blockedReason: taskBlockedReason }
         : t))
     } else {
+      const id = Date.now().toString()
       setTasks((p) => [...p, {
-        id: Date.now().toString(), title: taskTitle, desc: taskDesc,
+        id, title: taskTitle, desc: taskDesc,
         status: 'planned', priority: taskPriority, dueDate: taskDueDate,
         createdAt: new Date().toISOString(), blocked: taskBlocked,
         blockedReason: taskBlockedReason || undefined,
       }])
+      void trackResearchEvent('task_created', id, {
+        priority: taskPriority,
+        dueDate: taskDueDate || null,
+        blocked: taskBlocked,
+      }).catch(() => {})
     }
     setShowTaskModal(false)
   }
@@ -862,11 +876,16 @@ export default function CabinetPage() {
         ? { ...s, name: sprintName, goal: sprintGoal, startDate: sprintStart, endDate: sprintEnd }
         : s))
     } else {
+      const id = Date.now().toString()
       setSprints((p) => [...p, {
-        id: Date.now().toString(), name: sprintName, goal: sprintGoal,
+        id, name: sprintName, goal: sprintGoal,
         startDate: sprintStart, endDate: sprintEnd,
         status: 'planned', retroNotes: '', createdAt: new Date().toISOString(),
       }])
+      void trackResearchEvent('sprint_created', id, {
+        startDate: sprintStart || null,
+        endDate: sprintEnd || null,
+      }).catch(() => {})
     }
     setShowSprintModal(false)
     resetSprintForm()
@@ -878,7 +897,24 @@ export default function CabinetPage() {
   }
 
   const updateSprintStatus = (id: string, status: Sprint['status']) => {
+    const current = sprints.find((s) => s.id === id)
+    if (!current || current.status === status) return
+    void trackResearchEvent('sprint_status_changed', id, { from: current.status, to: status }).catch(() => {})
     setSprints((p) => p.map((s) => s.id === id ? { ...s, status } : s))
+  }
+
+  const updateTaskStatus = (id: string, status: Task['status']) => {
+    const current = tasks.find((task) => task.id === id)
+    if (!current || current.status === status) return
+    void trackResearchEvent('task_status_changed', id, {
+        from: current.status,
+        to: status,
+        dueDate: current.dueDate || null,
+        completedOnTime: status === 'done' && current.dueDate
+          ? new Date().toISOString().slice(0, 10) <= current.dueDate
+          : null,
+    }).catch(() => {})
+    setTasks((items) => items.map((task) => task.id === id ? { ...task, status } : task))
   }
 
   const updateSprintRetro = (id: string, notes: string) => {
@@ -1477,7 +1513,7 @@ export default function CabinetPage() {
                         return (
                           <div key={status} className={`rounded-[1.75rem] p-4 min-h-[200px] transition-colors ${wipExceeded ? 'bg-[#fff7ed]' : 'bg-[#f9fbfe]'}`}
                             onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => { if (draggedId) { setTasks((p) => p.map((t) => t.id === draggedId ? { ...t, status } : t)); setDraggedId(null) } }}>
+                            onDrop={() => { if (draggedId) { updateTaskStatus(draggedId, status); setDraggedId(null) } }}>
                             <h4 className={`flex items-center gap-2 mb-3 font-medium text-xs uppercase tracking-wide ${color}`}>
                               <Icon className="w-3.5 h-3.5" /> {label}
                               <span className={`ml-auto rounded-full px-2 py-0.5 font-bold text-[10px] ${wipExceeded ? 'bg-[#fed7aa] text-[#c2410c]' : 'bg-kv-light text-kv-muted'}`}>

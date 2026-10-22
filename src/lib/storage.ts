@@ -88,6 +88,27 @@ export type ResearchMeasurement = {
   createdAt: string
 }
 
+export type ResearchEventType =
+  | 'task_created'
+  | 'task_status_changed'
+  | 'sprint_created'
+  | 'sprint_status_changed'
+  | 'peer_review_submitted'
+  | 'community_question_sent'
+  | 'feedback_requested'
+  | 'project_submitted'
+  | 'approbation_added'
+  | 'measurement_submitted'
+
+export type ResearchEvent = {
+  id: string
+  teamCode: string
+  type: ResearchEventType
+  entityId: string
+  metadata: Record<string, string | number | boolean | null>
+  createdAt: string
+}
+
 export type CommunityProject = {
   id: string
   teamCode: string
@@ -449,6 +470,40 @@ export async function getResearchMeasurements(): Promise<ResearchMeasurement[]> 
   }
   if (!DEMO_MODE) return []
   return JSON.parse(localStorage.getItem('researchMeasurements') || '[]')
+}
+
+export async function trackResearchEvent(
+  type: ResearchEventType,
+  entityId = '',
+  metadata: ResearchEvent['metadata'] = {},
+): Promise<void> {
+  if (API_URL) {
+    await apiCall('trackResearchEvent', 'POST', { event: { type, entityId, metadata } })
+    return
+  }
+  if (!DEMO_MODE) return
+  const user = await getCurrentUser()
+  if (!user?.teamCode || user.role !== 'student') return
+  const createdAt = new Date().toISOString()
+  const record: ResearchEvent = {
+    id: `${user.teamCode}:${createdAt}:${Math.random().toString(36).slice(2, 8)}`,
+    teamCode: user.teamCode,
+    type,
+    entityId,
+    metadata,
+    createdAt,
+  }
+  const existing: ResearchEvent[] = JSON.parse(localStorage.getItem('researchEvents') || '[]')
+  localStorage.setItem('researchEvents', JSON.stringify([...existing, record]))
+}
+
+export async function getResearchEvents(): Promise<ResearchEvent[]> {
+  if (API_URL) {
+    const data = await apiCall('getResearchEvents', 'GET')
+    return (data.events as ResearchEvent[]) ?? []
+  }
+  if (!DEMO_MODE) return []
+  return JSON.parse(localStorage.getItem('researchEvents') || '[]')
 }
 
 const DEMO_COMMUNITY_PROJECTS: CommunityProject[] = [
