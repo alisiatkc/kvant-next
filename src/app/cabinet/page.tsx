@@ -9,7 +9,7 @@ import {
   Send, Calendar, Lightbulb, Hammer, School, BarChart3, Bell, AlertTriangle,
   KeyRound, RefreshCw, Bot, Eye, AlertOctagon, Video,
   Zap, Box, PenLine, Hexagon, Code, Wrench, UsersRound,
-  Palette, ChevronDown,
+  Palette, ChevronDown, Columns3, GanttChartSquare,
 } from 'lucide-react'
 import { workshops } from '@/data'
 import Header from '@/components/Header'
@@ -257,6 +257,75 @@ function taskAgeDays(createdAt: string): number {
   return Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000)
 }
 
+function TaskTimeline({ tasks, onOpen }: { tasks: Task[]; onOpen: (task: Task) => void }) {
+  const DAY = 86400000
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const ranges = tasks.map((task) => {
+    const rawStart = new Date(task.createdAt)
+    const start = Number.isNaN(rawStart.getTime()) ? new Date(today) : rawStart
+    start.setHours(0, 0, 0, 0)
+    const rawEnd = task.dueDate ? new Date(`${task.dueDate}T00:00:00`) : new Date(start.getTime() + DAY * 2)
+    const end = Number.isNaN(rawEnd.getTime()) ? new Date(start.getTime() + DAY * 2) : rawEnd
+    if (end < start) end.setTime(start.getTime())
+    return { task, start, end }
+  })
+  const earliest = new Date(Math.min(...ranges.map(({ start }) => start.getTime()), today.getTime()))
+  const latest = new Date(Math.max(...ranges.map(({ end }) => end.getTime()), today.getTime() + DAY))
+  earliest.setDate(earliest.getDate() - 1)
+  latest.setDate(latest.getDate() + 1)
+  const span = Math.max(latest.getTime() - earliest.getTime(), DAY)
+  const position = (date: Date) => ((date.getTime() - earliest.getTime()) / span) * 100
+  const todayPosition = position(today)
+  const statusColor: Record<Task['status'], string> = {
+    planned: '#64748b', inprogress: '#d97706', testing: '#7c3aed', done: '#16a34a',
+  }
+  const formatDate = (date: Date) => date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+
+  return (
+    <div className="overflow-x-auto pb-2">
+      <div className="min-w-[720px] border border-kv-border rounded-[1.75rem] overflow-hidden">
+        <div className="grid grid-cols-[220px_1fr] bg-kv-light border-b border-kv-border">
+          <div className="p-4 text-xs font-semibold uppercase tracking-wide text-kv-muted">Задача</div>
+          <div className="relative px-4 py-3 text-xs text-kv-muted flex justify-between">
+            <span>{formatDate(earliest)}</span><span>{formatDate(latest)}</span>
+          </div>
+        </div>
+        <div className="relative">
+          {todayPosition >= 0 && todayPosition <= 100 && (
+            <div className="absolute top-0 bottom-0 z-10 pointer-events-none" style={{ left: `calc(220px + (100% - 220px) * ${todayPosition / 100})` }}>
+              <div className="h-full border-l-2 border-[#ef4444]/50" />
+              <span className="absolute top-1 -translate-x-1/2 bg-[#fef2f2] text-[#dc2626] rounded-full px-2 py-0.5 text-[9px] font-semibold">сегодня</span>
+            </div>
+          )}
+          {ranges.map(({ task, start, end }) => {
+            const left = Math.max(0, position(start))
+            const width = Math.max(2.5, Math.min(100 - left, position(new Date(end.getTime() + DAY)) - left))
+            return (
+              <button key={task.id} className="grid grid-cols-[220px_1fr] w-full text-left bg-white border-none border-b last:border-b-0 border-kv-border cursor-pointer hover:bg-[#f9fbfe] transition-colors" onClick={() => onOpen(task)}>
+                <div className="p-4 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: statusColor[task.status] }} />
+                    <span className="text-sm font-medium truncate">{task.title}</span>
+                  </div>
+                  <span className="text-[10px] text-kv-muted ml-4">{task.dueDate ? `до ${task.dueDate}` : 'ориентир: 3 дня'}</span>
+                </div>
+                <div className="relative m-3 rounded-xl" style={{ backgroundImage: 'linear-gradient(to right, #eef2f7 1px, transparent 1px)', backgroundSize: '14.285% 100%' }}>
+                  <div className={`absolute top-1/2 -translate-y-1/2 h-8 rounded-xl flex items-center px-3 text-white text-[10px] font-medium shadow-sm ${task.blocked ? 'ring-2 ring-[#ef4444] ring-offset-2' : ''}`}
+                    style={{ left: `${left}%`, width: `${width}%`, minWidth: '24px', background: statusColor[task.status] }}>
+                    <span className="truncate">{width > 12 ? task.title : ''}</span>
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+      <p className="text-xs text-kv-muted mt-3">Срок задачи задаёт длину полосы. Если срок не указан, используется ориентир в три дня. Красная рамка означает блокировку.</p>
+    </div>
+  )
+}
+
 function getAiResponse(message: string): string {
   const m = message.toLowerCase()
   if (m.includes('паспорт') || m.includes('описан'))  return 'Паспорт проекта должен содержать: проблему, цель, ожидаемый результат, пользователей, задачи и критерии готовности. Если результат будет адаптирован в КОП, дополнительно опишите сценарий применения и необходимые ресурсы.'
@@ -335,6 +404,7 @@ export default function CabinetPage() {
   const [taskDueDate,   setTaskDueDate]   = useState('')
   const [taskBlocked,   setTaskBlocked]   = useState(false)
   const [taskBlockedReason, setTaskBlockedReason] = useState('')
+  const [taskView,      setTaskView]      = useState<'kanban' | 'timeline'>('kanban')
 
   // ── files ────────────────────────────────────────────────────────────────
   const [files, setFiles] = useState<FileItem[]>([])
@@ -1483,12 +1553,22 @@ export default function CabinetPage() {
               {/* ════ TASKS ════ */}
               {activeTab === 'tasks' && (
                 <div className="bg-white rounded-[2.5rem] p-8">
-                  <div className="flex justify-between items-center mb-3">
+                  <div className="flex justify-between items-center mb-3 gap-4 flex-wrap">
                     <div>
                       <h3 className="text-[1.3rem] font-semibold">Трекер задач</h3>
                       <p className="text-kv-muted text-sm mt-0.5">{doneTasks} из {tasks.length} выполнено</p>
                     </div>
-                    <button className="btn-blue" onClick={() => openTask()}><Plus className="w-4 h-4" /> Новая задача</button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex gap-1 p-1 bg-kv-light rounded-2xl">
+                        <button className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs border-none cursor-pointer transition-colors ${taskView === 'kanban' ? 'bg-white text-kv-blue shadow-sm' : 'bg-transparent text-kv-muted'}`} onClick={() => setTaskView('kanban')}>
+                          <Columns3 className="w-3.5 h-3.5" /> Канбан
+                        </button>
+                        <button className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs border-none cursor-pointer transition-colors ${taskView === 'timeline' ? 'bg-white text-kv-blue shadow-sm' : 'bg-transparent text-kv-muted'}`} onClick={() => setTaskView('timeline')}>
+                          <GanttChartSquare className="w-3.5 h-3.5" /> Таймлайн
+                        </button>
+                      </div>
+                      <button className="btn-blue" onClick={() => openTask()}><Plus className="w-4 h-4" /> Новая задача</button>
+                    </div>
                   </div>
 
                   {/* WIP legend */}
@@ -1504,7 +1584,7 @@ export default function CabinetPage() {
                       <p className="text-sm">Задач пока нет</p>
                       <p className="text-xs mt-1">Создайте первую задачу, чтобы отслеживать работу над проектом</p>
                     </div>
-                  ) : (
+                  ) : taskView === 'kanban' ? (
                     <div className="overflow-x-auto -mx-2 px-2 pb-2">
                     <div className="grid grid-cols-4 gap-3 min-w-[640px]">
                       {KANBAN_COLS.map(({ status, label, Icon, wipLimit, color }) => {
@@ -1573,6 +1653,8 @@ export default function CabinetPage() {
                       })}
                     </div>
                     </div>
+                  ) : (
+                    <TaskTimeline tasks={tasks} onOpen={openTask} />
                   )}
                 </div>
               )}
