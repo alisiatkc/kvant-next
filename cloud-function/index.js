@@ -43,6 +43,7 @@ const CORS = {
 const CATALOG_TABLE = 'approved_catalog'
 const WORKSPACE_TABLE = 'team_workspaces'
 const RESEARCH_TABLE = 'research_measurements'
+const RESEARCH_EVENT_TABLE = 'research_events'
 const PEER_REVIEW_TABLE = 'peer_reviews'
 const COMMUNITY_MESSAGE_TABLE = 'community_messages'
 const MAX_WORKSPACE_BYTES = 350000
@@ -70,6 +71,18 @@ const RESEARCH_FIELDS = [
 ]
 const RESEARCH_EXPERIENCE = new Set(['none', 'some', 'extensive'])
 const RESEARCH_QUALITATIVE_FIELDS = ['support', 'barrier', 'suggestion']
+const RESEARCH_EVENT_TYPES = new Set([
+  'task_created',
+  'task_status_changed',
+  'sprint_created',
+  'sprint_status_changed',
+  'peer_review_submitted',
+  'community_question_sent',
+  'feedback_requested',
+  'project_submitted',
+  'approbation_added',
+  'measurement_submitted',
+])
 const CATALOG_SUBJECTS = new Set([
   'math',
   'bio',
@@ -149,6 +162,20 @@ function validateResearchMeasurement(measurement) {
   if (RESEARCH_QUALITATIVE_FIELDS.some((field) => typeof measurement.qualitative[field] !== 'string' || measurement.qualitative[field].length > 600)) {
     return 'qualitative answers must be strings up to 600 characters'
   }
+  return null
+}
+
+function validateResearchEvent(event) {
+  if (!event || typeof event !== 'object' || Array.isArray(event)) return 'event required'
+  if (!RESEARCH_EVENT_TYPES.has(event.type)) return 'event type is invalid'
+  if (typeof event.entityId !== 'string' || event.entityId.length > 128) return 'entityId is invalid'
+  if (!event.metadata || typeof event.metadata !== 'object' || Array.isArray(event.metadata)) return 'event metadata required'
+  const entries = Object.entries(event.metadata)
+  if (entries.length > 12) return 'event metadata is too large'
+  if (entries.some(([key, value]) => key.length > 64 || !['string', 'number', 'boolean'].includes(typeof value) && value !== null)) {
+    return 'event metadata is invalid'
+  }
+  if (Buffer.byteLength(JSON.stringify(event.metadata), 'utf8') > 2000) return 'event metadata is too large'
   return null
 }
 
@@ -584,6 +611,46 @@ module.exports.handler = async function (event) {
         })
         .filter(Boolean)
       return respond(200, { measurements })
+    }
+
+    // ── POST ?action=trackResearchEvent  (privacy-safe process trace) ──────
+    if (action === 'trackResearchEvent' && event.httpMethod === 'POST') {
+      const session = requireRole(event, 'student')
+      if (!session) return respond(401, { error: 'student session required' })
+      const researchEvent = body.event
+      const validationError = validateResearchEvent(researchEvent)
+      if (validationError) return respond(400, { error: validationError })
+
+      const createdAt = new Date().toISOString()
+      const record = {
+        id: `${session.teamCode}:${createdAt}:${crypto.randomBytes(4).toString('hex')}`,
+        teamCode: session.teamCode,
+        type: researchEvent.type,
+        entityId: researchEvent.entityId,
+        metadata: researchEvent.metadata,
+        createdAt,
+      }
+      await ddb.send(new PutCommand({
+        TableName: RESEARCH_EVENT_TABLE,
+        Item: { id: record.id, data: JSON.stringify(record), createdAt },
+      }))
+      return respond(200, { ok: true, eventId: record.id, createdAt })
+    }
+
+    // ── GET ?action=getResearchEvents  (curator process analytics) ─────────
+    if (action === 'getResearchEvents' && event.httpMethod === 'GET') {
+      if (!requireRole(event, 'curator')) return respond(401, { error: 'curator session required' })
+      const result = await ddb.send(new ScanCommand({ TableName: RESEARCH_EVENT_TABLE }))
+      const events = (result.Items || [])
+        .map((item) => {
+          try { return JSON.parse(item.data) }
+          catch (_) {
+            console.warn('[kvant-api] Invalid research event', item.id)
+            return null
+          }
+        })
+        .filter(Boolean)
+      return respond(200, { events })
     }
 
     // ── GET ?action=getCommunityProjects  (authenticated project exchange) ──
