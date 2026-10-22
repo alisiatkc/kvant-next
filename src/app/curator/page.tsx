@@ -7,11 +7,12 @@ import {
   LayoutDashboard, ClipboardList, Bell, MessageSquare,
   BookOpen, CheckCircle2, FolderOpen, Send, X, AlertTriangle,
   UserCheck, UserPlus, Inbox, Package, Plus, Edit2, Trash2, BarChart3, TrendingUp,
-  Activity, Calendar, Filter, Layers, RefreshCw, Download,
+  Activity, Calendar, Filter, Layers, RefreshCw, Download, Network,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import PeerReviewSection from '@/components/PeerReviewSection'
+import ProjectGraph from '@/components/ProjectGraph'
 import {
   type SubmittedProject,
   type CatalogEntry,
@@ -80,7 +81,7 @@ function buildCatalogEntry(sub: SubmittedProject): CatalogEntry {
 }
 
 type WorkspaceModal = { project: SubmittedProject; feedbackDraft: string }
-type ActiveTab = 'dashboard' | 'inbox' | 'all' | 'peers' | 'research' | 'catalog'
+type ActiveTab = 'dashboard' | 'inbox' | 'all' | 'graph' | 'peers' | 'research' | 'catalog'
 
 const RESEARCH_LABELS: Array<{ key: keyof ResearchAnswers; short: string }> = [
   { key: 'processClarity', short: 'Понятность процесса' },
@@ -337,6 +338,7 @@ export default function CuratorPage() {
     { id: 'dashboard', label: 'Дашборд',        Icon: LayoutDashboard },
     { id: 'inbox',     label: 'Входящие',        Icon: Inbox,      badge: counts.inbox },
     { id: 'all',       label: 'Все проекты',     Icon: ClipboardList },
+    { id: 'graph',     label: 'Карта проектов',  Icon: Network },
     { id: 'peers',     label: 'Взаимооценивание', Icon: MessageSquare },
     { id: 'research',  label: 'T0–T3',           Icon: BarChart3, badge: measurements.length },
     { id: 'catalog',   label: 'Каталог КОП',     Icon: Package },
@@ -1030,6 +1032,17 @@ export default function CuratorPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ════ PROJECT MAP ════ */}
+          {activeTab === 'graph' && (
+            <ProjectGraph
+              projects={projects}
+              onOpen={(project) => {
+                setWorkspaceModal({ project, feedbackDraft: project.curatorFeedback || '' })
+                setWorkspaceTab('overview')
+              }}
+            />
           )}
         </div>
       </main>
