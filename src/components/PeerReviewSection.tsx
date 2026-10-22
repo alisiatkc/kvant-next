@@ -20,6 +20,7 @@ import {
   getPeerReviews,
   saveCommunityMessage,
   savePeerReview,
+  trackResearchEvent,
 } from '@/lib/storage'
 import TeamProfileIcon from '@/components/TeamProfileIcon'
 
@@ -138,6 +139,10 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
     setError('')
     try {
       const saved = await savePeerReview({ projectId: selectedProject.id, scores, comment })
+      void trackResearchEvent('peer_review_submitted', selectedProject.id, {
+        targetTeamCode: selectedProject.teamCode,
+        scoreAverage: Number(average(scores).toFixed(2)),
+      }).catch(() => {})
       setReviews((items) => [...items.filter((item) => item.id !== saved.id), saved])
       setNotice('Взаимооценивание сохранено. Команда проекта и куратор увидят рекомендацию.')
     } catch (submitError) {
@@ -154,6 +159,11 @@ export default function PeerReviewSection({ mode, currentTeamCode = '', currentT
     setError('')
     try {
       const saved = await saveCommunityMessage({ projectId: selectedProject.id, text: messageText })
+      void trackResearchEvent('community_question_sent', selectedProject.id, {
+        targetTeamCode: selectedProject.teamCode,
+        targetCohort: selectedProject.cohort,
+        archiveProject: selectedProject.isArchive,
+      }).catch(() => {})
       setMessages((items) => [...items, saved])
       setMessageText('')
       setNotice('Вопрос добавлен в межпоточное обсуждение.')
