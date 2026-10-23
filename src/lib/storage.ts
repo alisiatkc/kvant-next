@@ -88,6 +88,51 @@ export type ResearchMeasurement = {
   createdAt: string
 }
 
+export type MethodologySurveyInput = {
+  participantCode: string
+  stage: 'T0' | 'T1'
+  consentConfirmed: boolean
+  context?: {
+    educationLevel: string
+    course: string
+    completedProjects: string
+    projectStage: string
+    projectStageOther: string
+    teamSize: string
+    teamRole: string
+  }
+  followupContext?: {
+    participation: string
+    environmentUse: string
+  }
+  tools: string[]
+  toolsOther: string
+  actions: Record<string, string>
+  organization: Record<string, string>
+  attitudes: Record<string, string>
+  difficulties: string[]
+  difficultiesOther: string
+  support: string[]
+  supportOther: string
+  peerReviewBarriers: string[]
+  peerReviewBarriersOther: string
+  interteamComment: string
+  improvement: string
+  environmentFunctions?: string[]
+  environmentFunctionsOther?: string
+  environmentEase?: Record<string, string>
+  environmentIssues?: string[]
+  environmentIssuesOther?: string
+  environmentImpact?: string
+}
+
+export type MethodologySurveyRecord = MethodologySurveyInput & {
+  id: string
+  participantId: string
+  instrumentVersion: '3.0'
+  createdAt: string
+}
+
 export type ResearchEventType =
   | 'task_created'
   | 'task_status_changed'
@@ -461,6 +506,30 @@ export async function submitResearchMeasurement(measurement: ResearchMeasurement
     record,
   ]))
   return { participantId, savedAt: record.createdAt }
+}
+
+export async function submitMethodologySurvey(survey: MethodologySurveyInput): Promise<{ participantId: string; savedAt: string }> {
+  if (API_URL) {
+    const data = await apiCall('submitMethodologySurvey', 'POST', { survey })
+    return { participantId: data.participantId as string, savedAt: data.savedAt as string }
+  }
+  if (!DEMO_MODE) throw new Error('Сервер исследования ещё не подключён')
+  const participantId = survey.participantCode.trim().toUpperCase()
+  const createdAt = new Date().toISOString()
+  const record: MethodologySurveyRecord = {
+    ...survey,
+    participantCode: '',
+    id: `${participantId}:${survey.stage}`,
+    participantId,
+    instrumentVersion: '3.0',
+    createdAt,
+  }
+  const existing: MethodologySurveyRecord[] = JSON.parse(localStorage.getItem('methodologySurveyResponses') || '[]')
+  localStorage.setItem('methodologySurveyResponses', JSON.stringify([
+    ...existing.filter((item) => item.id !== record.id),
+    record,
+  ]))
+  return { participantId, savedAt: createdAt }
 }
 
 export async function getResearchMeasurements(): Promise<ResearchMeasurement[]> {
