@@ -10,6 +10,7 @@ import {
   Activity, Calendar, Filter, Layers, RefreshCw, Download, Network,
 } from 'lucide-react'
 import Header from '@/components/Header'
+import MethodologySurveyResults from '@/components/MethodologySurveyResults'
 import Footer from '@/components/Footer'
 import PeerReviewSection from '@/components/PeerReviewSection'
 import ProjectGraph from '@/components/ProjectGraph'
@@ -705,6 +706,7 @@ export default function CuratorPage() {
           {/* ════ RESEARCH T0–T3 ════ */}
           {activeTab === 'research' && (
             <div className="space-y-5">
+              <MethodologySurveyResults />
               <div className="bg-white rounded-[3rem] p-10">
                 <div className="flex items-start justify-between gap-5 flex-wrap mb-8">
                   <div>
@@ -1446,3 +1448,4 @@ function ProjectCard({
     </div>
   )
 }
+

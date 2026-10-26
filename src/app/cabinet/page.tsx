@@ -1776,6 +1776,12 @@ export default function CabinetPage() {
               {/* ════ RESEARCH T0–T3 ════ */}
               {activeTab === 'research' && (
                 <div className="space-y-5">
+                  <section className="bg-white rounded-[2.5rem] p-8">
+                    <p className="text-kv-blue text-sm">Индивидуальная анкета · версия 4.0</p>
+                    <h3 className="text-xl font-semibold mt-2">Взаимодействие в проектной работе</h3>
+                    <p className="text-kv-muted my-4">T0 — при формировании проекта до использования среды. T1 — после проектного цикла. Для обоих этапов сохраните один личный код, отдельный от кода команды.</p>
+                    <div className="flex flex-wrap gap-3"><Link className="btn-blue" href="/survey?stage=T0">Входная анкета T0</Link><Link className="btn-blue" href="/survey?stage=T1">Итоговая анкета T1</Link></div>
+                  </section>
                   <div className="bg-white rounded-[2.5rem] p-8">
                     <div className="mb-7">
                       <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Апробация цифровой среды</span>
@@ -2388,3 +2394,4 @@ function UsersIcon({ className }: { className?: string }) {
     </svg>
   )
 }
+

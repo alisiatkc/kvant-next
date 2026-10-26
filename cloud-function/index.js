@@ -372,6 +372,49 @@ module.exports.handler = async function (event) {
   } catch (_) {}
 
   try {
+    // Individual v4 questionnaire: independent of team accounts and legacy instruments.
+    if (action === 'submitHypothesisSurvey' && event.httpMethod === 'POST') {
+      if (typeof event.body === 'string' && Buffer.byteLength(event.body, 'utf8') > 32768) return respond(413, {error: 'Анкета слишком велика'})
+      let survey
+      try { survey = require('./methodology-survey').validate(body.survey) }
+      catch (e) { return respond(400, { error: e.message }) }
+      const secret = process.env.METHODOLOGY_SECRET || process.env.SESSION_SECRET || ''
+      if (secret.length < 32) return respond(503, { error: 'Survey storage is not configured' })
+      const hmac = value => crypto.createHmac('sha256', secret).update(value).digest('hex')
+      const { participantCode, ...payload } = survey
+      const id = survey.submissionId
+      const record = {
+        ...payload, id,
+        participantId: participantCode ? hmac(`methodology-v4:${participantCode}`) : `unpaired:${id}`,
+        paired: !!participantCode, createdAt: new Date().toISOString(),
+      }
+      record.payloadHash = hmac(JSON.stringify({...payload, participantId: record.participantId}))
+      const TableName = process.env.METHODOLOGY_TABLE || 'methodology_surveys'
+      try {
+        await ddb.send(new PutCommand({ TableName, Item: record, ConditionExpression: 'attribute_not_exists(id)' }))
+      } catch (e) {
+        if (e.name !== 'ConditionalCheckFailedException') throw e
+        const existing = await ddb.send(new GetCommand({ TableName, Key: { id } }))
+        if (existing.Item?.payloadHash !== record.payloadHash) return respond(409, { error: 'Номер отправки уже использован. Начните новую анкету.' })
+      }
+      return respond(200, { id })
+    }
+    if (action === 'getHypothesisSurveys' && event.httpMethod === 'GET') {
+      if (!requireRole(event, 'curator')) return respond(401, { error: 'curator session required' })
+      const surveys = []
+      let cursor
+      do {
+        const page = await ddb.send(new ScanCommand({TableName: process.env.METHODOLOGY_TABLE || 'methodology_surveys', ...(cursor ? {ExclusiveStartKey:cursor} : {})}))
+        for (const item of page.Items || []) {
+          if (item.instrumentVersion === '4.0') {
+            const {payloadHash, ...record} = item
+            surveys.push(record)
+          }
+        }
+        cursor = page.LastEvaluatedKey
+      } while (cursor)
+      return respond(200, {surveys})
+    }
     // ── POST ?action=login  (server verifies credentials) ───────────────────
     if (action === 'login' && event.httpMethod === 'POST') {
       const { role, login, password } = body
@@ -829,3 +872,4 @@ module.exports.handler = async function (event) {
     return respond(500, { error: e.message })
   }
 }
+
