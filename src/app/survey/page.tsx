@@ -1,464 +1,79 @@
-"use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { validate } from "../../../cloud-function/methodology-survey";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import {
-  schema,
-  visible,
-  cleanAnswers,
-  submitSurvey,
-  surveyMode,
-  type Stage,
-  type Answers,
-  type Question,
-} from "@/lib/methodology-survey";
-const draftKey = (stage: Stage) => `kvant_methodology_v4_draft_${stage}`;
-function makeCode() {
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  return Array.from(
-    bytes,
-    (b) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32],
-  ).join("");
+'use client'
+
+import { useMemo, useState, type ReactNode } from 'react'
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, ClipboardList, RefreshCw, Send, ShieldCheck } from 'lucide-react'
+import { submitMethodologySurvey, type MethodologySurveyInput } from '@/lib/storage'
+
+type Stage = 'T0' | 'T1'
+type Pair = readonly [string, string]
+
+const frequency: Pair[] = [
+  ['7.1','Задачи записывались с указанием ответственного.'],['7.2','Сроки выполнения задач фиксировались в доступном команде месте.'],
+  ['7.3','Промежуточный результат сохранялся так, чтобы к нему могли обратиться участники команды.'],['7.4','Команда получала содержательные комментарии к работе от куратора.'],
+  ['7.5','Вы давали содержательные комментарии к проекту другой команды.'],['7.6','Ваша команда получала содержательные комментарии от другой команды.'],
+  ['7.7','Команда обсуждала причины затруднений и изменения плана.'],['7.8','Вы обращались к материалам проектов предыдущих студенческих команд.'],
+]
+const organization: Pair[] = [
+  ['8.1','Мне была понятна цель проекта.'],['8.2','Мне было понятно, какую задачу выполнять следующей.'],['8.3','Сроки выполнения задач были мне понятны.'],
+  ['8.4','Я мог(ла) найти актуальную версию нужного материала.'],['8.5','Мне было понятно текущее состояние проекта.'],['8.6','Я понимал(а), за какие задачи отвечает каждый участник команды.'],
+  ['8.7','Распределение работы в команде казалось мне справедливым.'],['8.8','Комментарии куратора помогали понять, что следует доработать.'],
+  ['8.9','Комментарии других команд помогали улучшить проект.'],['8.10','Обсуждение трудностей помогало пересматривать наши решения.'],['8.11','Материалы предыдущих команд помогали в работе над проектом.'],
+]
+const attitudes: Pair[] = [
+  ['9.1','Получать комментарии от студентов других команд.'],['9.2','Анализировать проекты других команд по заранее известным критериям.'],
+  ['9.3','Предоставлять другим командам доступ к промежуточным материалам своего проекта.'],['9.4','Сохранять итоговые материалы своего проекта для следующих потоков студентов.'],
+]
+const toolOptions = ['Очные обсуждения','Мессенджер','Электронная почта','Облачное хранилище','Совместные документы','Доска задач','Образовательная платформа вуза','Другое','Цифровые средства не использовали']
+const difficultyOptions = ['Поиск нужных материалов','Понимание очередной задачи','Согласование сроков','Распределение работы','Получение полезной обратной связи','Фиксация промежуточных результатов','Взаимодействие с другими командами','Анализ причин затруднений','Другое','Существенных трудностей не было','Нет опыта']
+const supportOptions = ['Описание цели и ожидаемого результата','Общий план задач и сроков','Доступ к актуальным версиям материалов','Возможность видеть продвижение проекта','Комментарии куратора, связанные с конкретной задачей','Взаимная экспертиза проектов','Вопросы для обсуждения итогов этапа','Доступ к примерам завершённых проектов','Другое','Дополнительная поддержка не нужна','Затрудняюсь ответить']
+const barrierOptions = ['Нехватка времени','Непонятные критерии','Недостаток опыта для оценки','Опасение необъективности','Нежелание показывать незавершённую работу','Риск некорректных комментариев','Другое','Препятствий не вижу','Затрудняюсь ответить']
+const functionOptions = ['Паспорт проекта','Задачи и сроки','Материалы и версии','Комментарии куратора','Комментарии других команд','Записи рефлексии','Архив проектов','Другое','Никакие']
+const issueOptions = ['Вход и доступ','Навигация','Загрузка или поиск файлов','Непонятные статусы задач','Уведомления','Публикация комментариев','Технические сбои','Другое','Затруднений не было','Средой не пользовался(ась)']
+
+function Card({children}:{children:ReactNode}) { return <section className="bg-white rounded-[2rem] border border-kv-border shadow-card p-5 min-[640px]:p-8">{children}</section> }
+function Radio({name,value,options,onChange}:{name:string;value:string;options:Pair[];onChange:(v:string)=>void}) { return <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={name}>{options.map(([id,label])=><button type="button" key={id} role="radio" aria-checked={value===id} onClick={()=>onChange(id)} className={`px-4 py-2.5 rounded-full border text-sm ${value===id?'bg-kv-blue border-kv-blue text-white':'bg-white border-[#dce3ef] hover:border-kv-blue'}`}>{label}</button>)}</div> }
+function Multi({options,value,setValue,max,exclusive=[]}:{options:string[];value:string[];setValue:(v:string[])=>void;max?:number;exclusive?:string[]}) {
+  const toggle=(v:string)=>{ if(value.includes(v)) return setValue(value.filter(x=>x!==v)); if(exclusive.includes(v)) return setValue([v]); const next=value.filter(x=>!exclusive.includes(x)); if(!max||next.length<max)setValue([...next,v]) }
+  return <div className="grid min-[680px]:grid-cols-2 gap-2.5">{options.map(v=><label key={v} className={`flex gap-3 rounded-2xl border p-3.5 cursor-pointer text-sm ${value.includes(v)?'border-kv-blue bg-[#eef3ff]':'border-[#dce3ef]'}`}><input type="checkbox" className="accent-[#3452b4]" checked={value.includes(v)} onChange={()=>toggle(v)}/><span>{v}</span></label>)}</div>
 }
+function Scale({items,values,setValues,mode}:{items:Pair[];values:Record<string,string>;setValues:(v:Record<string,string>)=>void;mode:'frequency'|'agreement'|'attitude'}) {
+  const choices=mode==='frequency'?['0','1','2','3','4','НП','ЗО']:mode==='agreement'?['1','2','3','4','5','НП','ЗО']:['1','2','3','4','5','ЗО']
+  return <div className="divide-y divide-kv-border">{items.map(([id,label])=><div key={id} className="py-5 first:pt-0 last:pb-0"><p className="font-medium text-sm min-[640px]:text-base leading-relaxed mb-3"><span className="text-kv-blue mr-2">{id}</span>{label}</p><div className="flex gap-2 flex-wrap">{choices.map(v=><button type="button" key={v} onClick={()=>setValues({...values,[id]:v})} className={`min-w-10 h-10 px-2 rounded-full border text-xs font-semibold ${values[id]===v?'bg-kv-blue border-kv-blue text-white':'bg-white border-[#dce3ef]'}`}>{v}</button>)}</div></div>)}</div>
+}
+function Other({show,value,setValue,placeholder}:{show:boolean;value:string;setValue:(v:string)=>void;placeholder:string}) { return show?<input className="input-kv mt-3" value={value} onChange={e=>setValue(e.target.value)} placeholder={placeholder}/>:null }
+
 export default function SurveyPage() {
-  const [stage, setStage] = useState<Stage>("T0"),
-    [answers, setAnswers] = useState<Answers>({}),
-    [code, setCode] = useState(""),
-    [consent, setConsent] = useState(false),
-    [step, setStep] = useState(0),
-    [ready, setReady] = useState(false),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState(""),
-    [receipt, setReceipt] = useState(""),
-    [submissionId, setSubmissionId] = useState("");
-  const form = schema.stages[stage];
-  useEffect(() => {
-    if (ready && step > 0)
-      document.getElementById("survey-step-title")?.focus();
-  }, [step, stage, ready]);
-  function load(s: Stage) {
-    setReady(false);
-    setStage(s);
-    setStep(0);
-    setError("");
-    setReceipt("");
-    setConsent(false);
-    try {
-      const d = JSON.parse(localStorage.getItem(draftKey(s)) || "{}");
-      setAnswers(
-        d.answers && typeof d.answers === "object" && !Array.isArray(d.answers)
-          ? d.answers
-          : {},
-      );
-      setCode(typeof d.code === "string" ? d.code : "");
-      setSubmissionId(d.submissionId || crypto.randomUUID());
-    } catch {
-      setAnswers({});
-      setCode("");
-      setSubmissionId(crypto.randomUUID());
-      setError("Не удалось прочитать черновик. Можно заполнить форму заново.");
-    }
-    setReady(true);
-  }
-  useEffect(() => {
-    load(
-      new URLSearchParams(window.location.search).get("stage") === "T1"
-        ? "T1"
-        : "T0",
-    );
-  }, []);
-  useEffect(() => {
-    if (ready && !receipt)
-      try {
-        localStorage.setItem(
-          draftKey(stage),
-          JSON.stringify({ answers, code, submissionId }),
-        );
-      } catch {
-        setError(
-          "Браузер не сохраняет черновик. Не закрывайте страницу до отправки.",
-        );
-      }
-  }, [answers, code, submissionId, stage, ready, receipt]);
-  function change(id: string, v: string | number | string[]) {
-    setAnswers((a) => ({ ...a, [id]: v }));
-    setError("");
-  }
-  function clear(id: string) {
-    setAnswers((a) => {
-      const n = { ...a };
-      delete n[id];
-      return n;
-    });
-  }
-  function question(q: Question) {
-    const value = answers[q.id];
-    return (
-      <fieldset key={q.id} className="border-b border-kv-border pb-7 mb-7">
-        <legend className="font-semibold mb-3 leading-relaxed">
-          {q.id.replace(/^V/, "В").replace(/^I/, "И")}. {q.label}
-        </legend>
-        {q.hint && <p className="text-sm text-kv-muted mb-3">{q.hint}</p>}
-        {q.maxChoices && (
-          <p className="text-sm text-kv-muted mb-3">
-            Не более {q.maxChoices} вариантов.
-          </p>
-        )}
-        {q.options ? (
-          <div className="space-y-2">
-            {q.options.map((o) => (
-              <label
-                key={o.value}
-                className="flex items-start gap-3 rounded-xl border border-kv-border p-3 cursor-pointer hover:bg-blue-50"
-              >
-                <input
-                  className="mt-1 shrink-0"
-                  type={q.kind === "multiple" ? "checkbox" : "radio"}
-                  name={q.id}
-                  checked={
-                    q.kind === "multiple"
-                      ? Array.isArray(value) && value.includes(o.value)
-                      : value === o.value
-                  }
-                  onChange={() => {
-                    if (q.kind !== "multiple") {
-                      change(q.id, o.value);
-                      return;
-                    }
-                    const current = Array.isArray(value) ? value : [];
-                    let next = current.includes(o.value)
-                      ? current.filter((v) => v !== o.value)
-                      : q.exclusive?.includes(o.value)
-                        ? [o.value]
-                        : [
-                            ...current.filter((v) => !q.exclusive?.includes(v)),
-                            o.value,
-                          ];
-                    if (q.maxChoices && next.length > q.maxChoices) {
-                      setError(
-                        `В вопросе ${q.id} можно выбрать не более ${q.maxChoices} вариантов.`,
-                      );
-                      return;
-                    }
-                    change(q.id, next);
-                  }}
-                />
-                <span>{o.label}</span>
-              </label>
-            ))}
-          </div>
-        ) : q.kind === "text" ? (
-          <textarea
-            aria-label={q.label}
-            className="w-full rounded-xl border border-kv-border p-3 min-h-24"
-            maxLength={q.maxLength || 1000}
-            value={typeof value === "string" ? value : ""}
-            onChange={(e) => change(q.id, e.target.value)}
-          />
-        ) : (
-          <input
-            aria-label={q.label}
-            className="rounded-xl border border-kv-border p-3 max-w-full"
-            type={q.kind === "date" ? "date" : "number"}
-            min={q.min}
-            max={q.max}
-            step={1}
-            value={
-              typeof value === "number" || typeof value === "string"
-                ? value
-                : ""
-            }
-            onChange={(e) =>
-              change(
-                q.id,
-                e.target.value === ""
-                  ? ""
-                  : q.kind === "number"
-                    ? Number(e.target.value)
-                    : e.target.value,
-              )
-            }
-          />
-        )}
-        {value !== undefined && value !== "" && (
-          <button
-            type="button"
-            className="text-kv-blue text-sm underline mt-3"
-            onClick={() => clear(q.id)}
-          >
-            Очистить ответ / пропустить
-          </button>
-        )}
-      </fieldset>
-    );
-  }
-  async function send() {
-    setError("");
-    if (!consent) {
-      setError("Подтвердите добровольное участие.");
-      setStep(0);
-      return;
-    }
-    if ((code || stage === "T0") && !/^[A-Z0-9]{6}$/.test(code)) {
-      setError("Введите код из 6 латинских букв или цифр.");
-      setStep(0);
-      return;
-    }
-    const a = cleanAnswers(stage, answers);
-    if (typeof a.I3 === "number" && a.I3 > Number(a["I3.periodDays"] ?? 7)) {
-      setError("Число активных дней не может превышать период наблюдения.");
-      return;
-    }
-    if (
-      a["I3.from"] &&
-      a["I3.to"] &&
-      (Date.parse(String(a["I3.to"])) - Date.parse(String(a["I3.from"]))) /
-        86400000 +
-        1 !==
-        Number(a["I3.periodDays"] ?? 7)
-    ) {
-      setError("Уточните даты: они должны соответствовать числу дней периода.");
-      return;
-    }
-    try {
-      validate({
-        instrumentVersion: "4.0",
-        stage,
-        participantCode: code,
-        consentConfirmed: consent,
-        submissionId,
-        answers: a,
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Проверьте ответы");
-      return;
-    }
-    setBusy(true);
-    try {
-      const r = await submitSurvey({
-        instrumentVersion: "4.0",
-        stage,
-        participantCode: code,
-        consentConfirmed: consent,
-        submissionId,
-        answers: a,
-      });
-      setReceipt(r.id);
-      try {
-        localStorage.removeItem(draftKey(stage));
-      } catch {}
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Не удалось сохранить. Попробуйте ещё раз.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <>
-      <Header />
-      <main className="max-w-4xl mx-auto px-4 py-10">
-        <Link href="/cabinet" className="text-kv-blue underline">
-          В кабинет
-        </Link>
-        <div className="mt-6 mb-7">
-          <p className="text-kv-blue text-sm">Исследование · версия 4.0</p>
-          <h1 className="text-3xl font-semibold mt-2">{schema.title}</h1>
-          <p className="text-kv-muted mt-3">
-            Индивидуальная анкета студентов педагогического технопарка
-          </p>
-        </div>
-        <div
-          role="status"
-          className="rounded-2xl bg-amber-50 border border-amber-200 p-4 mb-6"
-        >
-          {surveyMode === "demo"
-            ? "Демонстрационный режим. Ответы останутся только в этом браузере и не попадут исследователю. Для участия в исследовании потребуется подключённый сбор ответов."
-            : surveyMode === "server"
-              ? "Ответы будут переданы в хранилище исследования. Имя и учётная запись команды к анкете не прикрепляются."
-              : "Сбор ответов ещё не настроен. Можно посмотреть форму, отправка недоступна."}
-        </div>
-        <div className="flex flex-wrap gap-3 mb-6">
-          {(["T0", "T1"] as Stage[]).map((s) => (
-            <button
-              type="button"
-              key={s}
-              disabled={busy}
-              aria-pressed={stage === s}
-              onClick={() => load(s)}
-              className={`rounded-full px-5 py-3 border ${stage === s ? "bg-kv-blue text-white" : "bg-white"}`}
-            >
-              {s} · {schema.stages[s].title}
-            </button>
-          ))}
-        </div>
-        {!ready ? (
-          <p>Загрузка черновика…</p>
-        ) : receipt ? (
-          <section className="bg-white rounded-3xl p-7">
-            <h2 className="text-2xl font-semibold">
-              {surveyMode === "demo"
-                ? "Сохранено в этом браузере"
-                : "Ответы приняты"}
-            </h2>
-            <p className="mt-4">
-              Этап: {stage}. Номер отправки:{" "}
-              <span className="break-all">{receipt}</span>
-            </p>
-            {code && (
-              <p className="mt-3">
-                Ваш код: <strong>{code}</strong>. Сохраните его для
-                сопоставления T0 и T1.
-              </p>
-            )}
-            <p className="mt-3">Спасибо за участие!</p>
-          </section>
-        ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (step < form.sections.length) setStep(step + 1);
-              else void send();
-            }}
-            className="bg-white rounded-3xl p-5 sm:p-9"
-          >
-            <p className="text-sm text-kv-muted mb-3">
-              Шаг {step + 1} из {form.sections.length + 1} · вопросы можно
-              пропускать
-            </p>
-            {step === 0 ? (
-              <section>
-                <h2 className="text-2xl font-semibold mb-4">{form.title}</h2>
-                <p className="font-medium mb-3">{form.description}</p>
-                <p className="leading-relaxed mb-6">{form.intro}</p>
-                <label
-                  className="block font-semibold"
-                  htmlFor="participantCode"
-                >
-                  Личный код участника
-                </label>
-                <p className="text-sm text-kv-muted my-3">
-                  6 латинских букв или цифр. Придумайте случайный код и
-                  сохраните его до T1. Не используйте инициалы, дату рождения
-                  или пароль.{" "}
-                  {stage === "T1"
-                    ? "Если код утрачен, оставьте поле пустым: ответ будет учтён без парного сопоставления."
-                    : "Один код для входной и итоговой анкет."}
-                </p>
-                <div className="flex gap-3 flex-wrap">
-                  <input
-                    id="participantCode"
-                    value={code}
-                    maxLength={6}
-                    autoComplete="off"
-                    spellCheck={false}
-                    onChange={(e) =>
-                      setCode(
-                        e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""),
-                      )
-                    }
-                    className="border rounded-xl p-3 tracking-widest"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setCode(makeCode())}
-                    className="text-kv-blue underline"
-                  >
-                    Создать код
-                  </button>
-                </div>
-                <p className="text-sm text-kv-muted mt-4">
-                  Черновик сохраняется на этом устройстве. На общем компьютере
-                  после завершения очистите данные сайта. Отправку до её
-                  подтверждения можно отменить, закрыв страницу.
-                </p>
-                <label className="flex gap-3 mt-6">
-                  <input
-                    type="checkbox"
-                    checked={consent}
-                    onChange={(e) => setConsent(e.target.checked)}
-                  />
-                  <span>
-                    Я ознакомлен(а) с условиями и добровольно согласен(на)
-                    участвовать в исследовании.
-                  </span>
-                </label>
-              </section>
-            ) : (
-              <section>
-                <h2
-                  id="survey-step-title"
-                  tabIndex={-1}
-                  className="text-2xl font-semibold mb-4"
-                >
-                  {form.sections[step - 1].title}
-                </h2>
-                <p className="text-kv-muted mb-6">
-                  {form.sections[step - 1].description}
-                </p>
-                {form.sections[step - 1].questions
-                  .filter((q) => visible(q, answers))
-                  .map(question)}
-              </section>
-            )}
-            {error && (
-              <p
-                role="alert"
-                className="bg-red-50 text-red-800 p-4 rounded-xl mt-5"
-              >
-                {error}
-              </p>
-            )}
-            <button
-              type="button"
-              disabled={busy}
-              className="mt-6 text-sm text-kv-muted underline"
-              onClick={() => {
-                localStorage.removeItem(draftKey(stage));
-                load(stage);
-              }}
-            >
-              Удалить черновик и начать заново
-            </button>
-            <div className="flex justify-between gap-4 mt-8">
-              <button
-                type="button"
-                disabled={step === 0 || busy}
-                className="disabled:opacity-30 text-kv-blue"
-                onClick={() => {
-                  setStep(step - 1);
-                  setError("");
-                }}
-              >
-                Назад
-              </button>
-              <button
-                type="submit"
-                disabled={
-                  busy ||
-                  (step === form.sections.length &&
-                    surveyMode === "unconfigured")
-                }
-                className="btn-blue disabled:opacity-40"
-              >
-                {busy
-                  ? "Сохраняем…"
-                  : step === form.sections.length
-                    ? surveyMode === "demo"
-                      ? "Сохранить в браузере"
-                      : "Отправить ответы"
-                    : "Далее"}
-              </button>
-            </div>
-          </form>
-        )}
-      </main>
-      <Footer />
-    </>
-  );
+  const [step,setStep]=useState(0), [stage,setStage]=useState<Stage>('T0'), [consent,setConsent]=useState<boolean|null>(null)
+  const [participantCode,setParticipantCode]=useState(''), [error,setError]=useState(''), [saving,setSaving]=useState(false), [receipt,setReceipt]=useState('')
+  const [context,setContext]=useState({educationLevel:'',course:'',completedProjects:'',projectStage:'',projectStageOther:'',teamSize:'',teamRole:''})
+  const [followupContext,setFollowupContext]=useState({participation:'',environmentUse:''})
+  const [tools,setTools]=useState<string[]>([]), [toolsOther,setToolsOther]=useState(''), [actions,setActions]=useState<Record<string,string>>({}), [org,setOrg]=useState<Record<string,string>>({}), [attitude,setAttitude]=useState<Record<string,string>>({})
+  const [difficulties,setDifficulties]=useState<string[]>([]), [difficultiesOther,setDifficultiesOther]=useState(''), [support,setSupport]=useState<string[]>([]), [supportOther,setSupportOther]=useState('')
+  const [barriers,setBarriers]=useState<string[]>([]), [barriersOther,setBarriersOther]=useState(''), [interteamComment,setInterteamComment]=useState(''), [improvement,setImprovement]=useState('')
+  const [functions,setFunctions]=useState<string[]>([]), [functionsOther,setFunctionsOther]=useState(''), [ease,setEase]=useState<Record<string,string>>({}), [issues,setIssues]=useState<string[]>([]), [issuesOther,setIssuesOther]=useState(''), [impact,setImpact]=useState('')
+  const steps=useMemo(()=>['Участие','Контекст','Действия','Оценка','Потребности','Завершение'],[])
+  const skip=(stage==='T0'&&context.completedProjects==='none')||(stage==='T1'&&followupContext.participation==='no')
+  const validate=()=>{setError('');if(step===0&&consent!==true){setError(consent===false?'Вы отказались от участия. Анкету можно закрыть.':'Подтвердите согласие, чтобы продолжить.');return false}if(step===1&&!/^[A-Z0-9]{6}$/.test(participantCode)){setError('Введите случайный код из шести латинских букв или цифр.');return false}if(step===1&&stage==='T1'&&!followupContext.participation){setError('Укажите, участвовали ли Вы в проекте в последние четыре недели.');return false}return true}
+  const next=()=>{if(validate()){setStep(v=>Math.min(5,v+1));window.scrollTo({top:0,behavior:'smooth'})}}, back=()=>{setError('');setStep(v=>Math.max(0,v-1));window.scrollTo({top:0,behavior:'smooth'})}
+  const submit=async()=>{if(!validate())return;setSaving(true);try{const payload:MethodologySurveyInput={participantCode,stage,consentConfirmed:true,context:stage==='T0'?context:undefined,followupContext:stage==='T1'?followupContext:undefined,tools:skip?[]:tools,toolsOther,actions:skip?{}:actions,organization:skip?{}:org,attitudes:attitude,difficulties,difficultiesOther,support,supportOther,peerReviewBarriers:barriers,peerReviewBarriersOther:barriersOther,interteamComment:stage==='T0'&&skip?'no_previous_project':interteamComment,improvement,environmentFunctions:stage==='T1'?functions:undefined,environmentFunctionsOther:stage==='T1'?functionsOther:undefined,environmentEase:stage==='T1'?ease:undefined,environmentIssues:stage==='T1'?issues:undefined,environmentIssuesOther:stage==='T1'?issuesOther:undefined,environmentImpact:stage==='T1'?impact:undefined};const result=await submitMethodologySurvey(payload);setReceipt(`Ответ ${stage} сохранён · код записи ${result.participantId.slice(-6).toUpperCase()}`)}catch(e){setError(e instanceof Error?e.message:'Не удалось сохранить ответы')}finally{setSaving(false)}}
+
+  if(receipt)return <main className="min-h-screen bg-[#f5f7fb] flex items-center justify-center px-4"><div className="bg-white rounded-[2.5rem] p-10 max-w-[620px] text-center shadow-card"><CheckCircle2 className="w-16 h-16 p-3 rounded-full bg-[#e8f5e9] text-[#2e7d32] mx-auto mb-5"/><h1 className="text-3xl font-semibold mb-3">Спасибо за участие</h1><p>{receipt}</p><p className="text-sm text-kv-muted mt-3">Сохраните код для повторного этапа. Фамилию и имя сообщать не нужно.</p></div></main>
+
+  return <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,#e6ebff,transparent_38%),#f5f7fb]"><header className="bg-white/90 backdrop-blur border-b sticky top-0 z-30"><div className="max-w-[980px] mx-auto px-4 min-[640px]:px-8 py-4 flex justify-between"><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-[14px] bg-kv-blue text-white grid place-items-center font-bold">К</div><div><p className="font-semibold">Проектный навигатор</p><p className="text-xs text-kv-muted">Анкета для студентов</p></div></div><span className="hidden min-[640px]:block text-xs text-kv-muted">10–12 минут · без ФИО</span></div><div className="h-1 bg-kv-light"><div className="h-full bg-kv-blue" style={{width:`${Math.round((step+1)/6*100)}%`}}/></div></header>
+  <div className="max-w-[980px] mx-auto px-4 min-[640px]:px-8 py-8 min-[640px]:py-12"><div className="mb-7"><span className="text-xs uppercase tracking-[.18em] text-kv-blue font-semibold">Исследование проектного опыта</span><h1 className="text-[1.8rem] min-[640px]:text-[2.5rem] leading-tight font-semibold mt-2 mb-3">Организация проектной работы студентов</h1><p className="text-kv-text max-w-[780px]">Анкета к исследованию цифровой образовательной среды сопровождения проектной деятельности студентов педагогического технопарка.</p></div><div className="flex gap-2 mb-7 overflow-x-auto">{steps.map((v,i)=><div key={v} className={`flex gap-2 items-center px-3.5 py-2 rounded-full text-xs whitespace-nowrap ${i===step?'bg-kv-blue text-white':i<step?'bg-[#e8f5e9] text-[#2e7d32]':'bg-white text-kv-muted'}`}>{i<step?<Check className="w-3.5"/>:i+1}{v}</div>)}</div>
+
+  {step===0&&<Card><ShieldCheck className="w-12 h-12 p-3 rounded-2xl bg-kv-light text-kv-blue mb-5"/><h2 className="text-xl font-semibold mb-4">Добровольное участие</h2><div className="text-sm text-kv-text leading-relaxed space-y-3 max-w-[800px]"><p>Мы изучаем, как организована проектная работа студентов, чтобы спроектировать удобную цифровую среду сопровождения. Заполнение займёт ориентировочно 10–12 минут.</p><p>Можно пропустить вопрос или прекратить заполнение. Правильных и неправильных ответов нет. Ответы будут представлены в обобщённом виде и не повлияют на оценку за практику. Не указывайте имена других людей.</p></div><div className="mt-7"><p className="font-medium mb-3">Согласны ли Вы участвовать?</p><Radio name="Согласие" value={consent===true?'yes':consent===false?'no':''} options={[["yes","Да, согласен(на)"],["no","Нет"]]} onChange={v=>setConsent(v==='yes')}/></div></Card>}
+
+  {step===1&&<div className="space-y-5"><Card><h2 className="text-xl font-semibold mb-2">Код и этап анкетирования</h2><p className="text-sm text-kv-muted mb-5">Придумайте и сохраните случайный код из шести латинских букв или цифр. Не используйте ФИО, дату рождения или номер студенческого билета.</p><input className="input-kv max-w-[420px] uppercase tracking-[.2em]" maxLength={6} value={participantCode} onChange={e=>setParticipantCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))} placeholder="Например, K7M2Q9"/><div className="mt-7"><p className="font-medium text-sm mb-3">Этап</p><Radio name="Этап" value={stage} options={[["T0","Т0 · входная анкета"],["T1","Т1 · после проектного цикла"]]} onChange={v=>setStage(v as Stage)}/></div></Card>
+  {stage==='T0'?<Card><h2 className="text-xl font-semibold mb-6">Блок 1 Опыт проектной работы</h2><div className="space-y-7"><Q n="1" text="На какой ступени Вы обучаетесь?"><Radio name="Ступень" value={context.educationLevel} options={[["bachelor","Бакалавриат"],["master","Магистратура"],["specialist","Специалитет"],["other","Другое"],["skip","Предпочитаю не отвечать"]]} onChange={v=>setContext({...context,educationLevel:v})}/><input className="input-kv max-w-[220px] mt-3" value={context.course} onChange={e=>setContext({...context,course:e.target.value})} placeholder="Курс (необязательно)"/></Q><Q n="2" text="Сколько командных учебных проектов Вы завершили до этой практики?"><Radio name="Опыт" value={context.completedProjects} options={[["none","Ни одного"],["one","1"],["two_three","2–3"],["four_plus","4 и более"],["unknown","Затрудняюсь ответить"]]} onChange={v=>setContext({...context,completedProjects:v})}/></Q><Q n="3" text="На каком этапе находится Ваш проект в технопарке?"><Radio name="Этап проекта" value={context.projectStage} options={[["not_started","Работа ещё не началась"],["idea","Обсуждаем замысел"],["planning","Планируем задачи"],["development","Разрабатываем продукт"],["testing","Проводим проверку или апробацию"],["presentation","Готовим представление результата"],["other","Другое"]]} onChange={v=>setContext({...context,projectStage:v})}/><Other show={context.projectStage==='other'} value={context.projectStageOther} setValue={v=>setContext({...context,projectStageOther:v})} placeholder="Укажите этап"/></Q><Q n="4" text="Сколько человек в Вашей команде?"><Radio name="Команда" value={context.teamSize} options={[["not_formed","Команда ещё не сформирована"],["2_3","2–3"],["4_5","4–5"],["6_plus","6 и более"],["individual","Работаю индивидуально"]]} onChange={v=>setContext({...context,teamSize:v})}/></Q><Q n="5" text="Как обычно определяется Ваша роль в команде?"><Radio name="Роль" value={context.teamRole} options={[["coordinate","Координирую работу"],["tasks","Выполняю согласованные задачи"],["both","Совмещаю обе роли"],["rotate","Роли меняются"],["undefined","Роли пока не определены"],["na","Не относится ко мне"]]} onChange={v=>setContext({...context,teamRole:v})}/></Q></div></Card>:<Card><h2 className="text-xl font-semibold mb-2">Повторный этап</h2><p className="text-sm text-kv-muted mb-6">Отвечайте о последних четырёх неделях проекта технопарка.</p><div className="space-y-7"><Q text="Работали ли Вы над проектом в течение последних четырёх недель?"><Radio name="Участие" value={followupContext.participation} options={[["yes","Да"],["part","Часть периода"],["no","Нет"]]} onChange={v=>setFollowupContext({...followupContext,participation:v})}/></Q><Q text="Как Вы использовали разработанную среду?"><Radio name="Среда" value={followupContext.environmentUse} options={[["independent","Самостоятельно"],["shared","Через общий командный аккаунт или совместный экран"],["other_member","Материалы вносил другой участник, результаты были мне доступны"],["not_used","Не использовал(а) и не видел(а) материалов"],["unknown","Затрудняюсь ответить"]]} onChange={v=>setFollowupContext({...followupContext,environmentUse:v})}/></Q></div></Card>}</div>}
+
+  {step===2&&(skip?<Skip/>:<div className="space-y-5"><Card><h2 className="text-xl font-semibold mb-2">Блок 2 Действия в проекте</h2><p className="text-sm text-kv-muted mb-6">{stage==='T0'?'Вспомните один наиболее недавний командный учебный проект и последние четыре недели работы над ним.':'Отвечайте о последних четырёх неделях проекта технопарка.'}</p><Q n="6" text="Какие средства Вы фактически использовали?"><Multi options={stage==='T1'?[...toolOptions.slice(0,-1),'Проектный навигатор',toolOptions.at(-1)!]:toolOptions} value={tools} setValue={setTools} exclusive={['Цифровые средства не использовали']}/><Other show={tools.includes('Другое')} value={toolsOther} setValue={setToolsOther} placeholder="Другое средство"/></Q></Card><Card><h2 className="text-lg font-semibold mb-2">7. Частота действий</h2><p className="text-xs text-kv-muted mb-6">0 — ни разу · 1 — один раз · 2 — реже раза в неделю · 3 — примерно раз в неделю · 4 — несколько раз в неделю или чаще · НП — не было ситуации · ЗО — затрудняюсь ответить</p><Scale items={frequency} values={actions} setValues={setActions} mode="frequency"/></Card></div>)}
+  {step===3&&(skip?<Skip/>:<Card><h2 className="text-xl font-semibold mb-2">Блок 3 Оценка организации проекта</h2><p className="text-xs text-kv-muted mb-6">1 — полностью не согласен(на) · 5 — полностью согласен(на) · НП — не было ситуации · ЗО — затрудняюсь ответить</p><Scale items={organization} values={org} setValues={setOrg} mode="agreement"/></Card>)}
+  {step===4&&<div className="space-y-5"><Card><h2 className="text-xl font-semibold mb-2">Блок 4 Отношение и потребности</h2><p className="text-xs text-kv-muted mb-6">9. Оцените формы взаимодействия: 1 — резко отрицательно · 5 — очень положительно · ЗО — затрудняюсь ответить</p><Scale items={attitudes} values={attitude} setValues={setAttitude} mode="attitude"/></Card><ChoiceCard title="10. Какие трудности Вы встречали в командных проектах?" note="Выберите не более трёх." options={difficultyOptions} value={difficulties} setValue={setDifficulties} max={3} exclusive={['Существенных трудностей не было','Нет опыта']} other={difficultiesOther} setOther={setDifficultiesOther}/><ChoiceCard title="11. Какая поддержка была бы наиболее полезной?" note="Выберите не более трёх." options={supportOptions} value={support} setValue={setSupport} max={3} exclusive={['Дополнительная поддержка не нужна','Затрудняюсь ответить']} other={supportOther} setOther={setSupportOther}/><ChoiceCard title="12. Что может затруднить участие во взаимной экспертизе?" note="Можно выбрать несколько вариантов." options={barrierOptions} value={barriers} setValue={setBarriers} exclusive={['Препятствий не вижу','Затрудняюсь ответить']} other={barriersOther} setOther={setBarriersOther}/></div>}
+  {step===5&&<div className="space-y-5"><Card><h2 className="text-xl font-semibold mb-6">Блок 5 Уточнение опыта</h2><Q n="13" text="Получала ли Ваша команда хотя бы один содержательный комментарий от студентов другой команды?"><p className="text-xs text-kv-muted mb-4">Содержательный комментарий содержит вопрос по решению, объяснение замечания или предложение доработки.</p><Radio name="Комментарий" value={interteamComment} options={[["yes","Да"],["no","Нет"],["unknown","Не помню"],["no_project","Не было предыдущего проекта"]]} onChange={setInterteamComment}/></Q><label className="block mt-7 text-sm font-medium">14. Какое одно изменение в организации проектной работы Вы считаете самым полезным?<textarea className="textarea-kv mt-3" rows={4} maxLength={1000} value={improvement} onChange={e=>setImprovement(e.target.value)}/></label></Card>{stage==='T1'&&<><ChoiceCard title="П1. Какие функции среды Вы фактически использовали?" note="Можно выбрать несколько вариантов." options={functionOptions} value={functions} setValue={setFunctions} exclusive={['Никакие']} other={functionsOther} setOther={setFunctionsOther}/><Card><h3 className="font-semibold mb-2">П2. Насколько легко было выполнить действия в среде?</h3><p className="text-xs text-kv-muted mb-6">1 — очень трудно · 5 — очень легко · НП — не пользовался(ась) функцией · ЗО — затрудняюсь ответить</p><Scale items={[["P2.1","Найти актуальный материал."],["P2.2","Понять следующую задачу."],["P2.3","Увидеть комментарий к своей работе."],["P2.4","Найти результаты предыдущего этапа."]]} values={ease} setValues={setEase} mode="agreement"/></Card><ChoiceCard title="П3. Какие затруднения возникали именно при использовании среды?" note="Выберите не более трёх." options={issueOptions} value={issues} setValue={setIssues} max={3} exclusive={['Затруднений не было','Средой не пользовался(ась)']} other={issuesOther} setOther={setIssuesOther}/><Card><label className="block text-sm font-medium">П4. Приведите пример, когда среда помогла или затруднила работу, либо укажите, что заметного влияния не было.<textarea className="textarea-kv mt-3" rows={4} maxLength={1000} value={impact} onChange={e=>setImpact(e.target.value)}/></label></Card></>}<Card><div className="flex gap-3"><ClipboardList className="w-5 text-kv-blue"/><p className="text-sm text-kv-muted">Можно оставить отдельные вопросы без ответа. Проверьте, что в свободных ответах нет имён.</p></div></Card></div>}
+  {error&&<div className="mt-6 rounded-2xl bg-[#ffebee] text-[#c62828] px-5 py-4 text-sm">{error}</div>}<div className="flex justify-between mt-7">{step>0?<button className="btn-outline" onClick={back}><ArrowLeft className="w-4"/>Назад</button>:<span/>}{step<5?<button className="btn-blue" onClick={next}>Продолжить<ArrowRight className="w-4"/></button>:<button className="btn-blue" disabled={saving} onClick={()=>void submit()}>{saving?<RefreshCw className="w-4 animate-spin"/>:<Send className="w-4"/>}Отправить ответы</button>}</div><footer className="mt-12 pt-6 border-t text-xs text-kv-muted">Анкета к исследованию сопровождения проектной деятельности студентов педагогического технопарка</footer></div></main>
 }
+
+function Q({n,text,children}:{n?:string;text:string;children:ReactNode}) { return <fieldset><legend className="font-medium text-sm mb-3">{n&&`${n}. `}{text}</legend>{children}</fieldset> }
+function Skip(){return <Card><h2 className="text-xl font-semibold mb-2">Блок пропущен</h2><p className="text-sm text-kv-text">Согласно логике анкеты, эти вопросы не задаются при отсутствии подходящего проектного опыта.</p></Card>}
+function ChoiceCard({title,note,options,value,setValue,max,exclusive,other,setOther}:{title:string;note:string;options:string[];value:string[];setValue:(v:string[])=>void;max?:number;exclusive?:string[];other:string;setOther:(v:string)=>void}) { return <Card><h3 className="font-semibold mb-2">{title}</h3><p className="text-xs text-kv-muted mb-4">{note}</p><Multi options={options} value={value} setValue={setValue} max={max} exclusive={exclusive}/><Other show={value.includes('Другое')} value={other} setValue={setOther} placeholder="Укажите другое"/></Card> }
