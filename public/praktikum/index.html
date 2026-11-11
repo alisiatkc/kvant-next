@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Практикум РГПУ</title>
+  <style>
+    body{margin:0;display:grid;place-items:center;min-height:100vh;font:16px/1.5 Arial,sans-serif;color:#282828;background:#f7f9fc}
+    main{width:min(560px,calc(100% - 40px));padding:32px;background:#fff;border:1px solid #d2dbe1;border-radius:16px;text-align:center}
+    .bar{height:6px;margin-top:20px;overflow:hidden;border-radius:8px;background:#e9f3ff}
+    .bar::after{content:"";display:block;width:38%;height:100%;background:#003896;animation:move 1s ease-in-out infinite alternate}
+    @keyframes move{to{transform:translateX(165%)}}
+  </style>
+</head>
+<body>
+  <main><h1>Практикум загружается</h1><p>Подготавливаем интерактивное занятие и встроенные материалы.</p><div class="bar"></div></main>
+  <script>
+    (async()=>{
+      try{
+        const names=Array.from({length:13},(_,i)=>`../praktikum-assets/part-${String(i).padStart(2,'0')}.txt`);
+        const parts=await Promise.all(names.map(name=>fetch(name).then(r=>{if(!r.ok)throw new Error(name);return r.text()})));
+        const binary=atob(parts.join('').trim());
+        const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+        const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+        const html=await new Response(stream).text();
+        document.open();document.write(html);document.close();
+      }catch(error){
+        document.querySelector('main').innerHTML='<h1>Страница временно недоступна</h1><p>Не удалось загрузить материалы практикума. Обновите страницу немного позже.</p>';
+        console.error(error);
+      }
+    })();
+  </script>
+</body>
+</html>
