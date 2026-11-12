@@ -1,27 +1,27 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import {
-  Box, Calendar, Zap, MapPin, Globe, Mail, MessageCircle,
-  Hash, MessageSquare, ArrowRight, CheckCircle2, Users,
+  ArrowRight, Box, Calendar, CheckCircle2, FileCheck2, Globe2,
+  Hash, Mail, MapPin, MessageCircle, MessageSquare, Users, Zap,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { contacts } from '@/data'
 
 const WorkshopsSection = dynamic(() => import('@/components/WorkshopsSection'), { ssr: false })
-const DocsSection      = dynamic(() => import('@/components/DocsSection'),      { ssr: false })
-const AIAssistant      = dynamic(() => import('@/components/AIAssistant'),      { ssr: false })
-const AgileSection     = dynamic(() => import('@/components/AgileSection'),     { ssr: false })
+const DocsSection = dynamic(() => import('@/components/DocsSection'), { ssr: false })
+const AIAssistant = dynamic(() => import('@/components/AIAssistant'), { ssr: false })
+const AgileSection = dynamic(() => import('@/components/AgileSection'), { ssr: false })
 
 const contactIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  MapPin, Globe, Mail, MessageCircle, Hash, MessageSquare,
+  MapPin, Globe: Globe2, Mail, MessageCircle, Hash, MessageSquare,
 }
 
-const statItems = [
-  { value: 'Идея',       label: 'Проблема и замысел',        color: '#2B3B6B', bg: '#EEF3FF' },
-  { value: 'Проект',     label: 'Работа команды',            color: '#4C1D95', bg: '#F3EEFF' },
-  { value: 'Апробация',  label: 'Проверка результата',       color: '#2B3B6B', bg: '#EEF3FF' },
-  { value: 'КОП',        label: 'Форма тиражирования',       color: '#4C1D95', bg: '#F3EEFF' },
+const route = [
+  { number: '01', title: 'Замысел', text: 'Проблема, пользователи и ожидаемый результат' },
+  { number: '02', title: 'Проект', text: 'Спринты, задачи и работа команды' },
+  { number: '03', title: 'Апробация', text: 'Проверка решения и обратная связь' },
+  { number: '04', title: 'Передача опыта', text: 'Архив проекта или публикация КОП' },
 ]
 
 export default function HomePage() {
@@ -29,252 +29,170 @@ export default function HomePage() {
     <>
       <Header active="home" />
       <main>
-
-        {/* ── HERO ─────────────────────────────────────────────────────────── */}
-        <section className="relative min-h-[92vh] flex items-center overflow-hidden bg-[#f5f7fb]">
-
-          {/* Animated background */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
-
-            {/* Morphing blobs — large coloured shapes that shift */}
-            <div className="blob-navy absolute w-[420px] h-[420px]"
-              style={{ top: '-100px', right: '-80px',
-                background: 'radial-gradient(circle at 38% 38%, rgba(43,59,107,0.26), rgba(79,106,208,0.06) 72%)',
-                filter: 'blur(55px)' }} />
-            <div className="blob-violet absolute w-[320px] h-[320px]"
-              style={{ top: '38%', left: '-80px',
-                background: 'radial-gradient(circle at 55% 38%, rgba(76,29,149,0.22), rgba(139,92,246,0.05) 72%)',
-                filter: 'blur(45px)' }} />
-            <div className="blob-accent absolute w-[240px] h-[240px]"
-              style={{ bottom: '6%', right: '10%',
-                background: 'radial-gradient(circle at 42% 42%, rgba(76,29,149,0.18), rgba(43,59,107,0.05) 72%)',
-                filter: 'blur(38px)' }} />
-
-            {/* Concentric orbit system — anchored to right side */}
-            <div style={{ position: 'absolute', top: 'calc(50% - 170px)', right: '3%',
-              width: '340px', height: '340px' }}>
-
-              {/* Outer ring — navy, slow */}
-              <div className="orbit-slow" style={{ position: 'absolute', inset: 0,
-                borderRadius: '50%', border: '1.5px solid rgba(43,59,107,0.22)' }}>
-                <div style={{ position: 'absolute', top: '-5px', left: 'calc(50% - 5px)',
-                  width: '10px', height: '10px', borderRadius: '50%', background: '#2B3B6B',
-                  boxShadow: '0 0 12px rgba(43,59,107,0.9), 0 0 28px rgba(43,59,107,0.4)' }} />
+        <section className="border-b border-kv-border bg-[#f7f8fa]">
+          <div className="container-kv grid min-h-[680px] items-center gap-12 py-16 min-[900px]:grid-cols-[1.08fr_.92fr] min-[900px]:py-24">
+            <div>
+              <p className="mb-7 max-w-[580px] text-sm leading-relaxed text-kv-muted">
+                Педагогический технопарк «Кванториум им. К. Д. Ушинского» · РГПУ им. А. И. Герцена
+              </p>
+              <h1 className="mb-7 max-w-[760px] text-[clamp(2.7rem,7vw,5.5rem)] font-semibold leading-[.98] tracking-[-0.045em]">
+                Рабочая среда студенческих проектов
+              </h1>
+              <p className="mb-9 max-w-[640px] text-lg leading-relaxed text-kv-text min-[640px]:text-xl">
+                Здесь команда планирует работу, сохраняет ход проекта, получает обратную связь
+                и готовит результат к апробации.
+              </p>
+              <div className="flex flex-col gap-3 min-[480px]:flex-row">
+                <Link href="/cabinet" className="btn-primary inline-flex items-center justify-center gap-2">
+                  Перейти в рабочую среду <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a href="#cycle" className="btn-outline inline-flex items-center justify-center">
+                  Посмотреть проектный цикл
+                </a>
               </div>
-
-              {/* Middle ring — violet, medium reverse */}
-              <div className="orbit-med" style={{ position: 'absolute', inset: '65px',
-                borderRadius: '50%', border: '1.5px solid rgba(76,29,149,0.28)' }}>
-                <div style={{ position: 'absolute', top: '-4px', left: 'calc(50% - 4px)',
-                  width: '8px', height: '8px', borderRadius: '50%', background: '#4C1D95',
-                  boxShadow: '0 0 10px rgba(76,29,149,1), 0 0 22px rgba(76,29,149,0.45)' }} />
-              </div>
-
-              {/* Inner ring — navy, fast */}
-              <div className="orbit-fast" style={{ position: 'absolute', inset: '118px',
-                borderRadius: '50%', border: '1.5px solid rgba(43,59,107,0.35)' }}>
-                <div style={{ position: 'absolute', top: '-3px', left: 'calc(50% - 3px)',
-                  width: '6px', height: '6px', borderRadius: '50%', background: '#2B3B6B',
-                  boxShadow: '0 0 8px rgba(43,59,107,1), 0 0 18px rgba(43,59,107,0.6)' }} />
-              </div>
-
-              {/* Nucleus */}
-              <div style={{ position: 'absolute', top: 'calc(50% - 7px)', left: 'calc(50% - 7px)',
-                width: '14px', height: '14px', borderRadius: '50%',
-                background: 'radial-gradient(circle at 35% 35%, #7c6fd0, #2B3B6B)',
-                boxShadow: '0 0 18px rgba(76,29,149,0.7), 0 0 36px rgba(43,59,107,0.35)' }} />
             </div>
 
-            {/* Scattered pulsing glow nodes */}
-            <div className="pulse-dot absolute w-3 h-3 rounded-full"
-              style={{ top: '18%', right: '34%', background: '#2B3B6B',
-                boxShadow: '0 0 0 5px rgba(43,59,107,0.12)' }} />
-            <div className="pulse-dot absolute w-2.5 h-2.5 rounded-full"
-              style={{ top: '62%', left: '10%', background: '#4C1D95',
-                boxShadow: '0 0 0 4px rgba(76,29,149,0.14)', animationDelay: '0.7s' }} />
-            <div className="pulse-dot absolute w-2 h-2 rounded-full"
-              style={{ top: '42%', left: '30%', background: '#2B3B6B',
-                boxShadow: '0 0 0 4px rgba(43,59,107,0.12)', animationDelay: '1.4s' }} />
-            <div className="pulse-dot absolute w-2.5 h-2.5 rounded-full"
-              style={{ bottom: '24%', right: '24%', background: '#4C1D95',
-                boxShadow: '0 0 0 5px rgba(76,29,149,0.12)', animationDelay: '2.1s' }} />
-            <div className="pulse-dot absolute w-2 h-2 rounded-full"
-              style={{ top: '74%', right: '42%', background: '#2B3B6B',
-                boxShadow: '0 0 0 3px rgba(43,59,107,0.15)', animationDelay: '0.4s' }} />
-            <div className="pulse-dot absolute w-2 h-2 rounded-full"
-              style={{ top: '26%', left: '18%', background: '#4C1D95',
-                boxShadow: '0 0 0 3px rgba(76,29,149,0.15)', animationDelay: '1.9s' }} />
-            <div className="pulse-dot absolute w-1.5 h-1.5 rounded-full"
-              style={{ top: '50%', right: '20%', background: '#4C1D95',
-                boxShadow: '0 0 0 3px rgba(76,29,149,0.12)', animationDelay: '0.9s' }} />
-
-            {/* Grid texture */}
-            <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2b3b6b" strokeWidth="1"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-            </svg>
-          </div>
-
-          <div className="container-kv relative z-10 py-20 min-[640px]:py-32">
-            {/* Badge */}
-            <div className="anim-fade-down mb-5 min-[640px]:mb-7">
-              <span className="inline-flex items-center gap-2 bg-white border border-kv-border rounded-full px-4 min-[640px]:px-5 py-2 text-[0.7rem] min-[640px]:text-xs font-medium text-kv-blue shadow-card">
-                <span className="w-1.5 h-1.5 rounded-full bg-kv-blue inline-block flex-shrink-0" />
-                Педагогический технопарк «Кванториум им. К.Д. Ушинского» · РГПУ им. А.И. Герцена
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h1 className="anim-fade-up anim-d1 text-[clamp(2.4rem,8vw,6rem)] font-semibold tracking-tight leading-[1.05] mb-5 min-[640px]:mb-6">
-              Развивайте проекты<br />
-              <span className="text-kv-blue">От идеи — до внедрения</span>
-            </h1>
-
-            <p className="anim-fade-up anim-d2 text-base min-[640px]:text-[1.2rem] font-light text-kv-text mb-8 min-[640px]:mb-10 max-w-[600px] leading-relaxed">
-              Цифровая образовательная среда для практики студентов: планируйте работу, взаимодействуйте с куратором, фиксируйте результаты и превращайте готовые решения в КОП.
-            </p>
-
-            <div className="anim-fade-up anim-d3 flex flex-col min-[480px]:flex-row gap-3">
-              <Link href="/cabinet" className="btn-primary inline-flex items-center justify-center gap-2">
-                Войти в кабинет <ArrowRight className="w-4 h-4" />
-              </Link>
-              <a href="#cycle" className="btn-outline inline-flex items-center justify-center gap-2">
-                Как это работает
-              </a>
-            </div>
-
-            {/* Stats strip */}
-            <div className="anim-fade-up anim-d4 grid grid-cols-2 min-[600px]:grid-cols-4 gap-3 mt-10 min-[640px]:mt-16">
-              {statItems.map(({ value, label, color, bg }) => (
-                <div key={label} className="rounded-[1.25rem] min-[640px]:rounded-[1.5rem] px-4 min-[640px]:px-5 py-3 min-[640px]:py-4 border"
-                  style={{ background: bg, borderColor: `${color}22` }}>
-                  <span className="block text-[1.5rem] min-[640px]:text-[1.8rem] font-bold leading-none mb-1"
-                    style={{ color }}>{value}</span>
-                  <p className="text-kv-muted text-[0.65rem] min-[640px]:text-xs leading-tight">{label}</p>
+            <div className="relative">
+              <div className="border border-kv-border bg-white p-6 shadow-card min-[640px]:p-9">
+                <div className="mb-8 flex items-start justify-between gap-5 border-b border-kv-border pb-6">
+                  <div>
+                    <p className="mb-2 text-sm text-kv-muted">Маршрут команды</p>
+                    <h2 className="text-2xl font-semibold tracking-tight">От замысла к проверенному решению</h2>
+                  </div>
+                  <FileCheck2 className="h-7 w-7 flex-shrink-0 text-kv-blue" strokeWidth={1.5} />
                 </div>
-              ))}
+                <ol className="space-y-0">
+                  {route.map((step, index) => (
+                    <li key={step.number} className="grid grid-cols-[36px_1fr] gap-4">
+                      <div className="flex flex-col items-center">
+                        <span className="flex h-9 w-9 items-center justify-center border border-kv-blue bg-white text-xs font-semibold text-kv-blue">
+                          {step.number}
+                        </span>
+                        {index < route.length - 1 && <span className="h-full w-px bg-kv-border" />}
+                      </div>
+                      <div className={index < route.length - 1 ? 'pb-7' : ''}>
+                        <h3 className="mb-1 font-semibold">{step.title}</h3>
+                        <p className="text-sm leading-relaxed text-kv-muted">{step.text}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div className="absolute -bottom-3 -right-3 -z-10 h-full w-full border border-kv-border bg-[#eef1f6]" aria-hidden />
             </div>
           </div>
         </section>
 
-        {/* ── ФОРМАТЫ ──────────────────────────────────────────────────────── */}
         <section className="section-kv" id="formats">
           <div className="container-kv">
-            <div className="mb-12">
-              <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Форматы практики</span>
-              <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Практика в вашем темпе</h2>
-              <p className="text-kv-text font-light text-lg max-w-[560px] leading-relaxed">
-                Семестровый и интенсивный форматы поддерживают единый проектный цикл. Результат любого внутреннего проекта можно апробировать и адаптировать в КОП.
+            <div className="mb-12 max-w-[720px]">
+              <h2 className="mb-4 text-[clamp(2rem,5vw,3.2rem)] font-semibold tracking-tight">Два формата практики</h2>
+              <p className="text-lg leading-relaxed text-kv-text">
+                Семестровая практика и интенсив проходят по одному проектному циклу.
+                Меняется темп, но сохраняются этапы, фиксация решений и работа с обратной связью.
               </p>
             </div>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
-              <div className="relative bg-white rounded-[2.5rem] p-10 border border-kv-border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
-                <div className="w-14 h-14 rounded-2xl bg-[#eff3ff] flex items-center justify-center mb-7">
-                  <Calendar className="w-7 h-7 text-kv-blue stroke-[1.5]" />
+            <div className="grid gap-px overflow-hidden border border-kv-border bg-kv-border min-[760px]:grid-cols-2">
+              <article className="bg-white p-7 min-[640px]:p-10">
+                <div className="mb-8 flex items-center justify-between gap-4">
+                  <Calendar className="h-8 w-8 text-kv-blue" strokeWidth={1.5} />
+                  <span className="text-sm text-kv-muted">16 недель</span>
                 </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <h3 className="text-[1.6rem] font-semibold">Семестровая</h3>
-                  <span className="tag-kv text-xs">16 недель</span>
-                </div>
-                <p className="text-kv-text leading-relaxed mb-4">
-                  Рассредоточенная практика в течение всего семестра — параллельно с учебными занятиями. Больше времени на проработку каждого спринта и более глубокую итерацию продукта.
+                <h3 className="mb-4 text-2xl font-semibold">Семестровая практика</h3>
+                <p className="mb-6 leading-relaxed text-kv-text">
+                  Команда последовательно проходит спринты параллельно с учебными занятиями,
+                  возвращается к решениям и дорабатывает проект по результатам обсуждений.
                 </p>
-                <ul className="space-y-2 text-sm text-kv-muted">
-                  {['Гибкий темп работы', '6 итераций Agile', 'Полный проектный цикл'].map((t) => (
-                    <li key={t} className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-kv-blue flex-shrink-0" /> {t}
+                <ul className="space-y-3 text-sm text-kv-muted">
+                  {['Шесть проектных итераций', 'Регулярные контрольные точки', 'Время на апробацию и доработку'].map((item) => (
+                    <li key={item} className="flex items-center gap-3">
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-kv-blue" /> {item}
                     </li>
                   ))}
                 </ul>
-              </div>
-
-              <div className="relative bg-white rounded-[2.5rem] p-10 border border-kv-border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
-                <div className="w-14 h-14 rounded-2xl bg-[#f5f0ff] flex items-center justify-center mb-7">
-                  <Zap className="w-7 h-7 text-[#7c3aed] stroke-[1.5]" />
+              </article>
+              <article className="bg-[#f3f0eb] p-7 min-[640px]:p-10">
+                <div className="mb-8 flex items-center justify-between gap-4">
+                  <Zap className="h-8 w-8 text-[#6b4f32]" strokeWidth={1.5} />
+                  <span className="text-sm text-kv-muted">5 дней</span>
                 </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <h3 className="text-[1.6rem] font-semibold">Интенсив</h3>
-                  <span className="bg-[#f5f0ff] text-[#7c3aed] px-4 py-1.5 rounded-full text-xs font-medium inline-block">5 дней</span>
-                </div>
-                <p className="text-kv-text leading-relaxed mb-4">
-                  Проектно-технологическая практика в формате недельного интенсива. Полное погружение в разработку — от постановки задачи до проверяемого результата и плана его дальнейшей апробации.
+                <h3 className="mb-4 text-2xl font-semibold">Проектный интенсив</h3>
+                <p className="mb-6 leading-relaxed text-kv-text">
+                  Команда сосредоточенно проходит путь от постановки задачи до прототипа
+                  и составляет план дальнейшей проверки результата.
                 </p>
-                <ul className="space-y-2 text-sm text-kv-muted">
-                  {['Полное погружение', 'Быстрые спринты', 'Результат за 5 дней'].map((t) => (
-                    <li key={t} className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[#7c3aed] flex-shrink-0" /> {t}
+                <ul className="space-y-3 text-sm text-kv-muted">
+                  {['Короткие рабочие циклы', 'Ежедневная фиксация результата', 'Прототип и план апробации'].map((item) => (
+                    <li key={item} className="flex items-center gap-3">
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[#6b4f32]" /> {item}
                     </li>
                   ))}
                 </ul>
-              </div>
+              </article>
             </div>
           </div>
         </section>
 
-        {/* ── AGILE ЦИКЛ ───────────────────────────────────────────────────── */}
         <AgileSection />
 
-        {/* ── КОП ──────────────────────────────────────────────────────────── */}
         <section className="section-kv">
           <div className="container-kv">
-            <div className="bg-white rounded-[2rem] min-[640px]:rounded-[3rem] px-6 py-8 min-[640px]:px-[60px] min-[640px]:py-[70px] flex flex-wrap gap-8 min-[640px]:gap-[60px] items-center border border-kv-border shadow-card">
-              <div className="flex-[2] min-w-[300px]">
-                <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest block mb-4">Упаковка результата</span>
-                <h3 className="text-[clamp(1.7rem,4vw,2.5rem)] font-semibold mb-5 leading-tight">
-                  Как проект становится<br />коробочным образовательным комплектом
-                </h3>
-                <p className="text-kv-text leading-relaxed mb-4 text-[1.05rem]">
-                  Исследовательский, конструкторский, методический или цифровой проект может быть адаптирован в КОП. Для этого его результат переводится в воспроизводимое образовательное решение: продукт или материалы дополняются сценарием применения, инструкцией и методическим сопровождением.
-                </p>
-                <p className="text-kv-muted text-sm leading-relaxed mb-8">
-                  В каталоге публикуется не черновая проектная работа, а оформленная и проверенная версия, которую другой педагог сможет понять, применить и при необходимости адаптировать.
-                </p>
-                <div className="flex gap-3 flex-wrap">
-                  <Link href="/catalog" className="btn-primary inline-flex items-center gap-2">
-                    Каталог КОП <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link href="/cabinet" className="btn-outline inline-flex items-center gap-2">
-                    Начать разработку
-                  </Link>
-                </div>
+            <div className="grid gap-10 border-y border-kv-border py-12 min-[840px]:grid-cols-[.75fr_1.25fr] min-[840px]:items-start min-[840px]:py-16">
+              <div>
+                <Box className="mb-6 h-12 w-12 text-kv-blue" strokeWidth={1.25} />
+                <h2 className="text-[clamp(2rem,4vw,3rem)] font-semibold leading-tight tracking-tight">
+                  Проект не обязан становиться КОП
+                </h2>
               </div>
-              <div className="flex-1 min-w-[180px] flex flex-col items-center gap-5">
-                <div className="w-36 h-36 rounded-[2.5rem] bg-kv-light flex items-center justify-center">
-                  <Box className="w-20 h-20 text-kv-blue stroke-[1.2]" />
+              <div>
+                <p className="mb-5 text-lg leading-relaxed text-kv-text">
+                  Внутренний проект сохраняется в архиве как история работы команды.
+                  Для публичной витрины команда отдельно готовит понятную и проверенную версию,
+                  которой сможет воспользоваться другой педагог.
+                </p>
+                <p className="mb-8 leading-relaxed text-kv-muted">
+                  Исследовательский, конструкторский, методический или цифровой результат
+                  можно адаптировать в коробочный образовательный комплект: добавить сценарий,
+                  инструкцию, материалы и описание условий применения.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/catalog" className="btn-primary inline-flex items-center gap-2">
+                    Открыть каталог <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href="/cabinet" className="btn-outline">Начать проект</Link>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── МАСТЕР-КЛАССЫ ────────────────────────────────────────────────── */}
         <WorkshopsSection />
-
-        {/* ── ДОКУМЕНТЫ ────────────────────────────────────────────────────── */}
         <DocsSection />
 
-        {/* ── КОНТАКТЫ ─────────────────────────────────────────────────────── */}
         <section className="section-kv">
-          <div className="container-kv">
-            <div className="mb-10">
-              <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Связь</span>
-              <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Контакты</h2>
-              <p className="text-kv-text font-light text-lg">
-                Связаться с куратором, задать вопрос или договориться о сотрудничестве.
+          <div className="container-kv grid gap-10 min-[840px]:grid-cols-[.8fr_1.2fr]">
+            <div>
+              <h2 className="mb-4 text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight">Контакты</h2>
+              <p className="max-w-[420px] text-lg leading-relaxed text-kv-text">
+                Вопросы о практике, апробации проектов и сотрудничестве с технопарком.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              {contacts.map((c) => {
-                const Icon = contactIconMap[c.icon] ?? MapPin
+            <div className="divide-y divide-kv-border border-y border-kv-border">
+              {contacts.map((contact) => {
+                const Icon = contactIconMap[contact.icon] ?? MapPin
                 return (
-                  <a key={c.text} href={c.link} target="_blank" rel="noopener noreferrer"
-                    className="bg-white rounded-full py-3.5 px-6 flex items-center gap-2.5 border border-kv-border text-kv-dark no-underline text-[0.95rem] transition-all hover:bg-kv-light hover:-translate-y-0.5 hover:shadow-card">
-                    <Icon className="w-[18px] h-[18px] text-kv-blue stroke-[1.5] flex-shrink-0" />
-                    <span>{c.text}</span>
+                  <a
+                    key={contact.text}
+                    href={contact.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-5 py-4 text-kv-dark no-underline transition-colors hover:text-kv-blue"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Icon className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={1.5} />
+                      {contact.text}
+                    </span>
+                    <ArrowRight className="h-4 w-4 flex-shrink-0" />
                   </a>
                 )
               })}
@@ -282,57 +200,28 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── КАТАЛОГ CTA ──────────────────────────────────────────────────── */}
-        <section className="section-kv">
+        <section className="pb-16 pt-4 min-[640px]:pb-24">
           <div className="container-kv">
-            <div className="relative bg-kv-dark rounded-[2rem] min-[640px]:rounded-[3rem] px-6 py-8 min-[640px]:px-[60px] min-[640px]:py-[70px] overflow-hidden">
-              {/* Decorative blob */}
-              <div className="absolute -right-24 -top-24 w-64 h-64 rounded-full opacity-10"
-                style={{ background: 'radial-gradient(circle, #4f6ad0, transparent 70%)' }} />
-              <div className="absolute -left-12 -bottom-16 w-48 h-48 rounded-full opacity-10"
-                style={{ background: 'radial-gradient(circle, #7c3aed, transparent 70%)' }} />
-              <div className="relative z-10 flex flex-wrap items-center justify-between gap-8">
-                <div>
-                  <h4 className="text-[clamp(1.6rem,4vw,2.2rem)] font-semibold text-white mb-3">
-                    Каталог коробочных комплектов
-                  </h4>
-                  <p className="text-white/60 text-lg max-w-[520px] leading-relaxed">
-                    Посмотрите результаты студенческих проектов, адаптированные в КОП и подготовленные для образовательного применения.
-                  </p>
-                </div>
-                <Link href="/catalog"
-                  className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-kv-dark px-8 py-4 rounded-full font-medium text-[1rem] hover:bg-kv-light transition-colors no-underline">
-                  Открыть каталог <ArrowRight className="w-4 h-4" />
-                </Link>
+            <div className="grid gap-8 bg-kv-dark p-7 text-white min-[760px]:grid-cols-[1fr_auto] min-[760px]:items-center min-[640px]:p-12">
+              <div>
+                <Users className="mb-5 h-7 w-7 text-white/70" strokeWidth={1.5} />
+                <h2 className="mb-3 text-2xl font-semibold">Сотрудничество и площадки для апробации</h2>
+                <p className="max-w-[720px] leading-relaxed text-white/65">
+                  Образовательные учреждения могут изучать опубликованные решения,
+                  предлагать площадки для проверки и оставлять содержательную обратную связь.
+                </p>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── ПАРТНЁРСТВО ──────────────────────────────────────────────────── */}
-        <section className="py-24 pt-0">
-          <div className="container-kv">
-            <div className="bg-white rounded-[2rem] min-[640px]:rounded-[3rem] p-7 min-[640px]:p-[60px] text-center border border-kv-border">
-              <div className="w-14 h-14 rounded-2xl bg-kv-light flex items-center justify-center mx-auto mb-6">
-                <Users className="w-7 h-7 text-kv-blue" />
-              </div>
-              <h4 className="text-[clamp(1.6rem,4vw,2.2rem)] font-semibold mb-4">
-                Хотите сотрудничать с технопарком?
-              </h4>
-              <p className="text-kv-text text-lg mb-3 max-w-[580px] mx-auto leading-relaxed">
-                Образовательные учреждения могут изучать готовые решения, предлагать площадки для апробации и оставлять обратную связь по итогам применения.
-              </p>
-              <p className="text-kv-muted mb-10">
-                Заявки на практику подаёт администрация технопарка РГПУ им. А.И. Герцена — место практики согласовывается заранее.
-              </p>
-              <a href="https://technopark.herzen.spb.ru" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-kv-blue text-white px-12 py-4 rounded-full text-[1.05rem] font-medium no-underline hover:bg-kv-dark transition-colors">
-                Написать нам <ArrowRight className="w-4 h-4" />
+              <a
+                href="https://technopark.herzen.spb.ru"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 border border-white/30 px-7 py-3.5 text-white no-underline transition-colors hover:bg-white hover:text-kv-dark"
+              >
+                Связаться <ArrowRight className="h-4 w-4" />
               </a>
             </div>
           </div>
         </section>
-
       </main>
       <Footer />
       <AIAssistant />
