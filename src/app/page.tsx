@@ -53,7 +53,7 @@ export default function HomePage() {
             </div>
 
             <div className="relative">
-              <div className="border border-kv-border border-t-4 border-t-kv-cyan bg-white p-6 shadow-card min-[640px]:p-9">
+              <div className="border border-kv-border border-t-4 border-t-kv-cyan bg-[#FAF8F3] p-6 shadow-card min-[640px]:p-9">
                 <div className="mb-8 flex items-start justify-between gap-5 border-b border-kv-border pb-6">
                   <div>
                     <p className="mb-2 text-sm text-kv-muted">Маршрут команды</p>
@@ -65,7 +65,7 @@ export default function HomePage() {
                   {route.map((step, index) => (
                     <li key={step.number} className="grid grid-cols-[36px_1fr] gap-4">
                       <div className="flex flex-col items-center">
-                        <span className="flex h-9 w-9 items-center justify-center border border-kv-blue bg-white text-xs font-semibold text-kv-blue">
+                        <span className="flex h-9 w-9 items-center justify-center border border-kv-blue bg-[#FAF8F3] text-xs font-semibold text-kv-blue">
                           {step.number}
                         </span>
                         {index < route.length - 1 && <span className="h-full w-px bg-kv-border" />}
@@ -78,7 +78,7 @@ export default function HomePage() {
                   ))}
                 </ol>
               </div>
-              <div className="absolute -bottom-3 -right-3 -z-10 h-full w-full border border-kv-border bg-[#E7EAF0]" aria-hidden />
+              <div className="absolute -bottom-3 -right-3 -z-10 h-full w-full border border-kv-border bg-[#DED6CA]" aria-hidden />
             </div>
           </div>
         </section>
@@ -93,7 +93,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="grid gap-px overflow-hidden border border-kv-border bg-kv-border min-[760px]:grid-cols-2">
-              <article className="bg-white p-7 min-[640px]:p-10">
+              <article className="bg-[#FAF8F3] p-7 min-[640px]:p-10">
                 <div className="mb-8 flex items-center justify-between gap-4">
                   <Calendar className="h-8 w-8 text-kv-blue" strokeWidth={1.5} />
                   <span className="text-sm text-kv-muted">16 недель</span>
@@ -111,7 +111,7 @@ export default function HomePage() {
                   ))}
                 </ul>
               </article>
-              <article className="bg-[#EDF7FA] p-7 min-[640px]:p-10">
+              <article className="bg-[#EDE5DA] p-7 min-[640px]:p-10">
                 <div className="mb-8 flex items-center justify-between gap-4">
                   <Zap className="h-8 w-8 text-kv-blue" strokeWidth={1.5} />
                   <span className="text-sm text-kv-muted">5 дней</span>
@@ -215,7 +215,7 @@ export default function HomePage() {
                 href="https://technopark.herzen.spb.ru"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 border border-white/30 px-7 py-3.5 text-white no-underline transition-colors hover:bg-white hover:text-kv-dark"
+                className="inline-flex items-center justify-center gap-2 border border-white/30 px-7 py-3.5 text-white no-underline transition-colors hover:bg-[#FAF8F3] hover:text-kv-dark"
               >
                 Связаться <ArrowRight className="h-4 w-4" />
               </a>
