@@ -13,7 +13,7 @@ const DocsSection = dynamic(() => import('@/components/DocsSection'), { ssr: fal
 const AIAssistant = dynamic(() => import('@/components/AIAssistant'), { ssr: false })
 const AgileSection = dynamic(() => import('@/components/AgileSection'), { ssr: false })
 
-const contactIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+const contactIconMap: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
   MapPin, Globe: Globe2, Mail, MessageCircle, Hash, MessageSquare,
 }
 
