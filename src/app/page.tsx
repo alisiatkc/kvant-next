@@ -29,7 +29,7 @@ export default function HomePage() {
     <>
       <Header active="home" />
       <main>
-        <section className="border-b border-kv-border bg-[#f7f8fa]">
+        <section className="border-b border-kv-border bg-kv-bg">
           <div className="container-kv grid min-h-[680px] items-center gap-12 py-16 min-[900px]:grid-cols-[1.08fr_.92fr] min-[900px]:py-24">
             <div>
               <p className="mb-7 max-w-[580px] text-sm leading-relaxed text-kv-muted">
@@ -78,7 +78,7 @@ export default function HomePage() {
                   ))}
                 </ol>
               </div>
-              <div className="absolute -bottom-3 -right-3 -z-10 h-full w-full border border-kv-border bg-[#eef1f6]" aria-hidden />
+              <div className="absolute -bottom-3 -right-3 -z-10 h-full w-full border border-kv-border bg-[#E7EAF0]" aria-hidden />
             </div>
           </div>
         </section>
@@ -111,9 +111,9 @@ export default function HomePage() {
                   ))}
                 </ul>
               </article>
-              <article className="bg-[#f3f0eb] p-7 min-[640px]:p-10">
+              <article className="bg-[#F4F1E9] p-7 min-[640px]:p-10">
                 <div className="mb-8 flex items-center justify-between gap-4">
-                  <Zap className="h-8 w-8 text-[#6b4f32]" strokeWidth={1.5} />
+                  <Zap className="h-8 w-8 text-kv-orange" strokeWidth={1.5} />
                   <span className="text-sm text-kv-muted">5 дней</span>
                 </div>
                 <h3 className="mb-4 text-2xl font-semibold">Проектный интенсив</h3>
@@ -124,7 +124,7 @@ export default function HomePage() {
                 <ul className="space-y-3 text-sm text-kv-muted">
                   {['Короткие рабочие циклы', 'Ежедневная фиксация результата', 'Прототип и план апробации'].map((item) => (
                     <li key={item} className="flex items-center gap-3">
-                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[#6b4f32]" /> {item}
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-kv-orange" /> {item}
                     </li>
                   ))}
                 </ul>
