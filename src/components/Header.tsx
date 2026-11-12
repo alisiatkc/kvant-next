@@ -17,7 +17,7 @@ export default function Header({ active }: HeaderProps) {
     <header className="sticky top-0 z-40 border-b border-kv-border bg-white">
       <div className="container-kv flex h-[72px] items-center justify-between">
         <Link href="/" className="flex items-center gap-3 no-underline" onClick={() => setOpen(false)}>
-          <span className="flex h-10 w-10 items-center justify-center bg-kv-blue text-sm font-semibold text-white">
+          <span className="flex h-10 w-10 items-center justify-center bg-kv-cyan text-sm font-semibold text-kv-dark">
             К
           </span>
           <span className="text-[1.05rem] font-semibold leading-tight text-kv-dark">
