@@ -53,7 +53,7 @@ export default function HomePage() {
             </div>
 
             <div className="relative">
-              <div className="border border-kv-border bg-white p-6 shadow-card min-[640px]:p-9">
+              <div className="border border-kv-border border-t-4 border-t-kv-cyan bg-white p-6 shadow-card min-[640px]:p-9">
                 <div className="mb-8 flex items-start justify-between gap-5 border-b border-kv-border pb-6">
                   <div>
                     <p className="mb-2 text-sm text-kv-muted">Маршрут команды</p>
@@ -111,9 +111,9 @@ export default function HomePage() {
                   ))}
                 </ul>
               </article>
-              <article className="bg-[#F4F1E9] p-7 min-[640px]:p-10">
+              <article className="bg-[#EDF7FA] p-7 min-[640px]:p-10">
                 <div className="mb-8 flex items-center justify-between gap-4">
-                  <Zap className="h-8 w-8 text-kv-orange" strokeWidth={1.5} />
+                  <Zap className="h-8 w-8 text-kv-blue" strokeWidth={1.5} />
                   <span className="text-sm text-kv-muted">5 дней</span>
                 </div>
                 <h3 className="mb-4 text-2xl font-semibold">Проектный интенсив</h3>
@@ -124,7 +124,7 @@ export default function HomePage() {
                 <ul className="space-y-3 text-sm text-kv-muted">
                   {['Короткие рабочие циклы', 'Ежедневная фиксация результата', 'Прототип и план апробации'].map((item) => (
                     <li key={item} className="flex items-center gap-3">
-                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-kv-orange" /> {item}
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-kv-blue" /> {item}
                     </li>
                   ))}
                 </ul>
