@@ -14,9 +14,9 @@ const config: Config = {
       colors: {
         kv: {
           dark: '#14203B',
-          blue: '#213A8F',
+          blue: '#247A9C',
           gold: '#C6A15B',
-          cyan: '#1BAAE3',
+          cyan: '#64BDE1',
           orange: '#EC6600',
           green: '#00713C',
           bg: '#F6F7F9',
@@ -26,8 +26,8 @@ const config: Config = {
           muted: '#6A7385',
         },
         ai: {
-          primary: '#213A8F',
-          dark: '#142867',
+          primary: '#247A9C',
+          dark: '#185B75',
           light: '#EEF1F8',
         },
       },
@@ -39,7 +39,7 @@ const config: Config = {
         card: '0 12px 30px -10px rgba(0, 0, 0, 0.05)',
         'card-hover': '0 20px 32px -14px rgba(20, 32, 59, 0.16)',
         modal: '0 40px 70px -10px rgba(0, 0, 0, 0.3)',
-        'ai-btn': '0 8px 20px rgba(33, 58, 143, 0.22)',
+        'ai-btn': '0 8px 20px rgba(36, 122, 156, 0.22)',
         'ai-window': '0 25px 50px rgba(0, 0, 0, 0.2)',
         likes: '0 4px 10px rgba(255, 100, 100, 0.1)',
       },
