@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import type { LucideIcon } from 'lucide-react'
 import {
   Box, Calendar, Zap, MapPin, Globe, Mail, MessageCircle,
   Hash, MessageSquare, ArrowRight, CheckCircle2, Users,
