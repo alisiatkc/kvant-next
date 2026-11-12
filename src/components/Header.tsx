@@ -14,10 +14,10 @@ export default function Header({ active }: HeaderProps) {
     `no-underline text-sm font-medium transition-colors ${isActive ? 'text-kv-blue' : 'text-kv-text hover:text-kv-dark'}`
 
   return (
-    <header className="sticky top-0 z-40 border-b border-kv-border bg-white">
+    <header className="sticky top-0 z-40 border-b border-kv-border bg-[#FAF8F3]">
       <div className="container-kv flex h-[72px] items-center justify-between">
         <Link href="/" className="flex items-center gap-3 no-underline" onClick={() => setOpen(false)}>
-          <span className="flex h-10 w-10 items-center justify-center bg-kv-cyan text-sm font-semibold text-kv-dark">
+          <span className="flex h-10 w-10 items-center justify-center bg-kv-cyan text-sm font-semibold text-white">
             К
           </span>
           <span className="text-[1.05rem] font-semibold leading-tight text-kv-dark">
@@ -55,7 +55,7 @@ export default function Header({ active }: HeaderProps) {
       </div>
 
       {open && (
-        <div className="space-y-1 border-t border-kv-border bg-white px-4 py-4 min-[640px]:hidden">
+        <div className="space-y-1 border-t border-kv-border bg-[#FAF8F3] px-4 py-4 min-[640px]:hidden">
           <Link href="/" onClick={() => setOpen(false)} className="flex px-4 py-3 text-sm font-medium text-kv-text no-underline hover:bg-kv-light">О платформе</Link>
           <Link href="/catalog" onClick={() => setOpen(false)} className="flex px-4 py-3 text-sm font-medium text-kv-text no-underline hover:bg-kv-light">Проекты</Link>
           <Link href="/guide" onClick={() => setOpen(false)} className="flex px-4 py-3 text-sm font-medium text-kv-text no-underline hover:bg-kv-light">Как работать</Link>
