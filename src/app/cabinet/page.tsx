@@ -1255,9 +1255,9 @@ export default function CabinetPage() {
         <div className="container-kv py-8">
 
           {/* Top bar */}
-          <div className="bg-white rounded-[2rem] px-8 py-5 mb-6 flex items-center justify-between flex-wrap gap-4">
+          <div className="bg-white rounded-[1.25rem] px-6 py-5 mb-6 flex items-center justify-between flex-wrap gap-4 border border-kv-border">
             <div>
-              <span className="text-kv-muted text-xs uppercase tracking-wide block mb-0.5">Рабочее пространство</span>
+              <span className="text-kv-muted text-xs block mb-0.5">Рабочее пространство</span>
               <span className="text-xl font-semibold">{captainName} <span className="text-kv-muted font-normal text-base">· {teamName}</span></span>
             </div>
             <div className="flex items-center gap-2.5 flex-wrap">
@@ -1298,9 +1298,9 @@ export default function CabinetPage() {
           <div className="flex gap-6 items-start max-[920px]:flex-col">
             {/* Sidebar */}
             <nav className="w-[220px] flex-shrink-0 max-[920px]:w-full">
-              <div className="bg-white rounded-[2rem] p-2 space-y-1">
+              <div className="bg-white rounded-[1.25rem] p-2 space-y-1 border border-kv-border">
                 <button
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-left text-[0.88rem] cursor-pointer border-none transition-all ${activeTab === 'overview' ? 'bg-kv-blue text-white font-medium' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-left text-[0.88rem] cursor-pointer border-none transition-colors ${activeTab === 'overview' ? 'bg-kv-blue text-white font-medium' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
                   onClick={() => setActiveTab('overview')}
                 >
                   <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> <span>Обзор</span>
@@ -1312,7 +1312,7 @@ export default function CabinetPage() {
                   return (
                     <div key={id}>
                       <button
-                        className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-left text-[0.88rem] cursor-pointer border-none transition-all ${groupActive ? 'text-kv-blue bg-[#f3f6ff] font-medium' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
+                        className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-left text-[0.88rem] cursor-pointer border-none transition-colors ${groupActive ? 'text-kv-blue bg-[#f3f6ff] font-medium' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
                         onClick={() => setOpenNavGroup(expanded ? null : id)}
                         aria-expanded={expanded}
                       >
@@ -1325,7 +1325,7 @@ export default function CabinetPage() {
                           {items.map(({ id: itemId, label: itemLabel, Icon: ItemIcon }) => (
                             <button
                               key={itemId}
-                              className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-left text-[0.82rem] cursor-pointer border-none transition-all ${activeTab === itemId ? 'bg-kv-blue text-white font-medium' : 'bg-transparent text-kv-muted hover:bg-kv-light hover:text-kv-dark'}`}
+                              className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-left text-[0.82rem] cursor-pointer border-none transition-colors ${activeTab === itemId ? 'bg-kv-blue text-white font-medium' : 'bg-transparent text-kv-muted hover:bg-kv-light hover:text-kv-dark'}`}
                               onClick={() => setActiveTab(itemId)}
                             >
                               <ItemIcon className="w-3.5 h-3.5 flex-shrink-0" /> {itemLabel}
@@ -1339,7 +1339,7 @@ export default function CabinetPage() {
               </div>
 
               <button
-                className={`mt-3 w-full rounded-[1.5rem] border px-4 py-3 text-left cursor-pointer transition-all flex items-start gap-3 ${activeTab === 'research' ? 'bg-[#eef3ff] border-kv-blue text-kv-blue' : 'bg-transparent border-kv-border text-kv-muted hover:bg-white'}`}
+                className={`mt-3 w-full rounded-xl border px-4 py-3 text-left cursor-pointer transition-colors flex items-start gap-3 ${activeTab === 'research' ? 'bg-[#eef3ff] border-kv-blue text-kv-blue' : 'bg-transparent border-kv-border text-kv-muted hover:bg-white'}`}
                 onClick={() => setActiveTab('research')}
               >
                 <BarChart3 className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -1357,7 +1357,7 @@ export default function CabinetPage() {
               {activeTab === 'overview' && (
                 <>
                   {/* Progress */}
-                  <div className="bg-white rounded-[2.5rem] p-8">
+                  <div className="bg-white rounded-[1.5rem] p-6 min-[640px]:p-8 border border-kv-border">
                     <h3 className="text-[1.3rem] font-semibold mb-7">Прогресс проекта</h3>
                     <div className="relative flex">
                       <div className="absolute top-5 left-5 right-5 h-[2px] bg-kv-light" />
@@ -1379,9 +1379,9 @@ export default function CabinetPage() {
                   </div>
 
                   {/* Recommended next step */}
-                  <div className="rounded-[2rem] bg-[#eef3ff] border border-[#2b3b6b20] px-7 py-6 flex items-center justify-between gap-5 flex-wrap">
+                  <div className="rounded-[1.25rem] bg-[#eef3ff] border border-[#2b3b6b20] px-6 py-5 flex items-center justify-between gap-5 flex-wrap">
                     <div className="max-w-[620px]">
-                      <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Следующий шаг</span>
+                      <span className="text-kv-blue text-xs font-medium">Следующий шаг</span>
                       <h4 className="text-lg font-semibold mt-1 mb-1">{nextStep.title}</h4>
                       <p className="text-sm text-kv-text leading-relaxed">{nextStep.text}</p>
                     </div>
@@ -1402,10 +1402,10 @@ export default function CabinetPage() {
 
                   {/* Practice dates */}
                   {(practiceStart || practiceEnd) && (
-                    <div className="bg-white rounded-[2rem] px-7 py-5 flex items-center gap-4 border border-kv-border">
+                    <div className="bg-white rounded-[1.25rem] px-6 py-5 flex items-center gap-4 border border-kv-border">
                       <Calendar className="w-5 h-5 text-kv-blue flex-shrink-0" />
                       <div>
-                        <span className="text-xs uppercase tracking-wide text-kv-muted block mb-0.5">Сроки практики</span>
+                        <span className="text-xs text-kv-muted block mb-0.5">Сроки практики</span>
                         <span className="text-sm font-medium">
                           {practiceStart ? new Date(practiceStart).toLocaleDateString('ru-RU') : '?'}
                           {' — '}

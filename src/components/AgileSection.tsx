@@ -115,13 +115,12 @@ export default function AgileSection() {
         {/* Header */}
         <div className="flex flex-wrap items-end justify-between gap-6 mb-10">
           <div>
-            <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Методология Agile</span>
-            <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Проектный цикл</h2>
-            <p className="text-kv-text font-light text-lg max-w-[540px] leading-relaxed">
+            <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mb-3">Проектный цикл</h2>
+            <p className="text-kv-text text-lg max-w-[540px] leading-relaxed">
               Шесть этапов от замысла до апробации, упаковки результата и передачи опыта. После каждого — обратная связь куратора.
             </p>
           </div>
-          <div className="flex items-center gap-2 bg-kv-dark text-white px-5 py-3 rounded-full text-sm font-medium flex-shrink-0">
+          <div className="flex items-center gap-2 border border-kv-border bg-white text-kv-dark px-5 py-3 text-sm font-medium flex-shrink-0">
             <Cpu className="w-4 h-4 opacity-70" />
             Agile · Kanban · Scrum
           </div>
@@ -133,14 +132,13 @@ export default function AgileSection() {
             <button
               key={i}
               onClick={() => setActive(i)}
-              className="flex-shrink-0 w-14 h-14 rounded-2xl text-[0.95rem] font-bold transition-all duration-200 border cursor-pointer"
+              className="flex-shrink-0 w-14 h-14 text-[0.95rem] font-semibold transition-colors duration-200 border cursor-pointer"
               style={
                 active === i
                   ? {
                       background: ACCENT[i],
                       color: 'white',
                       borderColor: ACCENT[i],
-                      boxShadow: `0 4px 14px ${ACCENT[i]}50`,
                     }
                   : {
                       background: 'white',
@@ -156,17 +154,17 @@ export default function AgileSection() {
 
         {/* Single card — switches on tab click */}
         <div
-          className="rounded-[2rem] p-7 min-[640px]:p-10 border"
+          className="p-7 min-[640px]:p-10 border"
           style={{ background: bg, borderColor: `${accent}20` }}
         >
           {/* Card header */}
           <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 bg-white border border-kv-border flex items-center justify-center flex-shrink-0">
                 <Icon className="w-7 h-7" style={{ color: accent }} />
               </div>
               <div>
-                <div className="text-[0.68rem] font-bold uppercase tracking-widest mb-1"
+                <div className="text-xs font-medium mb-1"
                   style={{ color: accent }}>
                   Этап {step.num}
                 </div>
@@ -176,7 +174,7 @@ export default function AgileSection() {
               </div>
             </div>
             <span
-              className="flex-shrink-0 text-[0.72rem] font-bold uppercase tracking-widest px-4 py-2 rounded-full text-white"
+              className="flex-shrink-0 text-xs font-medium px-4 py-2 text-white"
               style={{ background: accent }}
             >
               {step.tag}
@@ -191,7 +189,7 @@ export default function AgileSection() {
           {/* Task grid */}
           <div className="grid grid-cols-1 min-[540px]:grid-cols-2 gap-2.5 mb-6">
             {step.tasks.map((t) => (
-              <div key={t} className="flex items-start gap-2.5 bg-white/70 rounded-xl px-4 py-3">
+              <div key={t} className="flex items-start gap-2.5 bg-white/70 border border-white px-4 py-3">
                 <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: accent }} />
                 <span className="text-[0.87rem] text-kv-dark leading-snug">{t}</span>
               </div>
@@ -200,10 +198,10 @@ export default function AgileSection() {
 
           {/* Result */}
           <div className="flex items-center gap-3 pt-5 border-t border-white/60">
-            <span className="text-[0.7rem] font-bold uppercase tracking-widest" style={{ color: accent }}>
+            <span className="text-xs font-medium" style={{ color: accent }}>
               Результат:
             </span>
-            <span className="text-[0.85rem] font-semibold px-4 py-1.5 rounded-full bg-white"
+            <span className="text-[0.85rem] font-semibold px-4 py-1.5 bg-white"
               style={{ color: accent }}>
               {step.result}
             </span>
@@ -211,9 +209,9 @@ export default function AgileSection() {
         </div>
 
         {/* Callout */}
-        <div className="mt-6 bg-kv-dark rounded-[2rem] p-7 min-[640px]:p-8 flex flex-wrap items-center justify-between gap-6">
+        <div className="mt-6 bg-kv-dark p-7 min-[640px]:p-8 flex flex-wrap items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-10 h-10 bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
               <Cpu className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -224,7 +222,7 @@ export default function AgileSection() {
             </div>
           </div>
           <Link href="/cabinet"
-            className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-kv-dark px-6 py-3 rounded-full font-medium text-sm hover:bg-kv-light transition-colors no-underline">
+            className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-kv-dark px-6 py-3 font-medium text-sm hover:bg-kv-light transition-colors no-underline">
             Открыть трекер <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
