@@ -116,7 +116,7 @@ export default function AgileSection() {
         <div className="flex flex-wrap items-end justify-between gap-6 mb-10">
           <div>
             <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mb-3">Проектный цикл</h2>
-            <p className="text-kv-text font-light text-lg max-w-[540px] leading-relaxed">
+            <p className="text-kv-text text-lg max-w-[540px] leading-relaxed">
               Шесть этапов от замысла до апробации, упаковки результата и передачи опыта. После каждого — обратная связь куратора.
             </p>
           </div>
@@ -132,14 +132,13 @@ export default function AgileSection() {
             <button
               key={i}
               onClick={() => setActive(i)}
-              className="flex-shrink-0 w-14 h-14 text-[0.95rem] font-bold transition-all duration-200 border cursor-pointer"
+              className="flex-shrink-0 w-14 h-14 text-[0.95rem] font-semibold transition-colors duration-200 border cursor-pointer"
               style={
                 active === i
                   ? {
                       background: ACCENT[i],
                       color: 'white',
                       borderColor: ACCENT[i],
-                      boxShadow: `0 4px 14px ${ACCENT[i]}50`,
                     }
                   : {
                       background: 'white',
@@ -165,7 +164,7 @@ export default function AgileSection() {
                 <Icon className="w-7 h-7" style={{ color: accent }} />
               </div>
               <div>
-                <div className="text-[0.68rem] font-bold uppercase tracking-widest mb-1"
+                <div className="text-xs font-medium mb-1"
                   style={{ color: accent }}>
                   Этап {step.num}
                 </div>
@@ -175,7 +174,7 @@ export default function AgileSection() {
               </div>
             </div>
             <span
-              className="flex-shrink-0 text-[0.72rem] font-bold uppercase tracking-widest px-4 py-2 text-white"
+              className="flex-shrink-0 text-xs font-medium px-4 py-2 text-white"
               style={{ background: accent }}
             >
               {step.tag}
@@ -199,7 +198,7 @@ export default function AgileSection() {
 
           {/* Result */}
           <div className="flex items-center gap-3 pt-5 border-t border-white/60">
-            <span className="text-[0.7rem] font-bold uppercase tracking-widest" style={{ color: accent }}>
+            <span className="text-xs font-medium" style={{ color: accent }}>
               Результат:
             </span>
             <span className="text-[0.85rem] font-semibold px-4 py-1.5 bg-white"
