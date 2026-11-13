@@ -81,13 +81,13 @@
     @apply inline-block bg-transparent text-kv-dark px-8 py-3.5 rounded-full font-medium border border-[#cdd6e4] transition-colors duration-200 hover:bg-kv-light no-underline;
   }
   .card-kv {
-    @apply bg-white rounded-4xl p-7 min-[640px]:p-10 shadow-card border border-kv-border;
+    @apply bg-white rounded-[1.25rem] p-6 min-[640px]:p-8 shadow-card border border-kv-border;
   }
   .modal-overlay {
     @apply fixed inset-0 bg-[rgba(15,18,28,0.7)] backdrop-blur-sm flex items-end min-[640px]:items-center justify-center z-[1000];
   }
   .modal-box {
-    @apply bg-white max-w-[600px] w-full min-[640px]:w-[90%] rounded-t-[2rem] min-[640px]:rounded-[3rem] p-7 min-[640px]:p-[50px] relative shadow-modal max-h-[92vh] overflow-y-auto;
+    @apply bg-white max-w-[600px] w-full min-[640px]:w-[90%] rounded-t-[1.5rem] min-[640px]:rounded-[1.5rem] p-7 min-[640px]:p-10 relative shadow-modal max-h-[92vh] overflow-y-auto;
   }
   .modal-close-btn {
     @apply absolute top-5 right-5 min-[640px]:top-6 min-[640px]:right-7 bg-kv-light border-none w-9 h-9 rounded-full flex items-center justify-center text-[#7c7f93] cursor-pointer hover:text-kv-dark hover:bg-[#e2e8f0] transition-colors;
@@ -110,4 +110,18 @@
   .status-badge {
     @apply inline-flex items-center gap-1.5 px-3 min-[640px]:px-5 py-1.5 min-[640px]:py-2 rounded-full font-medium text-xs min-[640px]:text-sm;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 3px solid rgba(43, 59, 107, 0.35);
+  outline-offset: 3px;
 }
