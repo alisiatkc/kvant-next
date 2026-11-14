@@ -53,7 +53,6 @@ export default function GuidePage() {
       <main>
         <section className="section-kv bg-[#f5f7fb]">
           <div className="container-kv max-w-[960px]">
-            <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Памятка участника</span>
             <h1 className="text-[clamp(2.4rem,7vw,4.5rem)] font-semibold tracking-tight leading-[1.05] mt-3 mb-5">
               Как работать с проектом
             </h1>
@@ -73,7 +72,7 @@ export default function GuidePage() {
                       <Icon className="w-6 h-6 stroke-[1.7]" />
                     </div>
                     <div>
-                      <span className="text-xs font-semibold text-kv-muted uppercase tracking-widest">Шаг {index + 1}</span>
+                      <span className="text-xs font-medium text-kv-muted">Шаг {index + 1}</span>
                       <h2 className="text-xl font-semibold mt-1 mb-2">{title}</h2>
                       <p className="text-kv-text font-light leading-relaxed">{text}</p>
                     </div>
@@ -82,7 +81,7 @@ export default function GuidePage() {
               ))}
             </div>
 
-            <div className="mt-8 rounded-[2rem] bg-[#f3eeff] border border-[#4c1d9520] p-6 min-[640px]:p-8 flex gap-4">
+            <div className="mt-8 rounded-[1.25rem] bg-[#f3eeff] border border-[#4c1d9520] p-6 min-[640px]:p-8 flex gap-4">
               <ShieldCheck className="w-7 h-7 text-[#4C1D95] flex-shrink-0" />
               <div>
                 <h2 className="text-lg font-semibold mb-2">Во время пилотной апробации</h2>
