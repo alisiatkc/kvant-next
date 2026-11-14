@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import type { LucideIcon } from 'lucide-react'
 import {
   Box, Calendar, Zap, MapPin, Globe, Mail, MessageCircle,
   Hash, MessageSquare, ArrowRight, CheckCircle2, Users,
@@ -13,7 +14,7 @@ const DocsSection      = dynamic(() => import('@/components/DocsSection'),      
 const AIAssistant      = dynamic(() => import('@/components/AIAssistant'),      { ssr: false })
 const AgileSection     = dynamic(() => import('@/components/AgileSection'),     { ssr: false })
 
-const contactIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+const contactIconMap: Record<string, LucideIcon> = {
   MapPin, Globe, Mail, MessageCircle, Hash, MessageSquare,
 }
 
@@ -166,13 +167,13 @@ export default function HomePage() {
           <div className="container-kv">
             <div className="mb-12">
               <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Форматы практики</span>
-              <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Практика в вашем темпе</h2>
+              <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mb-3">Практика в вашем темпе</h2>
               <p className="text-kv-text font-light text-lg max-w-[560px] leading-relaxed">
                 Семестровый и интенсивный форматы поддерживают единый проектный цикл. Результат любого внутреннего проекта можно апробировать и адаптировать в КОП.
               </p>
             </div>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
-              <div className="relative bg-white rounded-[2.5rem] p-10 border border-kv-border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
+              <div className="relative bg-white rounded-[1.5rem] p-8 min-[640px]:p-10 border border-kv-border shadow-card transition-shadow duration-200 hover:shadow-card-hover">
                 <div className="w-14 h-14 rounded-2xl bg-[#eff3ff] flex items-center justify-center mb-7">
                   <Calendar className="w-7 h-7 text-kv-blue stroke-[1.5]" />
                 </div>
@@ -192,7 +193,7 @@ export default function HomePage() {
                 </ul>
               </div>
 
-              <div className="relative bg-white rounded-[2.5rem] p-10 border border-kv-border shadow-card group hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
+              <div className="relative bg-white rounded-[1.5rem] p-8 min-[640px]:p-10 border border-kv-border shadow-card transition-shadow duration-200 hover:shadow-card-hover">
                 <div className="w-14 h-14 rounded-2xl bg-[#f5f0ff] flex items-center justify-center mb-7">
                   <Zap className="w-7 h-7 text-[#7c3aed] stroke-[1.5]" />
                 </div>
@@ -221,7 +222,7 @@ export default function HomePage() {
         {/* ── КОП ──────────────────────────────────────────────────────────── */}
         <section className="section-kv">
           <div className="container-kv">
-            <div className="bg-white rounded-[2rem] min-[640px]:rounded-[3rem] px-6 py-8 min-[640px]:px-[60px] min-[640px]:py-[70px] flex flex-wrap gap-8 min-[640px]:gap-[60px] items-center border border-kv-border shadow-card">
+            <div className="bg-white rounded-[1.5rem] px-6 py-8 min-[640px]:px-12 min-[640px]:py-14 flex flex-wrap gap-8 min-[640px]:gap-12 items-center border border-kv-border shadow-card">
               <div className="flex-[2] min-w-[300px]">
                 <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest block mb-4">Упаковка результата</span>
                 <h3 className="text-[clamp(1.7rem,4vw,2.5rem)] font-semibold mb-5 leading-tight">
@@ -243,7 +244,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="flex-1 min-w-[180px] flex flex-col items-center gap-5">
-                <div className="w-36 h-36 rounded-[2.5rem] bg-kv-light flex items-center justify-center">
+                <div className="w-36 h-36 rounded-[1.25rem] bg-kv-light flex items-center justify-center">
                   <Box className="w-20 h-20 text-kv-blue stroke-[1.2]" />
                 </div>
               </div>
@@ -262,7 +263,7 @@ export default function HomePage() {
           <div className="container-kv">
             <div className="mb-10">
               <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Связь</span>
-              <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mt-2 mb-3">Контакты</h2>
+              <h2 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight mb-3">Контакты</h2>
               <p className="text-kv-text font-light text-lg">
                 Связаться с куратором, задать вопрос или договориться о сотрудничестве.
               </p>
@@ -272,7 +273,7 @@ export default function HomePage() {
                 const Icon = contactIconMap[c.icon] ?? MapPin
                 return (
                   <a key={c.text} href={c.link} target="_blank" rel="noopener noreferrer"
-                    className="bg-white rounded-full py-3.5 px-6 flex items-center gap-2.5 border border-kv-border text-kv-dark no-underline text-[0.95rem] transition-all hover:bg-kv-light hover:-translate-y-0.5 hover:shadow-card">
+                    className="bg-white rounded-full py-3.5 px-6 flex items-center gap-2.5 border border-kv-border text-kv-dark no-underline text-[0.95rem] transition-[background-color,border-color] hover:bg-kv-light hover:border-[#dce4f0]">
                     <Icon className="w-[18px] h-[18px] text-kv-blue stroke-[1.5] flex-shrink-0" />
                     <span>{c.text}</span>
                   </a>

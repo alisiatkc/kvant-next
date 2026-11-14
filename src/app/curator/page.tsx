@@ -352,9 +352,9 @@ export default function CuratorPage() {
         <div className="container-kv py-10">
 
           {/* Top bar */}
-          <div className="bg-white rounded-[3rem] px-10 py-8 mb-8 flex items-center justify-between flex-wrap gap-4">
+          <div className="bg-white rounded-[1.5rem] px-6 min-[640px]:px-8 py-6 mb-8 flex items-center justify-between flex-wrap gap-4 border border-kv-border">
             <div>
-              <span className="text-kv-muted text-xs uppercase tracking-wide block mb-0.5">Панель куратора</span>
+              <span className="text-kv-muted text-xs block mb-0.5">Панель куратора</span>
               <h1 className="text-[2rem] font-semibold">{curatorName}</h1>
               <p className="text-kv-muted text-sm mt-0.5">Логин: {curatorLogin} · {counts.mine} проект{counts.mine === 1 ? '' : counts.mine < 5 ? 'а' : 'ов'} в работе</p>
             </div>
@@ -367,7 +367,7 @@ export default function CuratorPage() {
           <div className="flex gap-3 mb-6 flex-wrap">
             {TABS.map(({ id, label, Icon, badge }) => (
               <button key={id}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium border-none cursor-pointer transition-all relative ${activeTab === id ? 'bg-kv-blue text-white' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border border-kv-border cursor-pointer transition-colors relative ${activeTab === id ? 'bg-kv-blue border-kv-blue text-white' : 'bg-white text-kv-dark hover:bg-kv-light'}`}
                 onClick={() => setActiveTab(id)}
               >
                 <Icon className="w-4 h-4" /> {label}
@@ -386,7 +386,7 @@ export default function CuratorPage() {
                   { label: 'Свободные',       value: counts.available, color: 'text-kv-blue',     bg: 'bg-[#EEF3FF]' },
                   { label: 'Одобрено всего', value: counts.approved,  color: 'text-[#4C1D95]',   bg: 'bg-[#F3EEFF]' },
                 ].map((s) => (
-                  <div key={s.label} className={`${s.bg} rounded-[2rem] p-7 text-center`}>
+                  <div key={s.label} className={`${s.bg} rounded-[1.25rem] p-6 text-center border border-kv-border`}>
                     <div className={`text-[2.2rem] font-bold ${s.color} mb-1`}>{s.value}</div>
                     <div className="text-kv-muted text-xs leading-tight">{s.label}</div>
                   </div>
@@ -394,7 +394,7 @@ export default function CuratorPage() {
               </div>
 
               {/* Analytics */}
-              <div className="bg-white rounded-[3rem] p-8 mb-6">
+              <div className="bg-white rounded-[1.5rem] p-6 min-[640px]:p-8 mb-6 border border-kv-border">
                 {/* Header + view switcher */}
                 <div className="flex items-center justify-between mb-7 flex-wrap gap-4">
                   <h3 className="text-base font-semibold flex items-center gap-2">
@@ -407,7 +407,7 @@ export default function CuratorPage() {
                       { id: 'funnel',   label: 'Воронка',    Icon: Activity },
                     ] as { id: 'status' | 'timeline' | 'funnel'; label: string; Icon: React.ComponentType<{ className?: string }> }[]).map(({ id, label, Icon }) => (
                       <button key={id}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium border-none cursor-pointer transition-all ${analyticsView === id ? 'bg-kv-blue text-white shadow-sm' : 'bg-transparent text-kv-muted hover:text-kv-dark'}`}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium border-none cursor-pointer transition-colors ${analyticsView === id ? 'bg-kv-blue text-white' : 'bg-transparent text-kv-muted hover:text-kv-dark'}`}
                         onClick={() => setAnalyticsView(id)}>
                         <Icon className="w-3.5 h-3.5" /> {label}
                       </button>
@@ -557,7 +557,7 @@ export default function CuratorPage() {
               </div>
 
               {/* My assigned projects */}
-              <div className="bg-white rounded-[3rem] p-10 mb-6">
+              <div className="bg-white rounded-[1.5rem] p-6 min-[640px]:p-8 mb-6 border border-kv-border">
                 <h2 className="text-[1.4rem] font-semibold mb-6 flex items-center gap-2">
                   <UserCheck className="w-5 h-5 text-kv-blue" /> Мои проекты
                 </h2>
@@ -577,7 +577,7 @@ export default function CuratorPage() {
 
                 <div className="mt-10 pt-8 border-t border-kv-border">
                   <div className="mb-5">
-                    <span className="text-kv-blue text-xs font-semibold uppercase tracking-widest">Объективные показатели</span>
+                    <span className="text-kv-blue text-xs font-medium">Объективные показатели</span>
                     <h3 className="text-[1.15rem] font-semibold mt-1">Цифровой след проектной деятельности</h3>
                     <p className="text-xs text-kv-muted mt-2 max-w-[760px] leading-relaxed">
                       Журнал хранит тип действия, время, код команды и технические признаки результата. Тексты проектов, комментариев и личные данные в исследовательский журнал не копируются.

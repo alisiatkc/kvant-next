@@ -51,7 +51,7 @@ export default function Header({ active }: HeaderProps) {
             Как работать
           </Link>
           <Link href="/cabinet"
-            className={`no-underline text-sm font-medium px-5 py-2 rounded-full transition-all ${
+            className={`no-underline text-sm font-medium px-5 py-2 rounded-full transition-colors ${
               active === 'cabinet'
                 ? 'bg-kv-blue text-white'
                 : 'border border-kv-border text-kv-dark hover:border-kv-blue hover:text-kv-blue'

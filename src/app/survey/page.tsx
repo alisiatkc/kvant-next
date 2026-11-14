@@ -300,7 +300,7 @@ export default function SurveyPage() {
         {!ready ? (
           <p>Загрузка черновика…</p>
         ) : receipt ? (
-          <section className="bg-white rounded-3xl p-7">
+          <section className="bg-white rounded-[1.5rem] p-7 border border-kv-border">
             <h2 className="text-2xl font-semibold">
               {surveyMode === "demo"
                 ? "Сохранено в этом браузере"
@@ -316,7 +316,7 @@ export default function SurveyPage() {
                 сопоставления T0 и T1.
               </p>
             )}
-            <p className="mt-3">Спасибо за участие!</p>
+            <p className="mt-3">Спасибо за участие</p>
           </section>
         ) : (
           <form
@@ -325,7 +325,7 @@ export default function SurveyPage() {
               if (step < form.sections.length) setStep(step + 1);
               else void send();
             }}
-            className="bg-white rounded-3xl p-5 sm:p-9"
+            className="bg-white rounded-[1.5rem] p-5 sm:p-9 border border-kv-border"
           >
             <p className="text-sm text-kv-muted mb-3">
               Шаг {step + 1} из {form.sections.length + 1} · вопросы можно
