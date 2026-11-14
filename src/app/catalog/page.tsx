@@ -103,7 +103,7 @@ export default function CatalogPage() {
         <div className="container-kv">
 
           {/* ── HERO BANNER ── */}
-          <div className="mt-8 min-[640px]:mt-12 mb-8 rounded-[2rem] min-[640px]:rounded-[2.5rem] overflow-hidden relative"
+          <div className="mt-8 min-[640px]:mt-12 mb-8 rounded-[1.5rem] overflow-hidden relative border border-kv-border"
             style={{ background: 'linear-gradient(135deg, #EEF3FF 0%, #e8e0ff 55%, #F3EEFF 100%)' }}>
             {/* decorative blobs */}
             <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full opacity-30 pointer-events-none"
@@ -143,7 +143,7 @@ export default function CatalogPage() {
               <div className="flex gap-2 flex-wrap">
                 {subjects.map((s) => (
                   <button key={s.key}
-                    className={`px-4 py-2 rounded-full font-medium text-sm transition-all cursor-pointer border ${
+                    className={`px-4 py-2 rounded-full font-medium text-sm transition-colors cursor-pointer border ${
                       filter === s.key && !topFilter
                         ? 'bg-kv-blue text-white border-transparent'
                         : 'bg-white border-[#e2e8f0] hover:border-[#c7d2e7]'
@@ -154,7 +154,7 @@ export default function CatalogPage() {
                 ))}
               </div>
               <button
-                className={`px-5 py-2.5 rounded-full border-2 font-semibold text-sm flex items-center gap-2 transition-all cursor-pointer ${
+                className={`px-5 py-2.5 rounded-full border font-medium text-sm flex items-center gap-2 transition-colors cursor-pointer ${
                   topFilter ? 'bg-[#f59e0b] text-white border-[#f59e0b]' : 'bg-[#fffbeb] text-[#92400e] border-[#fcd34d] hover:bg-[#fef3c7]'
                 }`}
                 onClick={() => { setTopFilter((v) => !v); if (!topFilter) setFilter('all') }}>
@@ -166,7 +166,7 @@ export default function CatalogPage() {
 
           {/* Top-5 banner */}
           {topFilter && (
-            <div className="rounded-[2rem] p-7 min-[640px]:p-10 mb-8 flex items-center gap-5"
+            <div className="rounded-[1.25rem] p-6 min-[640px]:p-8 mb-8 flex items-center gap-5"
               style={{ background: 'linear-gradient(135deg,#fffbeb,#fef3c7)', border: '2px solid #fcd34d' }}>
               <div className="w-14 h-14 rounded-2xl bg-[#f59e0b] flex items-center justify-center flex-shrink-0">
                 <Award className="w-7 h-7 text-white" />
@@ -186,11 +186,18 @@ export default function CatalogPage() {
               const isTop   = topIds.has(project.id)
 
               return (
-                <div key={project.id}
-                  className={`bg-white rounded-[1.75rem] border cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-card-hover relative overflow-hidden flex flex-col ${
+                <article key={project.id} role="button" tabIndex={0}
+                  className={`bg-white rounded-[1.25rem] border cursor-pointer transition-[border-color,box-shadow] duration-200 hover:shadow-card relative overflow-hidden flex flex-col text-left ${
                     topFilter && isTop ? 'border-[#fcd34d] ring-2 ring-[#fcd34d]/30' : 'border-kv-border'
                   }`}
-                  onClick={() => { setSelected(project); setPhotoIdx(0) }}>
+                  onClick={() => { setSelected(project); setPhotoIdx(0) }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setSelected(project)
+                      setPhotoIdx(0)
+                    }
+                  }}>
 
                   {/* Cover */}
                   <div className="h-[88px] flex items-center justify-between px-6 relative"
@@ -205,7 +212,7 @@ export default function CatalogPage() {
                       </span>
                     )}
                     <button
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all hover:scale-105 cursor-pointer ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
                         isLiked ? 'bg-[#ffe0e0] border-[#fca5a5]' : 'bg-white border-[#fca5a5]/40'
                       }`}
                       onClick={(e) => toggleLike(e, project.id)}>
@@ -230,13 +237,13 @@ export default function CatalogPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </article>
               )
             })}
           </div>
 
           {/* CTA */}
-          <div className="bg-white rounded-[2rem] min-[640px]:rounded-[3.75rem] p-8 min-[640px]:p-[60px] my-10 mb-16 text-center">
+          <div className="bg-white rounded-[1.5rem] p-8 min-[640px]:p-12 my-10 mb-16 text-center border border-kv-border">
             <h3 className="text-[1.4rem] min-[640px]:text-[2.2rem] font-medium mb-4">Хотите пройти практику на базе технопарка?</h3>
             <p className="text-kv-text text-base min-[640px]:text-xl mb-8 max-w-[600px] mx-auto">Напишите нам, и мы договоримся о сотрудничестве</p>
             <a href="https://technopark.herzen.spb.ru" target="_blank" rel="noopener noreferrer"
@@ -254,7 +261,7 @@ export default function CatalogPage() {
         const ModalIcon = subjectIconMap[selected.image] ?? subjectIconMap[selected.subject] ?? Box
         return (
           <div className="modal-overlay" onClick={() => setSelected(null)}>
-            <div className="bg-white max-w-[820px] w-full min-[640px]:w-[92%] max-h-[94vh] overflow-y-auto rounded-t-[2rem] min-[640px]:rounded-[2.5rem] relative shadow-modal"
+            <div className="bg-white max-w-[820px] w-full min-[640px]:w-[92%] max-h-[94vh] overflow-y-auto rounded-t-[1.5rem] min-[640px]:rounded-[1.5rem] relative shadow-modal"
               onClick={(e) => e.stopPropagation()}>
 
               {/* Header */}
@@ -267,7 +274,7 @@ export default function CatalogPage() {
                     <ModalIcon className="text-white stroke-[1.25] w-9 h-9" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-2 inline-block bg-kv-blue text-white">
+                    <span className="text-xs font-medium px-3 py-1 rounded-full mb-2 inline-block bg-kv-blue text-white">
                       {subjects.find(s => s.key === selected.subject)?.label ?? 'КОП'}
                     </span>
                     <h2 className="text-[1.3rem] min-[640px]:text-[1.8rem] font-semibold leading-tight text-kv-dark">
@@ -305,7 +312,7 @@ export default function CatalogPage() {
                         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                           {photos.map((_, i) => (
                             <button key={i}
-                              className={`w-2 h-2 rounded-full border-none cursor-pointer transition-all ${i === photoIdx ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}`}
+                              className={`w-2 h-2 rounded-full border-none cursor-pointer transition-colors ${i === photoIdx ? 'bg-white' : 'bg-white/50 hover:bg-white/80'}`}
                               onClick={() => setPhotoIdx(i)} />
                           ))}
                         </div>
@@ -324,7 +331,7 @@ export default function CatalogPage() {
 
                 {/* Authors */}
                 <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-widest text-kv-muted mb-3">Авторы</h4>
+                  <h4 className="text-xs font-medium text-kv-muted mb-3">Авторы</h4>
                   <div className="flex flex-wrap gap-2">
                     {selected.authors.map((a, i) => (
                       <span key={a} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm ${i === 0 ? 'bg-[#EEF3FF] text-kv-blue' : 'bg-[#f1f5f9] text-[#64748b]'}`}>
@@ -344,7 +351,7 @@ export default function CatalogPage() {
                       const FIcon = fileIconMap[f.icon] ?? File
                       return (
                         <div key={f.name}
-                          className="bg-white rounded-2xl p-4 text-center border border-[#EEF3FF] cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
+                          className="bg-white rounded-xl p-4 text-center border border-[#EEF3FF] cursor-pointer hover:border-[#dce4f0] transition-colors"
                           onClick={() => alert(`Скачивание ${f.name} (демо-режим)`)}>
                           <span className="flex justify-center mb-2 text-kv-blue"><FIcon className="w-7 h-7" /></span>
                           <span className="text-xs block font-medium text-kv-dark">{f.name}</span>
